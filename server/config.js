@@ -5,7 +5,7 @@ export const SEASONS = {
   "2024": { label: "Season 2024", start: 1704844800, end: 1736380800 },
   "2023": { label: "Season 2023", start: 1673395200, end: 1704844800 },
 };
-export const CURRENT_SEASON = "2025";
+export const CURRENT_SEASON = "2026";
 export const QUEUE_IDS = { solo: 420, flex: 440, clash: 700 };
 
 // --- Full Player Roster ---
@@ -23,4 +23,4 @@ export const FULL_SQUAD = [
 
 export const CACHE_DURATION = 10 * 60 * 1000;       // 10 minutes
 export const FETCH_DELAY_MS = 1350;                  // ~44 req/min — safely under Riot 100/2min
-export const AUTO_FETCH_INTERVAL = 15 * 60 * 1000;  // 15 minutes
+export const AUTO_FETCH_INTERVAL = 10 * 60 * 1000;  // 10 minutes

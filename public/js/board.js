@@ -18,6 +18,7 @@ function setBoardSeason(season) {
 
 function setBoardMode(mode) {
   _boardMode = mode;
+  _updatePageHeader();
   // Re-fetch available seasons for this mode, then reload
   _fetchAvailableSeasons(function() {
     // If current season no longer available in this mode, fall back to first available
@@ -27,6 +28,25 @@ function setBoardMode(mode) {
     _renderFilterBar();
     _loadForFilter();
   });
+}
+
+function _updatePageHeader() {
+  var titles = {
+    solo:  { h1: "Solo / Duo Ranked", sub: "Solo / Duo Ranked · EUNE", rankCol: "Rank" },
+    flex:  { h1: "Flex Ranked",        sub: "Flex 5v5 Ranked · EUNE",   rankCol: "Rank" },
+    clash: { h1: "Clash",              sub: "Clash Tournament · EUNE",  rankCol: "Solo Strength" },
+  };
+  var t = titles[_boardMode] || titles.solo;
+  var h1 = document.getElementById("page-title");
+  var sub = document.getElementById("page-subtitle");
+  var col = document.getElementById("lb-rank-header");
+  if (h1) {
+    var timer = document.getElementById("refreshTimer");
+    h1.textContent = t.h1 + " ";
+    if (timer) h1.appendChild(timer);
+  }
+  if (sub) sub.textContent = t.sub;
+  if (col) col.textContent = t.rankCol;
 }
 
 function _fetchAvailableSeasons(cb) {
@@ -62,10 +82,15 @@ function _renderFilterBar() {
   }
   if (modeEl) {
     modeEl.innerHTML = BOARD_MODES.map(function(m) {
+      if (m.id === 'clash') {
+        return '<button class="bf-mode dev-locked" data-tip="In development" onclick="return false">' + m.label + '</button>';
+      }
       return '<button class="bf-mode' + (m.id === _boardMode ? " active " + m.id : "") + '" onclick="setBoardMode(\'' + m.id + '\')">' + m.label + '</button>';
     }).join('');
   }
 }
+
+var _hideRank = false;
 
 function loadSquadStats(season, mode) {
   currentOpenIdx = null;
@@ -78,6 +103,12 @@ function loadSquadStats(season, mode) {
         return;
       }
       allData = data.players || [];
+      _hideRank = !!data.hideRank;
+      var col = document.getElementById("lb-rank-header");
+      if (col) {
+        col.textContent = _boardMode === "clash" ? "Solo Strength" : "Rank";
+        col.style.visibility = _hideRank ? "hidden" : "";
+      }
       if (data.ddragonVersion) {
         ICON_BASE = "https://ddragon.leagueoflegends.com/cdn/" + data.ddragonVersion + "/img/profileicon/";
       }
@@ -194,17 +225,27 @@ function cardHTML(p, i, rankPos) {
   }
 
   var tierCol = '';
-  if (p.cached) {
-    var modeTag = MODE_LABELS[p.mode] || p.mode;
-    var lrHtml = '';
+  if (p.mode === 'clash') {
+    // Clash has no rank — show solo rank as a strength reference pill
+    var soloStrHtml = '';
     if (p.liveRank && p.liveRank.tier) {
+      soloStrHtml = '<div class="tier-name t-' + tc(p.liveRank.tier) + '" style="font-size:0.85rem">'
+        + p.liveRank.tier + ' ' + p.liveRank.rank + '</div>'
+        + '<div style="font-size:0.65rem;color:var(--text3);margin-top:2px;letter-spacing:.04em">Solo rank</div>';
+    } else {
+      soloStrHtml = '<div style="font-size:0.75rem;color:var(--text3)">Unranked</div>';
+    }
+    tierCol = '<div class="tier-col"><div class="tier-info">' + soloStrHtml + '</div></div>';
+  } else if (p.cached) {
+    var lrHtml = '';
+    if (!_hideRank && p.liveRank && p.liveRank.tier) {
       lrHtml = '<div class="tier-name t-' + tc(p.liveRank.tier) + '" style="opacity:0.65;font-size:0.8rem">'
         + p.liveRank.tier + ' ' + p.liveRank.rank + '</div>';
     }
-    tierCol = '<div class="tier-col"><div class="tier-info">'
-      + lrHtml
-      + '<div class="bf-mode-tag ' + (p.mode || '') + '" style="margin-top:2px">' + modeTag + ' · ' + (p.season || '') + '</div>'
-      + '</div></div>';
+    var gamesHtml = _hideRank
+      ? '<div style="font-size:0.9rem;font-weight:700;visibility:hidden">' + (s.wins + s.losses) + ' games</div>'
+      : '';
+    tierCol = '<div class="tier-col"><div class="tier-info">' + lrHtml + gamesHtml + '</div></div>';
   } else {
     tierCol = '<div class="tier-col">'
       + '<div class="tier-info"><div class="tier-name t-' + tc(s.tier) + '">' + s.tier + ' ' + s.rank + '</div><div class="tier-lp">' + s.lp + ' LP</div></div></div>';
@@ -235,8 +276,10 @@ function cardHTML(p, i, rankPos) {
 function renderBoard() {
   var board = document.getElementById("board"), ranked = 0, html = "";
   for (var i = 0; i < allData.length; i++) {
-    var hasStats = allData[i].solo && (allData[i].solo.wins + allData[i].solo.losses) > 0;
-    html += cardHTML(allData[i], i, hasStats ? ++ranked : null);
+    var p = allData[i];
+    if (_hideRank && p.liveRank) p = Object.assign({}, p, { liveRank: null });
+    var hasStats = p.solo && (p.solo.wins + p.solo.losses) > 0;
+    html += cardHTML(p, i, hasStats ? ++ranked : null);
   }
   board.innerHTML = html;
 }
@@ -257,6 +300,9 @@ function renderSkeletons() {
 
 function loadSquad() {
   currentOpenIdx = null;
+  _hideRank = false;
+  var col = document.getElementById("lb-rank-header");
+  if (col) col.textContent = "Rank";
   _fetchAvailableSeasons(_renderFilterBar);
   renderSkeletons();
 

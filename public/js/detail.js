@@ -6,6 +6,7 @@ function renderDetail(p, i) {
   var tierKey = tc(s.tier);
   var tierEmblem = "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-" + tierKey + ".png";
 
+  var seasonLabel = p.season ? "Season " + p.season : "This season";
   var timePlayed = "";
   if (s.totalTimeSecs) {
     var _d = Math.floor(s.totalTimeSecs / 86400);
@@ -30,25 +31,23 @@ function renderDetail(p, i) {
     + '</div>'
     + '</div>'
     + '</div>'
-    + '<div class="detail-tier-badge">'
-    + (s.tier
-      ? '<div class="tier-emblem-clip"><img src="' + tierEmblem + '" class="tier-emblem-large" /></div>'
-        + '<div><div class="dtier t-' + tierKey + '">' + s.tier + ' ' + s.rank + '</div>'
-        + '<div style="font-size:0.9rem;color:var(--text);font-weight:700">' + s.lp + ' LP</div></div>'
-      : (function() {
+    + (s.tier ? '<div class="detail-tier-badge">'
+      + '<div class="tier-emblem-clip"><img src="' + tierEmblem + '" class="tier-emblem-large" /></div>'
+      + '<div><div class="dtier t-' + tierKey + '">' + s.tier + ' ' + s.rank + '</div>'
+      + '<div style="font-size:0.9rem;color:var(--text);font-weight:700">' + s.lp + ' LP</div></div>'
+      + '</div>' : (function() {
           var lr = p.liveRank;
           if (lr && lr.tier) {
             var lrKey = lr.tier.toLowerCase();
             var lrEmblem = "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-" + lrKey + ".png";
-            return '<div class="tier-emblem-clip" style="opacity:0.55"><img src="' + lrEmblem + '" class="tier-emblem-large" /></div>'
+            return '<div class="detail-tier-badge">'
+              + '<div class="tier-emblem-clip" style="opacity:0.55"><img src="' + lrEmblem + '" class="tier-emblem-large" /></div>'
               + '<div><div class="dtier t-' + lrKey + '" style="opacity:0.7">' + lr.tier + ' ' + lr.rank + '</div>'
-              + '<div style="font-size:0.7rem;color:var(--text3);margin-top:3px">Current rank · ' + (p.season || '') + ' cache</div></div>';
+              + '<div style="font-size:0.7rem;color:var(--text3);margin-top:3px">Current rank · ' + (p.season || '') + ' cache</div></div>'
+              + '</div>';
           }
-          return '<div><div class="dtier" style="font-size:1rem;color:var(--text3)">'
-            + (p.mode ? (MODE_LABELS[p.mode] || p.mode) + ' · ' : '') + (p.season || '') + '</div>'
-            + '<div style="font-size:0.75rem;color:var(--text3);margin-top:4px">Cached stats</div></div>';
+          return '';
         })())
-    + '</div>'
     + '</div>'
 
     // Combat + Performance
@@ -59,7 +58,7 @@ function renderDetail(p, i) {
     + '<div class="stat-box"><div class="st-label">Avg Kills</div><div class="st-val" style="color:var(--green)">' + (s.kills || "0.0") + '</div><div class="st-sub">Per game</div></div>'
     + '<div class="stat-box"><div class="st-label">Avg Deaths</div><div class="st-val" style="color:var(--red)">' + (s.deaths || "0.0") + '</div><div class="st-sub">Per game</div></div>'
     + '<div class="stat-box"><div class="st-label">Avg Assists</div><div class="st-val">' + (s.assists || "0.0") + '</div><div class="st-sub">Per game</div></div>'
-    + '<div class="stat-box"><div class="st-label">KDA Ratio</div><div class="st-val" style="color:var(--orange)">' + (s.kda || "0.00") + '</div><div class="st-sub">All stored games</div></div>'
+    + '<div class="stat-box"><div class="st-label">KDA Ratio</div><div class="st-val" style="color:var(--orange)">' + (s.kda || "0.00") + '</div><div class="st-sub">Per game</div></div>'
     + '</div>'
     + '</div>'
     + '<div class="detail-section">'
@@ -77,20 +76,20 @@ function renderDetail(p, i) {
     + '<div class="detail-section">'
     + '<div class="ds-title">Season Totals</div>'
     + '<div class="ds-grid ds-5">'
-    + (timePlayed ? '<div class="stat-box"><div class="st-label">Time Played</div><div class="st-val">' + timePlayed + '</div><div class="st-sub">This season</div></div>' : '')
-    + (s.totalKills ? '<div class="stat-box"><div class="st-label">Total Kills</div><div class="st-val" style="color:var(--green)">' + s.totalKills + '</div><div class="st-sub">This season</div></div>' : '')
-    + (s.totalAssists ? '<div class="stat-box"><div class="st-label">Total Assists</div><div class="st-val" style="color:var(--accent)">' + s.totalAssists + '</div><div class="st-sub">This season</div></div>' : '')
-    + (s.totalDeaths ? '<div class="stat-box"><div class="st-label">Total Deaths</div><div class="st-val" style="color:var(--red)">' + s.totalDeaths + '</div><div class="st-sub">This season</div></div>' : '')
-    + (s.pentas != null ? '<div class="stat-box"><div class="st-label">Total Pentas</div><div class="st-val" style="color:' + (s.pentas > 0 ? "var(--orange)" : "var(--text)") + '">' + (s.pentas > 0 ? "🏆 " : "") + s.pentas + '</div><div class="st-sub">' + (s.pentas > 0 ? "This season" : "None yet") + '</div></div>' : '')
+    + (timePlayed ? '<div class="stat-box"><div class="st-label">Time Played</div><div class="st-val">' + timePlayed + '</div><div class="st-sub">' + seasonLabel + '</div></div>' : '')
+    + (s.totalKills ? '<div class="stat-box"><div class="st-label">Total Kills</div><div class="st-val" style="color:var(--green)">' + s.totalKills + '</div><div class="st-sub">' + seasonLabel + '</div></div>' : '')
+    + (s.totalAssists ? '<div class="stat-box"><div class="st-label">Total Assists</div><div class="st-val" style="color:var(--accent)">' + s.totalAssists + '</div><div class="st-sub">' + seasonLabel + '</div></div>' : '')
+    + (s.totalDeaths ? '<div class="stat-box"><div class="st-label">Total Deaths</div><div class="st-val" style="color:var(--red)">' + s.totalDeaths + '</div><div class="st-sub">' + seasonLabel + '</div></div>' : '')
+    + (s.pentas != null ? '<div class="stat-box"><div class="st-label">Total Pentas</div><div class="st-val" style="color:' + (s.pentas > 0 ? "var(--orange)" : "var(--text)") + '">' + (s.pentas > 0 ? "🏆 " : "") + s.pentas + '</div><div class="st-sub">' + (s.pentas > 0 ? seasonLabel : "None yet") + '</div></div>' : '')
     + '</div>'
     + '</div>'
 
     // Streaks
-    + ((s.streak || s.bestStreak || s.bestLStreak) ?
+    + ((s.bestStreak || s.bestLStreak || (!p.cached && s.streak)) ?
       '<div class="detail-section">'
       + '<div class="ds-title">Streaks</div>'
       + '<div class="ds-grid ds-3">'
-      + (s.streak ? '<div class="stat-box"><div class="st-label">Current</div><div class="st-val" style="color:' + (s.streak > 0 ? "var(--green)" : "var(--red)") + '">' + (s.streak > 0 ? "🔥 " + s.streak + "W" : "💀 " + Math.abs(s.streak) + "L") + '</div><div class="st-sub">' + (s.streak > 0 ? "On a roll" : "Rough patch") + '</div></div>' : '')
+      + (!p.cached && s.streak ? '<div class="stat-box"><div class="st-label">Current</div><div class="st-val" style="color:' + (s.streak > 0 ? "var(--green)" : "var(--red)") + '">' + (s.streak > 0 ? "🔥 " + s.streak + "W" : "💀 " + Math.abs(s.streak) + "L") + '</div><div class="st-sub">' + (s.streak > 0 ? "On a roll" : "Rough patch") + '</div></div>' : '')
       + (s.bestStreak ? '<div class="stat-box"><div class="st-label">Best Win Streak</div><div class="st-val" style="color:var(--green)">🔥 ' + s.bestStreak + 'W</div><div class="st-sub">Longest win run</div></div>' : '')
       + (s.bestLStreak ? '<div class="stat-box"><div class="st-label">Worst Loss Streak</div><div class="st-val" style="color:var(--red)">💀 ' + s.bestLStreak + 'L</div><div class="st-sub">Longest loss run</div></div>' : '')
       + '</div>'

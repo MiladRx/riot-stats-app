@@ -21,12 +21,12 @@
   <div class="wrap">
     <header>
       <div class="header-left">
-        <h1>Solo / Duo Ranked <span class="h1-timer" id="refreshTimer"></span></h1>
-        <p>Solo / Duo Ranked · EUNE</p>
+        <h1 id="page-title">Solo / Duo Ranked <span class="h1-timer" id="refreshTimer"></span></h1>
+        <p id="page-subtitle">Solo / Duo Ranked · EUNE</p>
       </div>
       <div class="header-right">
-        <button id="fd-header-btn" class="fetch-dash-btn" onclick="openFetchDashboard()">📊 <span>Fetch</span></button>
-        <button class="clash-btn" onclick="openClashModal()">⚔️ <span>Clash Builder</span></button>
+        <button id="fd-header-btn" class="fetch-dash-btn dev-locked" data-tip="In development" onclick="return false">📊 <span>Fetch</span></button>
+        <button class="clash-btn dev-locked" data-tip="In development" onclick="return false">⚔️ <span>Clash Builder</span></button>
       </div>
     </header>
 
@@ -38,7 +38,7 @@
     <div class="lb-header">
       <div>#</div>
       <div>Player</div>
-      <div>Rank</div>
+      <div id="lb-rank-header">Rank</div>
       <div>Record</div>
       <div>Win Rate</div>
       <div style="text-align:center">Games</div>

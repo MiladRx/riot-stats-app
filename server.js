@@ -223,6 +223,13 @@ app.get("/squad-stats", (req, res) => {
       if (!streakWin) streak = -streak;
     }
 
+    // Best win streak & worst loss streak (all-time across full cache)
+    let bestStreak = 0, bestLStreak = 0, curRun = 0, curLRun = 0;
+    for (const m of sorted.slice().reverse()) {
+      if (m.win) { curRun++; if (curRun > bestStreak) bestStreak = curRun; curLRun = 0; }
+      else { curLRun++; if (curLRun > bestLStreak) bestLStreak = curLRun; curRun = 0; }
+    }
+
     return {
       ...base,
       solo: {
@@ -240,9 +247,13 @@ app.get("/squad-stats", (req, res) => {
         totalTimeSecs: duration,
         totalKills: kills, totalDeaths: deaths, totalAssists: assists,
         totalCS: cs, totalDamage: damage, totalGold: gold,
-        pentas, streak,
-        sortScore: mode === "flex"
+        pentas, streak, bestStreak, bestLStreak,
+        sortScore: (season !== CURRENT_SEASON && mode !== "clash")
+          ? n  // past seasons: sort by games played
+          : mode === "flex"
           ? (liveRank ? (TIER_SCORES[liveRank.tier] || 0) + (RANK_SCORES[liveRank.rank] || 0) + (liveRank.lp || 0) : wins - losses)
+          : mode === "clash"
+          ? winRate * 1000 + wins
           : wins - losses,
         topCachedChamp,
       },
@@ -250,7 +261,8 @@ app.get("/squad-stats", (req, res) => {
   });
 
   players.sort((a, b) => (b.solo?.sortScore ?? -9999) - (a.solo?.sortScore ?? -9999));
-  res.json({ players, season, mode, ddragonVersion });
+  const hideRank = season !== CURRENT_SEASON && mode !== "clash";
+  res.json({ players, season, mode, hideRank, ddragonVersion });
 });
 
 // --- Clash Lineup ---
@@ -365,15 +377,22 @@ function startAutoFetch() {
   autoFetchTimer = setInterval(() => { runAutoFetchCycle(); }, AUTO_FETCH_INTERVAL);
 }
 
-function runAutoFetchCycle() {
+async function runAutoFetchCycle() {
   nextFetchAt = Date.now() + AUTO_FETCH_INTERVAL;
   scheduleReloadAt = null;
-  if (!fetchJob.running) {
-    console.log("⏰ Auto fetch triggered");
-    runFetch(CURRENT_SEASON, "solo", null, invalidateSquadCache);
-  } else {
+  if (fetchJob.running) {
     console.log("⏰ Auto fetch skipped (fetch already running)");
+    return;
   }
+  console.log("⏰ Auto fetch triggered for season " + CURRENT_SEASON);
+  const modes = ["solo", "flex", "clash"];
+  for (const mode of modes) {
+    await new Promise(resolve => {
+      runFetch(CURRENT_SEASON, mode, null, resolve);
+    });
+  }
+  invalidateSquadCache();
+  console.log("⏰ Auto fetch cycle complete for all modes");
 }
 
 app.get("/schedule", (req, res) => {

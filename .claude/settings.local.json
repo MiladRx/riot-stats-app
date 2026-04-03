@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(echo ':*)",
+      "Bash(\"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\public\\\\css\\\\base.css\")"
+    ]
+  }
+}

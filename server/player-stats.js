@@ -148,6 +148,7 @@ export async function getPlayerStats(gameName, tagLine) {
   } catch (e) { }
 
   const solo = allEntries.find(e => e.queueType === "RANKED_SOLO_5x5") || null;
+  const flexEntry = allEntries.find(e => e.queueType === "RANKED_FLEX_SR") || null;
   const tierOrder = { IRON: 0, BRONZE: 1, SILVER: 2, GOLD: 3, PLATINUM: 4, EMERALD: 5, DIAMOND: 6, MASTER: 7, GRANDMASTER: 8, CHALLENGER: 9 };
   const rankOrder = { IV: 0, III: 1, II: 2, I: 3 };
 
@@ -158,6 +159,14 @@ export async function getPlayerStats(gameName, tagLine) {
     profileIconId: summoner.profileIconId ?? 1,
     isLive: isLive,
     topChamp: topChamp,
+    flex: flexEntry ? {
+      tier: flexEntry.tier,
+      rank: flexEntry.rank,
+      lp: flexEntry.leaguePoints,
+      wins: flexEntry.wins,
+      losses: flexEntry.losses,
+      sortScore: (tierOrder[flexEntry.tier] ?? -1) * 400 + (rankOrder[flexEntry.rank] ?? 0) * 100 + flexEntry.leaguePoints,
+    } : null,
     solo: solo ? {
       tier: solo.tier,
       rank: solo.rank,
