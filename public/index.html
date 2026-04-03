@@ -7,7 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/board.css" />
+  <link rel="stylesheet" href="css/detail.css" />
+  <link rel="stylesheet" href="css/compare.css" />
+  <link rel="stylesheet" href="css/modals.css" />
+  <link rel="stylesheet" href="css/tooltips.css" />
+  <link rel="stylesheet" href="css/clash.css" />
 </head>
 <body>
   <div class="bg-glow"></div>
@@ -18,7 +24,7 @@
         <p>Solo / Duo Ranked · EUNE</p>
       </div>
       <div class="header-right">
-       <!-- <button class="history-btn" id="historyBtn" onclick="openFetchPanel()">📊</button> -->
+        <button class="clash-btn" onclick="openClashModal()">⚔️ <span>Clash Builder</span></button>
       </div>
     </header>
 
@@ -37,7 +43,7 @@
   </div>
 
   <div id="fetch-panel" class="fetch-panel hidden">
-    <div class="fetch-backdrop" onclick="closeFetchPanel()"></div>
+    <div class="fetch-backdrop" onclick="closeFetchPanel()">📊</div>
     <div class="fetch-modal">
       <div class="fetch-modal-header">
         <div>
@@ -58,6 +64,22 @@
     </div>
   </div>
 
+  <div id="clash-modal" class="clash-modal hidden">
+    <div class="clash-backdrop" onclick="closeClashModal()"></div>
+    <div class="clash-panel">
+      <div class="clash-panel-header">
+        <div>
+          <div class="clash-panel-title">⚔️ Clash Team Builder</div>
+          <div class="clash-panel-sub">Optimal role assignments based on match history &amp; rank</div>
+        </div>
+        <button class="clash-close" onclick="closeClashModal()">✕</button>
+      </div>
+      <div class="clash-body">
+        <div id="clash-content"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="compare-modal" class="compare-modal hidden">
     <div class="compare-backdrop" onclick="closeCompareModal()"></div>
     <div class="compare-panel">
@@ -65,6 +87,13 @@
     </div>
   </div>
 
-<script src="app.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/detail.js"></script>
+<script src="js/board.js"></script>
+<script src="js/fetch-panel.js"></script>
+<script src="js/compare.js"></script>
+<script src="js/tooltips.js"></script>
+<script src="js/clash.js"></script>
+<script src="js/schedule.js"></script>
 </body>
 </html>

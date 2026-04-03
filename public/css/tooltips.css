@@ -1,0 +1,46 @@
+/* ── Badge Tooltip ── */
+#badge-tip {
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 9999;
+  max-width: 260px;
+  min-width: 180px;
+  padding: 11px 14px 12px 16px;
+  background: rgba(12, 12, 18, 0.97);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid var(--tip-accent, #8b5cf6);
+  border-radius: 10px;
+  font-family: "DM Sans", sans-serif;
+  pointer-events: none;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.03);
+  opacity: 0;
+  transform: translateY(6px) scale(0.97);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  visibility: hidden;
+}
+#badge-tip .tip-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--tip-accent, #8b5cf6);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 5px;
+  line-height: 1;
+}
+#badge-tip .tip-body {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.82);
+  line-height: 1.55;
+}
+#badge-tip.tip-show {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+#badge-tip.tip-below {
+  transform: translateY(-6px) scale(0.97);
+}
+#badge-tip.tip-below.tip-show {
+  transform: translateY(0) scale(1);
+}

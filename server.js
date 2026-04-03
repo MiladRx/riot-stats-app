@@ -20,6 +20,7 @@ app.use(express.static(path.join(__dirname, "public")));
 import { FULL_SQUAD, CACHE_DURATION, AUTO_FETCH_INTERVAL } from "./server/config.js";
 import { loadMatchCache, fetchJob, runFetchJob, scheduleReloadAt, setScheduleReloadAt } from "./server/match-cache.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
+import { buildLineups } from "./server/clash.js";
 
 loadDDragon();
 
@@ -93,6 +94,18 @@ app.post("/fetch-history/:gameName/:tagLine", (req, res) => {
 app.delete("/fetch-history", (req, res) => {
   fetchJob.running = false;
   res.json({ status: "stopped" });
+});
+
+app.get("/clash-lineup", (req, res) => {
+  if (!cachedSquadData) return res.status(503).json({ error: "Squad data not loaded yet — try again in a moment." });
+  const eligible = cachedSquadData.filter(p => !p.error && p.solo);
+  if (eligible.length < 5) return res.status(400).json({ error: "Need at least 5 ranked players." });
+  try {
+    const lineups = buildLineups(eligible);
+    res.json({ lineups });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get("/fetch-status", (req, res) => {

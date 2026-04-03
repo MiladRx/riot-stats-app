@@ -1,0 +1,71 @@
+/* ── Accordion Inner Elements ── */
+.detail-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.player-card.open .detail-wrapper { grid-template-rows: 1fr; }
+.detail-inner { overflow: hidden; }
+.detail-panel-inner { padding: 0 20px 24px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 20px; }
+
+/* ── Detail Hero Header ── */
+.detail-hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.dh-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+.dh-avatar { width: 72px; height: 72px; border-radius: 16px; border: 2px solid var(--bg4); box-shadow: 0 4px 16px rgba(0,0,0,0.5); flex-shrink: 0; object-fit: cover; }
+.dh-info { min-width: 0; }
+.dh-name { font-size: 1.25rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dh-name span { color: var(--text3); font-weight: 400; font-size: 1rem; }
+.dh-sub { font-size: 0.75rem; color: var(--text3); margin-top: 3px; font-weight: 500; }
+.dh-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.dh-chip { background: rgba(255,255,255,0.04); border: 1px solid var(--sep); border-radius: 100px; padding: 4px 11px; font-size: 0.72rem; font-weight: 600; color: var(--text2); white-space: nowrap; }
+
+/* ── Tier Badge ── */
+.detail-tier-badge {
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--sep);
+  border-radius: var(--radius-sm); padding: 10px 20px; min-height: 84px; flex-shrink: 0;
+}
+.detail-tier-badge > div { min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; }
+.detail-tier-badge .dtier { font-family: "Bebas Neue", sans-serif; font-size: 1.5rem; letter-spacing: 1px; white-space: nowrap; line-height: 1; }
+.detail-tier-badge .dlp { font-size: 0.8rem; color: var(--text3); text-transform: uppercase; font-weight: 700; margin-top: 4px; }
+
+/* ── Tier Emblem ── */
+.tier-emblem-clip { width: 72px; height: 72px; overflow: hidden; flex-shrink: 0; margin-right: 8px; position: relative; }
+.tier-emblem-large { width: 200px; height: 200px; object-fit: contain; position: absolute; top: -64px; left: -64px; filter: drop-shadow(0 0 8px rgba(0,0,0,0.6)); pointer-events: none; }
+
+/* ── Stat grid ── */
+.stat-box { background: rgba(255,255,255,0.02); border: 1px solid var(--sep); border-radius: var(--radius-sm); padding: 16px; transition: background 0.2s; }
+.stat-box:hover { background: rgba(255,255,255,0.04); }
+.stat-box .st-label { font-size: 0.65rem; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 600; }
+.stat-box .st-val { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+.stat-box .st-sub { font-size: 0.7rem; color: var(--text3); margin-top: 6px; font-weight: 500; }
+.prog-bar { height: 4px; background: var(--bg4); border-radius: 4px; overflow: hidden; margin-top: 12px; }
+.prog-fill { height: 100%; border-radius: 4px; }
+
+/* ── Signature champion ── */
+.signature-box { grid-column: span 1 !important; }
+.sig-content { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.sig-content img { width: 48px; height: 48px; border-radius: var(--radius-sm); border: 1px solid var(--sep); }
+
+/* ── Two-column section wrapper ── */
+.ds-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 4px; }
+.ds-two-col .detail-section { margin-bottom: 0; }
+
+/* ── Detail Sections ── */
+.detail-section { margin-bottom: 16px; }
+.ds-title { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); font-weight: 700; margin-bottom: 8px; padding-left: 10px; border-left: 2px solid var(--accent); }
+.ds-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.ds-3 { grid-template-columns: repeat(3, 1fr); }
+.ds-2 { grid-template-columns: repeat(2, 1fr); }
+.ds-5 { grid-template-columns: repeat(5, 1fr); }
+
+/* ── Responsive ── */
+@media(max-width: 850px) {
+  .ds-two-col { grid-template-columns: 1fr; }
+  .ds-grid, .ds-5 { grid-template-columns: repeat(2, 1fr); }
+  .ds-3 { grid-template-columns: repeat(3, 1fr); }
+  .detail-tier-badge { flex-shrink: 0; }
+}
+@media(max-width: 500px) {
+  .ds-two-col { grid-template-columns: 1fr; gap: 0; }
+  .ds-grid, .ds-5, .ds-3, .ds-2 { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-box { padding: 12px; }
+  .detail-tier-badge { width: 100%; justify-content: center; }
+  .dh-chips { gap: 4px; }
+}
