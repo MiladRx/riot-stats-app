@@ -1,3 +1,44 @@
+/* ── Board Filter Bar ── */
+.board-filter-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.bf-seasons, .bf-modes { display: flex; gap: 6px; flex-wrap: wrap; }
+.bf-seasons::after {
+  content: ""; width: 1px; height: 22px; background: rgba(255,255,255,0.1);
+  align-self: center; margin-left: 4px;
+}
+
+.bf-season {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+  color: var(--text3); border-radius: 100px; padding: 5px 14px;
+  font-size: 0.72rem; font-weight: 700; cursor: pointer;
+  font-family: "DM Sans", sans-serif; transition: all 0.15s;
+}
+.bf-season:hover { background: rgba(255,255,255,0.09); color: var(--text2); border-color: rgba(255,255,255,0.18); }
+.bf-season.active { background: rgba(255,255,255,0.11); border-color: rgba(255,255,255,0.3); color: var(--text1); }
+
+.bf-mode {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+  color: var(--text3); border-radius: 100px; padding: 5px 14px;
+  font-size: 0.72rem; font-weight: 700; cursor: pointer;
+  font-family: "DM Sans", sans-serif; transition: all 0.15s;
+}
+.bf-mode:hover { background: rgba(255,255,255,0.09); color: var(--text2); border-color: rgba(255,255,255,0.18); }
+.bf-mode.active.solo  { background: rgba(10,132,255,0.14); border-color: rgba(10,132,255,0.45); color: #7eb8ff; }
+.bf-mode.active.flex  { background: rgba(48,209,88,0.12); border-color: rgba(48,209,88,0.4); color: var(--green); }
+.bf-mode.active.clash { background: rgba(191,90,242,0.14); border-color: rgba(191,90,242,0.45); color: #d090f8; }
+
+/* Mode tag inside card tier column (for cached seasons) */
+.bf-mode-tag {
+  font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.5px; padding: 2px 8px; border-radius: 100px;
+  display: inline-block;
+}
+.bf-mode-tag.solo  { background: rgba(10,132,255,0.14); color: #7eb8ff; border: 1px solid rgba(10,132,255,0.3); }
+.bf-mode-tag.flex  { background: rgba(48,209,88,0.12); color: var(--green); border: 1px solid rgba(48,209,88,0.28); }
+.bf-mode-tag.clash { background: rgba(191,90,242,0.14); color: #d090f8; border: 1px solid rgba(191,90,242,0.3); }
+
 /* ── Player card Base ── */
 .player-card {
   background: var(--bg2);

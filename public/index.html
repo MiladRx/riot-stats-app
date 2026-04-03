@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/modals.css" />
   <link rel="stylesheet" href="css/tooltips.css" />
   <link rel="stylesheet" href="css/clash.css" />
+  <link rel="stylesheet" href="css/fetch-dashboard.css" />
 </head>
 <body>
   <div class="bg-glow"></div>
@@ -24,9 +25,15 @@
         <p>Solo / Duo Ranked · EUNE</p>
       </div>
       <div class="header-right">
+        <button id="fd-header-btn" class="fetch-dash-btn" onclick="openFetchDashboard()">📊 <span>Fetch</span></button>
         <button class="clash-btn" onclick="openClashModal()">⚔️ <span>Clash Builder</span></button>
       </div>
     </header>
+
+    <div class="board-filter-bar">
+      <div class="bf-seasons" id="board-seasons"></div>
+      <div class="bf-modes" id="board-modes"></div>
+    </div>
 
     <div class="lb-header">
       <div>#</div>
@@ -42,28 +49,50 @@
     <p class="last-updated" id="lastUpdated"></p>
   </div>
 
-  <div id="fetch-panel" class="fetch-panel hidden">
-    <div class="fetch-backdrop" onclick="closeFetchPanel()">📊</div>
-    <div class="fetch-modal">
-      <div class="fetch-modal-header">
+  <!-- Fetch Dashboard Modal -->
+  <div id="fd-modal" class="fd-modal hidden">
+    <div class="fd-backdrop" onclick="closeFetchDashboard()"></div>
+    <div class="fd-panel">
+      <div class="fd-header">
         <div>
-          <div class="fetch-modal-title">📊 Match History Fetch</div>
-          <div class="fetch-modal-sub">Stores every ranked game for all players. Runs in the background — safe to close this panel.</div>
+          <div class="fd-title">📊 Fetch Dashboard</div>
+          <div class="fd-sub">Download and store match history by season and game mode</div>
         </div>
+        <button class="fd-close" onclick="closeFetchDashboard()">✕</button>
       </div>
-      <div class="fetch-actions">
-        <button class="fetch-start-btn" id="fetchStartBtn" onclick="startFetch()">▶ Start Deep Fetch</button>
-        <button class="fetch-stop-btn" id="fetchStopBtn" onclick="stopFetch()" style="display:none">⏹ Stop</button>
-        <span class="fetch-status-label" id="fetchStatusLabel"></span>
-      </div>
-      <div class="fetch-progress-list" id="fetchProgressList"></div>
-      <div class="fetch-log-wrap">
-        <div class="fetch-log-title">Live Log</div>
-        <div class="fetch-log" id="fetchLog"></div>
+      <div class="fd-body">
+        <div>
+          <div class="fd-label">Season</div>
+          <div class="fd-season-row" id="fd-seasons"></div>
+        </div>
+        <div>
+          <div class="fd-label">Game Mode</div>
+          <div class="fd-mode-row" id="fd-modes"></div>
+        </div>
+        <div>
+          <div class="fd-player-header">
+            <div class="fd-label" style="margin-bottom:0">Players</div>
+            <div class="fd-sel-btns">
+              <button class="fd-sel-btn" onclick="_fdSelectAll(true)">All</button>
+              <button class="fd-sel-btn" onclick="_fdSelectAll(false)">None</button>
+            </div>
+          </div>
+          <div class="fd-players" id="fd-players"></div>
+        </div>
+        <div class="fd-actions">
+          <button class="fd-start-btn" id="fd-start-btn" onclick="_fdStart()" disabled>▶ Select Players to Fetch</button>
+          <button class="fd-stop-btn" id="fd-stop-btn" onclick="_fdStop()" style="display:none">⏹ Stop</button>
+          <span class="fd-status-txt" id="fd-status-txt"></span>
+        </div>
+        <div class="fd-log-wrap">
+          <div class="fd-log-header">Live Log</div>
+          <div class="fd-log" id="fd-log"></div>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Clash Builder Modal -->
   <div id="clash-modal" class="clash-modal hidden">
     <div class="clash-backdrop" onclick="closeClashModal()"></div>
     <div class="clash-panel">
@@ -90,7 +119,7 @@
 <script src="js/utils.js"></script>
 <script src="js/detail.js"></script>
 <script src="js/board.js"></script>
-<script src="js/fetch-panel.js"></script>
+<script src="js/fetch-dashboard.js"></script>
 <script src="js/compare.js"></script>
 <script src="js/tooltips.js"></script>
 <script src="js/clash.js"></script>

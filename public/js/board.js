@@ -1,3 +1,94 @@
+// ── Board filter state ────────────────────────────────────────────────────────
+var _boardSeason = "2026";
+var _boardMode   = "solo";
+var _boardAvailableSeasons = ["2026"]; // always starts with current; updated after fetch
+
+var BOARD_MODES = [
+  { id: "solo",  label: "Solo/Duo" },
+  { id: "flex",  label: "Flex"     },
+  { id: "clash", label: "Clash"    },
+];
+var MODE_LABELS = { solo: "Solo/Duo", flex: "Flex", clash: "Clash" };
+
+function setBoardSeason(season) {
+  _boardSeason = season;
+  _renderFilterBar();
+  _loadForFilter();
+}
+
+function setBoardMode(mode) {
+  _boardMode = mode;
+  // Re-fetch available seasons for this mode, then reload
+  _fetchAvailableSeasons(function() {
+    // If current season no longer available in this mode, fall back to first available
+    if (_boardAvailableSeasons.indexOf(_boardSeason) === -1) {
+      _boardSeason = _boardAvailableSeasons[0] || "2026";
+    }
+    _renderFilterBar();
+    _loadForFilter();
+  });
+}
+
+function _fetchAvailableSeasons(cb) {
+  fetch("/seasons-available?mode=" + _boardMode)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      // Always include current season (live data), plus any with cached data, sorted newest first
+      var avail = d.available || [];
+      if (avail.indexOf("2026") === -1) avail.push("2026");
+      avail.sort(function(a, b) { return parseInt(b) - parseInt(a); });
+      _boardAvailableSeasons = avail;
+      if (cb) cb();
+    })
+    .catch(function() { if (cb) cb(); });
+}
+
+function _loadForFilter() {
+  // Live ranked data for current season solo; cached for everything else
+  if (_boardSeason === "2026" && _boardMode === "solo") {
+    loadSquad();
+  } else {
+    loadSquadStats(_boardSeason, _boardMode);
+  }
+}
+
+function _renderFilterBar() {
+  var seasonEl = document.getElementById("board-seasons");
+  var modeEl   = document.getElementById("board-modes");
+  if (seasonEl) {
+    seasonEl.innerHTML = _boardAvailableSeasons.map(function(s) {
+      return '<button class="bf-season' + (s === _boardSeason ? " active" : "") + '" onclick="setBoardSeason(\'' + s + '\')">' + s + '</button>';
+    }).join('');
+  }
+  if (modeEl) {
+    modeEl.innerHTML = BOARD_MODES.map(function(m) {
+      return '<button class="bf-mode' + (m.id === _boardMode ? " active " + m.id : "") + '" onclick="setBoardMode(\'' + m.id + '\')">' + m.label + '</button>';
+    }).join('');
+  }
+}
+
+function loadSquadStats(season, mode) {
+  currentOpenIdx = null;
+  renderSkeletons();
+  fetch("/squad-stats?season=" + season + "&mode=" + mode)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) {
+        document.getElementById("board").innerHTML = '<div style="text-align:center;color:var(--red);padding:40px">' + data.error + '</div>';
+        return;
+      }
+      allData = data.players || [];
+      if (data.ddragonVersion) {
+        ICON_BASE = "https://ddragon.leagueoflegends.com/cdn/" + data.ddragonVersion + "/img/profileicon/";
+      }
+      renderBoard();
+      document.getElementById("lastUpdated").textContent = "";
+    })
+    .catch(function(e) {
+      document.getElementById("board").innerHTML = '<div style="text-align:center;color:var(--red);padding:40px">' + e.message + '</div>';
+    });
+}
+
 function cardHTML(p, i, rankPos) {
   var delay = 'style="animation-delay:' + (i * 0.04 + 0.04) + 's"';
 
@@ -12,15 +103,16 @@ function cardHTML(p, i, rankPos) {
       + '</div></div>';
   }
 
-  // Unranked State
+  // Unranked / No cached data
   if (!p.solo) {
-    return '<div class="player-card" ' + delay + ' id="player-card-' + i + '" onclick="togglePlayer(' + i + ')">'
+    var noDataLabel = p.cached ? 'No data — fetch first' : 'Unranked';
+    return '<div class="player-card" ' + delay + ' id="player-card-' + i + '">'
       + '<div class="card-header">'
       + '<div class="rank-num">—</div>'
       + '<div class="player-id"><div class="icon-wrap"><img src="' + ICON(p.profileIconId) + '" onerror="this.src=\'' + ICON(1) + '\'" />'
       + (p.summonerLevel ? '<div class="level-badge">' + p.summonerLevel + '</div>' : '')
       + '</div><div class="player-name"><div class="name">' + p.gameName + '</div><div class="tag">#' + p.tagLine + '</div></div></div>'
-      + '<div class="unranked-label">Unranked</div>'
+      + '<div class="unranked-label">' + noDataLabel + '</div>'
       + '</div></div>';
   }
 
@@ -101,6 +193,23 @@ function cardHTML(p, i, rankPos) {
     badges = '<span class="badge" style="background:rgba(255,69,58,0.2);color:#ff7369;border:1px solid rgba(255,69,58,0.5);box-shadow:0 0 8px rgba(255,69,58,0.4);animation:pulse 2s infinite">🔴 LIVE</span>' + badges;
   }
 
+  var tierCol = '';
+  if (p.cached) {
+    var modeTag = MODE_LABELS[p.mode] || p.mode;
+    var lrHtml = '';
+    if (p.liveRank && p.liveRank.tier) {
+      lrHtml = '<div class="tier-name t-' + tc(p.liveRank.tier) + '" style="opacity:0.65;font-size:0.8rem">'
+        + p.liveRank.tier + ' ' + p.liveRank.rank + '</div>';
+    }
+    tierCol = '<div class="tier-col"><div class="tier-info">'
+      + lrHtml
+      + '<div class="bf-mode-tag ' + (p.mode || '') + '" style="margin-top:2px">' + modeTag + ' · ' + (p.season || '') + '</div>'
+      + '</div></div>';
+  } else {
+    tierCol = '<div class="tier-col">'
+      + '<div class="tier-info"><div class="tier-name t-' + tc(s.tier) + '">' + s.tier + ' ' + s.rank + '</div><div class="tier-lp">' + s.lp + ' LP</div></div></div>';
+  }
+
   var headerStr = '<div class="card-header">'
     + '<div class="rank-num">' + rankPos + '</div>'
     + '<div class="player-id"><div class="icon-wrap"><img src="' + ICON(p.profileIconId) + '" onerror="this.src=\'' + ICON(1) + '\'" />'
@@ -108,8 +217,7 @@ function cardHTML(p, i, rankPos) {
     + '</div><div class="player-name"><div class="name">' + p.gameName + '</div><div class="tag">#' + p.tagLine + '</div>'
     + (badges ? '<div class="badge-row">' + badges + '</div>' : '')
     + '</div></div>'
-    + '<div class="tier-col">'
-    + '<div class="tier-info"><div class="tier-name t-' + tc(s.tier) + '">' + s.tier + ' ' + s.rank + '</div><div class="tier-lp">' + s.lp + ' LP</div></div></div>'
+    + tierCol
     + '<div class="wl-col"><div class="wl-numbers"><span class="w">' + s.wins + 'W</span> <span style="color:var(--text3)">/</span> <span class="l">' + s.losses + 'L</span></div>'
     + '<div class="wl-bar"><div class="wl-bar-fill" style="width:' + s.winRate + '%"></div></div></div>'
     + '<div class="wr-col">' + wrRing(s.winRate) + '</div>'
@@ -126,7 +234,10 @@ function cardHTML(p, i, rankPos) {
 
 function renderBoard() {
   var board = document.getElementById("board"), ranked = 0, html = "";
-  for (var i = 0; i < allData.length; i++) html += cardHTML(allData[i], i, allData[i].solo ? ++ranked : null);
+  for (var i = 0; i < allData.length; i++) {
+    var hasStats = allData[i].solo && (allData[i].solo.wins + allData[i].solo.losses) > 0;
+    html += cardHTML(allData[i], i, hasStats ? ++ranked : null);
+  }
   board.innerHTML = html;
 }
 
@@ -146,6 +257,7 @@ function renderSkeletons() {
 
 function loadSquad() {
   currentOpenIdx = null;
+  _fetchAvailableSeasons(_renderFilterBar);
   renderSkeletons();
 
   fetch("/squad")

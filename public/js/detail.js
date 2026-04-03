@@ -21,7 +21,7 @@ function renderDetail(p, i) {
     + '<img class="dh-avatar" src="' + ICON(p.profileIconId) + '" onerror="this.src=\'' + ICON(1) + '\'" />'
     + '<div class="dh-info">'
     + '<div class="dh-name">' + p.gameName + ' <span>#' + p.tagLine + '</span></div>'
-    + '<div class="dh-sub">Solo / Duo Ranked</div>'
+    + '<div class="dh-sub">' + (p.cached ? (MODE_LABELS[p.mode] || p.mode || 'Cached') + ' · Season ' + p.season : 'Solo / Duo Ranked') + '</div>'
     + '<div class="dh-chips">'
     + '<span class="dh-chip" style="color:' + wrHex(s.winRate) + ';border-color:' + wrHex(s.winRate) + '33">' + s.winRate + '% WR</span>'
     + '<span class="dh-chip"><span style="color:var(--green)">' + s.wins + 'W</span> / <span style="color:var(--red)">' + s.losses + 'L</span></span>'
@@ -31,9 +31,23 @@ function renderDetail(p, i) {
     + '</div>'
     + '</div>'
     + '<div class="detail-tier-badge">'
-    + '<div class="tier-emblem-clip"><img src="' + tierEmblem + '" class="tier-emblem-large" /></div>'
-    + '<div><div class="dtier t-' + tierKey + '">' + s.tier + ' ' + s.rank + '</div>'
-    + '<div style="font-size:0.9rem;color:var(--text);font-weight:700">' + s.lp + ' LP</div></div>'
+    + (s.tier
+      ? '<div class="tier-emblem-clip"><img src="' + tierEmblem + '" class="tier-emblem-large" /></div>'
+        + '<div><div class="dtier t-' + tierKey + '">' + s.tier + ' ' + s.rank + '</div>'
+        + '<div style="font-size:0.9rem;color:var(--text);font-weight:700">' + s.lp + ' LP</div></div>'
+      : (function() {
+          var lr = p.liveRank;
+          if (lr && lr.tier) {
+            var lrKey = lr.tier.toLowerCase();
+            var lrEmblem = "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-" + lrKey + ".png";
+            return '<div class="tier-emblem-clip" style="opacity:0.55"><img src="' + lrEmblem + '" class="tier-emblem-large" /></div>'
+              + '<div><div class="dtier t-' + lrKey + '" style="opacity:0.7">' + lr.tier + ' ' + lr.rank + '</div>'
+              + '<div style="font-size:0.7rem;color:var(--text3);margin-top:3px">Current rank · ' + (p.season || '') + ' cache</div></div>';
+          }
+          return '<div><div class="dtier" style="font-size:1rem;color:var(--text3)">'
+            + (p.mode ? (MODE_LABELS[p.mode] || p.mode) + ' · ' : '') + (p.season || '') + '</div>'
+            + '<div style="font-size:0.75rem;color:var(--text3);margin-top:4px">Cached stats</div></div>';
+        })())
     + '</div>'
     + '</div>'
 

@@ -1,6 +1,7 @@
 import fetch from "node-fetch";
 import { riotFetch } from "./riot-api.js";
-import { loadMatchCache } from "./match-cache.js";
+import { loadSeasonCache } from "./season-cache.js";
+import { CURRENT_SEASON } from "./config.js";
 
 // --- Data Dragon (Champion Info) ---
 export let championMap = {};
@@ -73,7 +74,7 @@ export async function getPlayerStats(gameName, tagLine) {
   let totalKills = 0, totalDeaths = 0, totalAssists = 0, totalDuration = 0;
   let totalCS = 0, totalDamage = 0, totalGold = 0;
   try {
-    const cache = loadMatchCache();
+    const cache = loadSeasonCache(CURRENT_SEASON, "solo");
     const cacheKey = `${gameName}#${tagLine}`.toLowerCase();
     const cached = cache[cacheKey] && cache[cacheKey].matches ? cache[cacheKey].matches : null;
 
