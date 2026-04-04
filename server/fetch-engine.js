@@ -1,6 +1,6 @@
 import { riotFetch } from "./riot-api.js";
 import { loadSeasonCache, saveSeasonCache } from "./season-cache.js";
-import { FULL_SQUAD, FETCH_DELAY_MS, SEASONS, QUEUE_IDS } from "./config.js";
+import { FULL_SQUAD, FETCH_DELAY_MS, SEASONS, QUEUE_IDS, MAX_MATCH_PAGES_PER_PLAYER } from "./config.js";
 
 export const fetchJob = {
   running: false,
@@ -69,9 +69,11 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
       start += PAGE;
     }
 
-    const toFetch = allIds.filter(id => !knownIds.has(id));
+    const newIds = allIds.filter(id => !knownIds.has(id));
+    const maxMatchesToFetch = MAX_MATCH_PAGES_PER_PLAYER * 20;
+    const toFetch = newIds.slice(0, maxMatchesToFetch);
     const totalToFetch = toFetch.length;
-    jobLog(`📋 ${gameName}: ${allIds.length} total, ${totalToFetch} new to fetch`);
+    jobLog(`📋 ${gameName}: ${allIds.length} total, ${totalToFetch} new to fetch (limit: ${maxMatchesToFetch})`);
 
     let currentFetch = 0;
 

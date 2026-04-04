@@ -25,5 +25,6 @@ export const FULL_SQUAD = [
 ];
 
 export const CACHE_DURATION = 10 * 60 * 1000;       // 10 minutes
-export const FETCH_DELAY_MS = 1350;                  // ~44 req/min — safely under Riot 100/2min
+export const FETCH_DELAY_MS = 700;                   // ~85 req/min — safely under Riot 100/2min, optimized for Vercel 60s timeout
+export const MAX_MATCH_PAGES_PER_PLAYER = 3;         // Fetch ~60 recent games per player (3 pages × 20 games) instead of all
 export const AUTO_FETCH_INTERVAL = 10 * 60 * 1000;  // 10 minutes
