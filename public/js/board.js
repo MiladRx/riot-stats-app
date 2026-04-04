@@ -120,7 +120,8 @@ function loadSquadStats(season, mode) {
 }
 
 function _badge(type, icon, label, tip) {
-  return '<span class="badge badge-' + type + '" data-tip="' + tip.replace(/"/g, '&quot;') + '">' + icon + ' ' + label + '</span>';
+  var tipAttr = tip ? ' data-tip="' + tip.replace(/"/g, '&quot;') + '"' : '';
+  return '<span class="badge badge-' + type + '"' + tipAttr + '>' + icon + ' ' + label + '</span>';
 }
 
 function cardHTML(p, i, rankPos) {
@@ -233,7 +234,7 @@ function cardHTML(p, i, rankPos) {
   var badges = badgesArr.join('');
 
   if (p.isLive) {
-    badges = _badge('live', '🔴', 'Live', 'Currently in a game.') + badges;
+    badges = _badge('live', '🔴', 'Live', '') + badges;
   }
 
   var tierCol = '';
@@ -289,7 +290,8 @@ function cardHTML(p, i, rankPos) {
 
   var detailStr = '<div class="detail-wrapper"><div class="detail-inner">' + renderDetail(p, i) + '</div></div>';
 
-  return '<div class="player-card ' + rankClass + tierAccent + '" ' + delay + ' id="player-card-' + i + '" onclick="togglePlayer(' + i + ')">'
+  var liveClass = p.isLive ? ' is-live' : '';
+  return '<div class="player-card ' + rankClass + tierAccent + liveClass + '" ' + delay + ' id="player-card-' + i + '" onclick="togglePlayer(' + i + ')">'
     + headerStr + detailStr
     + '</div>';
 }

@@ -9,6 +9,7 @@
   var currentTarget = null;
 
   var accentMap = {
+    'badge-live': '#ff6058',
     'badge-feeder': '#ef4444',
     'badge-feeder-soft': '#f97316',
     'badge-godlike': '#f59e0b',

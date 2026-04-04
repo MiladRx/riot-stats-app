@@ -79,6 +79,19 @@
   background: linear-gradient(105deg, rgba(205,127,50,0.04) 0%, var(--bg2) 45%);
 }
 
+/* ── Live card — red border pulse ── */
+@keyframes liveBorderPulse {
+  0%, 100% { border-color: rgba(255,59,48,0.35); box-shadow: 0 0 0 1px rgba(255,59,48,0.1), 0 8px 24px rgba(0,0,0,0.4); }
+  50%       { border-color: rgba(255,59,48,0.7);  box-shadow: 0 0 0 1px rgba(255,59,48,0.35), 0 8px 28px rgba(255,59,48,0.12); }
+}
+.player-card.is-live {
+  animation: slideUp 0.45s ease both, liveBorderPulse 2s ease-in-out infinite;
+}
+.player-card.is-live.open {
+  background: linear-gradient(180deg, rgba(255,59,48,0.07) 0%, var(--bg2) 120px) !important;
+  animation: liveBorderPulse 2s ease-in-out infinite;
+}
+
 .player-card.is-error { opacity: 0.45; cursor: default; }
 .player-card.is-error:hover { transform: none; box-shadow: none; background: var(--bg2); }
 
@@ -208,7 +221,7 @@
 .badge-streak { background: rgba(255,149,0,0.16); color: #ff9900; border: 1px solid rgba(255,149,0,0.42); box-shadow: 0 0 8px rgba(255,149,0,0.14); }
 
 /* Live — red pulse */
-.badge-live { background: rgba(255,59,48,0.2); color: #ff6058; border: 1px solid rgba(255,59,48,0.5); box-shadow: 0 0 10px rgba(255,59,48,0.3); animation: pulse 2s infinite; }
+.badge-live { background: rgba(255,59,48,0.2); color: #ff6058; border: 1px solid rgba(255,59,48,0.5); box-shadow: 0 0 10px rgba(255,59,48,0.3); }
 
 /* Neutral */
 .badge-neutral { background: rgba(255,255,255,0.05); color: var(--text3); border: 1px solid rgba(255,255,255,0.1); }
