@@ -44,6 +44,7 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
     ]);
     const initialCount = knownIds.size;
     jobLog(`👤 ${gameName}: ${initialCount} cached — fetching Season ${season} ${mode}...`);
+    jobLog(`📊 DEBUG: cache[${key}] exists=${!!cache[key]}, matches=${Object.keys(cache[key].matches || {}).length}, fetchedIds=${(cache[key].fetchedIds || []).length}, knownIds=${knownIds.size}`);
 
     // Paginate match IDs — stop early if a full page is all cached (nothing new further back)
     let start = 0;
@@ -68,6 +69,8 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
       const newOnPage = pageIds.filter(id => !knownIds.has(id));
       allIds = allIds.concat(newOnPage);
 
+      jobLog(`📊 DEBUG page ${start}: got ${pageIds.length} IDs, ${newOnPage.length} new, knownIds=${knownIds.size}`);
+
       // Early stop: entire page already cached — nothing new further back in history
       if (newOnPage.length === 0) {
         jobLog(`⏩ ${gameName}: all IDs on page cached, stopping early`);
@@ -78,10 +81,9 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
       start += PAGE;
     }
 
-    const maxMatchesToFetch = MAX_MATCH_PAGES_PER_PLAYER * 20;
-    const toFetch = allIds.slice(0, maxMatchesToFetch); // allIds already filtered to new-only
+    const toFetch = allIds.slice(0, 3); // Fetch only last 3 new games
     const totalToFetch = toFetch.length;
-    jobLog(`📋 ${gameName}: ${totalToFetch} new matches to fetch (limit: ${maxMatchesToFetch})`);
+    jobLog(`📋 ${gameName}: ${totalToFetch} new matches to fetch`);
 
     let currentFetch = 0;
 
