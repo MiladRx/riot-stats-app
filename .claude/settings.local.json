@@ -25,7 +25,8 @@
       "Bash(curl -s \"http://localhost:3000/power-rankings\")",
       "Bash(\"C:/Users/milad/AppData/Local/Temp/pr.json\")",
       "WebFetch(domain:www.leagueofgraphs.com)",
-      "Bash(del \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\power-snapshot-2026-F14.json\")"
+      "Bash(del \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\power-snapshot-2026-F14.json\")",
+      "Bash(gh workflow:*)"
     ]
   }
 }
