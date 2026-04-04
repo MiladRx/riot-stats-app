@@ -1,0 +1,22 @@
+name: Auto-Fetch Trigger
+
+on:
+  schedule:
+    # Every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  trigger-fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger auto-fetch
+        run: |
+          curl -X POST https://riot-stat-app-milad.vercel.app/fetch \
+            -H "Content-Type: application/json" \
+            -d '{"season": "2026", "mode": "solo"}' \
+            --max-time 30 \
+            --retry 2
+
+      - name: Log success
+        run: echo "✅ Auto-fetch triggered successfully"

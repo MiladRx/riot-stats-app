@@ -30,9 +30,28 @@ loadDDragon();
 
 // --- Squad Cache ---
 const SQUAD_CACHE_FILE = path.join(__dirname, "data", "squad-live-cache.json");
+const SCHEDULE_STATE_FILE = path.join(__dirname, "data", "schedule-state.json");
 let cachedSquadData = null;
 let lastFetchTime = 0;
 let scheduleReloadAt = null;
+
+// Load persisted schedule state
+function loadScheduleState() {
+  try {
+    const raw = fs.readFileSync(SCHEDULE_STATE_FILE, "utf8");
+    const state = JSON.parse(raw);
+    return state;
+  } catch (e) {
+    return { scheduleReloadAt: null, nextFetchAt: null };
+  }
+}
+
+// Save schedule state to file
+function saveScheduleState() {
+  try {
+    fs.writeFileSync(SCHEDULE_STATE_FILE, JSON.stringify({ scheduleReloadAt, nextFetchAt }, null, 2));
+  } catch (e) {}
+}
 
 // Load persisted squad cache on startup — always serve stale file over nothing
 try {
@@ -44,6 +63,11 @@ try {
     console.log("⚡ Loaded squad cache from file.");
   }
 } catch (e) {}
+
+// Load persisted schedule state on startup — preserves timer state across restarts
+const schedState = loadScheduleState();
+scheduleReloadAt = schedState.scheduleReloadAt;
+nextFetchAt = schedState.nextFetchAt;
 
 // Refresh rank data in the background, write new file, then swap cache atomically
 async function refreshSquadCache() {
@@ -82,11 +106,13 @@ async function refreshSquadCache() {
 
   // Schedule page reload so frontend sees updated rank data
   scheduleReloadAt = Date.now() + 2 * 60 * 1000;
+  saveScheduleState();
 }
 
 function invalidateSquadCache() {
   // Set reload timer immediately when fetch completes — rank refresh runs in background within this window
   scheduleReloadAt = Date.now() + 2 * 60 * 1000;
+  saveScheduleState();
   console.log("🔄 Fetch complete — reload in 2 min, refreshing rank cache in background...");
   refreshSquadCache().catch(e => console.log("❌ Squad refresh failed:", e.message));
 }
@@ -127,10 +153,12 @@ app.post("/fetch", (req, res) => {
 
   // Reset auto-fetch timer so it doesn't immediately trigger after a manual fetch
   nextFetchAt = Date.now() + AUTO_FETCH_INTERVAL;
+  saveScheduleState();
 
   runFetch(season, mode, targets, () => {
     invalidateSquadCache();
     nextFetchAt = Date.now() + AUTO_FETCH_INTERVAL;
+    saveScheduleState();
   });
 
   res.json({ status: "started", season, mode });
@@ -423,12 +451,14 @@ let nextFetchAt = null;
 
 function startAutoFetch() {
   nextFetchAt = Date.now() + AUTO_FETCH_INTERVAL;
+  saveScheduleState();
   autoFetchTimer = setInterval(() => { runAutoFetchCycle(); }, AUTO_FETCH_INTERVAL);
 }
 
 async function runAutoFetchCycle() {
   nextFetchAt = Date.now() + AUTO_FETCH_INTERVAL;
   scheduleReloadAt = null;
+  saveScheduleState();
   if (fetchJob.running) {
     console.log("⏰ Auto fetch skipped (fetch already running)");
     return;
