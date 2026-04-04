@@ -34,6 +34,8 @@ const SCHEDULE_STATE_FILE = path.join(__dirname, "data", "schedule-state.json");
 let cachedSquadData = null;
 let lastFetchTime = 0;
 let scheduleReloadAt = null;
+let nextFetchAt = null;
+let autoFetchTimer = null;
 
 // Load persisted schedule state
 function loadScheduleState() {
@@ -446,9 +448,6 @@ app.get("/compare/:keyA/:keyB", (req, res) => {
 });
 
 // --- Auto Deep Fetch ---
-let autoFetchTimer = null;
-let nextFetchAt = null;
-
 function startAutoFetch() {
   nextFetchAt = Date.now() + AUTO_FETCH_INTERVAL;
   saveScheduleState();
