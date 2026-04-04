@@ -120,6 +120,16 @@ function invalidateSquadCache() {
 }
 
 // --- Routes ---
+
+// Force refresh rank data immediately (admin only — password checked client-side)
+app.post("/force-refresh", (req, res) => {
+  if (fetchJob.running) return res.status(409).json({ error: "Fetch already running" });
+  console.log("⚡ Force refresh triggered");
+  refreshSquadCache()
+    .then(() => res.json({ ok: true, cachedAt: lastFetchTime }))
+    .catch(e => res.status(500).json({ error: e.message }));
+});
+
 app.get("/stats", async (req, res) => {
   const { gameName = "adam1276", tagLine = "EUNE" } = req.query;
   try { res.json(await getPlayerStats(gameName, tagLine)); }

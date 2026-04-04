@@ -2,6 +2,27 @@ var allData = [];
 var currentOpenIdx = null;
 var compareSelection = [];
 
+// ── Force Refresh (admin only) ──────────────────────────────────────────────
+function forceRefresh() {
+  _devAuthGate(function() {
+    var btn = document.querySelector(".force-refresh-btn");
+    if (btn) { btn.classList.add("spinning"); }
+    fetch("/force-refresh", { method: "POST" })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.ok) {
+          loadSquad();
+        }
+      })
+      .catch(function() {})
+      .finally(function() {
+        setTimeout(function() {
+          if (btn) btn.classList.remove("spinning");
+        }, 800);
+      });
+  });
+}
+
 var ROLE_LABELS = { TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid", BOTTOM: "Bot", UTILITY: "Support" };
 var ROLE_ICONS = { TOP: "", JUNGLE: "", MIDDLE: "", BOTTOM: "", UTILITY: "" };
 
