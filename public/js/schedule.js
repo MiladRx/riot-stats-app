@@ -1,6 +1,7 @@
 // Countdown Timer & Auto-Reload
 var _scheduleData = null;
 var _reloadScheduled = false;
+var _cycleTriggered = false;
 var _timerTick = null;
 
 function _fmtCountdown(ms) {
@@ -19,7 +20,7 @@ function _updateTimerUI() {
 
   el.classList.add("visible");
 
-  if (d.fetchRunning) {
+  if (_cycleTriggered || d.fetchRunning) {
     el.className = "update-timer visible state-fetching";
     el.innerHTML = '<div class="update-timer-dot"></div>Fetching new data…';
     return;
@@ -42,14 +43,39 @@ function _updateTimerUI() {
   el.className = "update-timer";
 }
 
+// Trigger full cycle from browser — keeps request open so Vercel can't kill it
+function _triggerCycle() {
+  if (_cycleTriggered) return;
+  _cycleTriggered = true;
+  _updateTimerUI();
+  fetch("/full-cycle", { method: "POST" })
+    .then(function(r) { return r.json(); })
+    .then(function() {
+      _cycleTriggered = false;
+      loadSquad();
+      pollSchedule();
+    })
+    .catch(function() { _cycleTriggered = false; });
+}
+
 function pollSchedule() {
   fetch("/schedule")
     .then(function (r) { return r.json(); })
     .then(function (d) {
       _scheduleData = d;
       _updateTimerUI();
+
+      var now = Date.now();
+
+      // Timer hit 0 — trigger fetch from browser
+      if (!_cycleTriggered && !d.fetchRunning && d.nextFetchAt && d.nextFetchAt <= now) {
+        _triggerCycle();
+        return;
+      }
+
+      // Schedule reload when fresh data is ready
       if (d.scheduleReloadAt && !_reloadScheduled) {
-        var delay = d.scheduleReloadAt - Date.now();
+        var delay = d.scheduleReloadAt - now;
         if (delay > 0) {
           _reloadScheduled = true;
           setTimeout(function () {
