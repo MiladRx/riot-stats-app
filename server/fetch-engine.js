@@ -45,9 +45,9 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
     const initialCount = knownIds.size;
     jobLog(`👤 ${gameName}: ${initialCount} cached — fetching Season ${season} ${mode}...`);
 
-    // Paginate all match IDs
+    // Paginate match IDs — stop early if a full page is all cached (nothing new further back)
     let start = 0;
-    const PAGE = 100;
+    const PAGE = 20; // smaller pages = faster early-stop detection
     let allIds = [];
 
     while (true) {
@@ -64,16 +64,24 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
       } catch (e) { jobLog(`❌ ${gameName}: page ${start} failed — ${e.message}`); break; }
 
       if (!pageIds || pageIds.length === 0) break;
-      allIds = allIds.concat(pageIds);
+
+      const newOnPage = pageIds.filter(id => !knownIds.has(id));
+      allIds = allIds.concat(newOnPage);
+
+      // Early stop: entire page already cached — nothing new further back in history
+      if (newOnPage.length === 0) {
+        jobLog(`⏩ ${gameName}: all IDs on page cached, stopping early`);
+        break;
+      }
+
       if (pageIds.length < PAGE) break;
       start += PAGE;
     }
 
-    const newIds = allIds.filter(id => !knownIds.has(id));
     const maxMatchesToFetch = MAX_MATCH_PAGES_PER_PLAYER * 20;
-    const toFetch = newIds.slice(0, maxMatchesToFetch);
+    const toFetch = allIds.slice(0, maxMatchesToFetch); // allIds already filtered to new-only
     const totalToFetch = toFetch.length;
-    jobLog(`📋 ${gameName}: ${allIds.length} total, ${totalToFetch} new to fetch (limit: ${maxMatchesToFetch})`);
+    jobLog(`📋 ${gameName}: ${totalToFetch} new matches to fetch (limit: ${maxMatchesToFetch})`);
 
     let currentFetch = 0;
 
