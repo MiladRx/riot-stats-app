@@ -413,8 +413,8 @@ app.post("/full-cycle", async (req, res) => {
   res.json({ status: "started" });
 });
 
-// Local dev: auto full cycle every 5 min
-setInterval(runFullCycle, 5 * 60 * 1000);
+// Auto full cycle on schedule (every AUTO_FETCH_INTERVAL)
+setInterval(runFullCycle, AUTO_FETCH_INTERVAL);
 
 // ─────────────────────────────────────────────
 // Start — run full cycle immediately on launch
