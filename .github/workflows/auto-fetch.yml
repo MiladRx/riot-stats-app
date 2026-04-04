@@ -1,6 +1,8 @@
 name: Full Cycle Trigger
 
 on:
+  push:
+    branches: [main]
   schedule:
     # Every 5 minutes — matches AUTO_FETCH_INTERVAL in config
     - cron: '*/5 * * * *'
