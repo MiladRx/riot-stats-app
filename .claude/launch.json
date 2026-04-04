@@ -6,7 +6,7 @@
       "name": "Dev Server (watch)",
       "runtimeExecutable": "node",
       "runtimeArgs": ["--watch", "server.js"],
-      "port": 3000
+      "port": 3001
     },
     {
       "name": "Production Server",
