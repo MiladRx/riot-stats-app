@@ -27,6 +27,7 @@
     'badge-streak': '#fb923c',
     'badge-neutral': '#64748b'
   };
+  
 
   function show(el) {
     clearTimeout(hideTimer);
