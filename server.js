@@ -116,6 +116,8 @@ app.post("/force-refresh", async (req, res) => {
   }
 });
 
+app.get("/health", (req, res) => res.json({ ok: true }));
+
 app.get("/stats", async (req, res) => {
   const { gameName = "adam1276", tagLine = "EUNE" } = req.query;
   try { res.json(await getPlayerStats(gameName, tagLine)); }
