@@ -485,7 +485,15 @@ async function runAutoFetchCycle() {
 
 app.get("/schedule", (req, res) => {
   // On Vercel serverless nextFetchAt may be null — calculate from last fetch time as fallback
-  const computedNextFetch = nextFetchAt || (lastFetchTime ? lastFetchTime + AUTO_FETCH_INTERVAL : null);
+  // If even that's null, default to ~10 min from now (GitHub Actions runs every 10 min)
+  let computedNextFetch = nextFetchAt;
+  if (!computedNextFetch && lastFetchTime) {
+    computedNextFetch = lastFetchTime + AUTO_FETCH_INTERVAL;
+  }
+  if (!computedNextFetch) {
+    // Default: assume next fetch in ~10 min (GitHub Actions interval)
+    computedNextFetch = Date.now() + AUTO_FETCH_INTERVAL;
+  }
   res.json({
     nextFetchAt: computedNextFetch,
     scheduleReloadAt,
