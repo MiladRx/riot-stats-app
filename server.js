@@ -433,7 +433,7 @@ async function runAutoFetchCycle() {
     return;
   }
   console.log("⏰ Auto fetch triggered for season " + CURRENT_SEASON);
-  const modes = ["solo", "flex"];
+  const modes = ["solo"];
   for (const mode of modes) {
     await new Promise(resolve => {
       runFetch(CURRENT_SEASON, mode, null, resolve);
@@ -452,13 +452,25 @@ app.get("/schedule", (req, res) => {
   });
 });
 
+// --- Rank Refresh Timer (every 10 min, independent of deep fetch) ---
+const RANK_REFRESH_INTERVAL = 10 * 60 * 1000;
+function startRankRefresh() {
+  setInterval(() => {
+    if (fetchJob.running) {
+      console.log("⏭ Rank refresh skipped (deep fetch running)");
+      return;
+    }
+    console.log("🔃 Rank refresh triggered (10 min interval)");
+    refreshSquadCache().catch(e => console.log("❌ Rank refresh failed:", e.message));
+  }, RANK_REFRESH_INTERVAL);
+}
+
 // --- Start ---
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
   startAutoFetch();
-  // If no cache file exists, fetch immediately on startup
-  if (!cachedSquadData) {
-    console.log("🆕 No squad cache found — fetching on startup...");
-    refreshSquadCache().catch(e => console.log("❌ Startup fetch failed:", e.message));
-  }
+  startRankRefresh();
+  // Always run a fetch cycle on startup, then rank refresh after
+  console.log("🚀 Running startup fetch cycle...");
+  runAutoFetchCycle();
 });
