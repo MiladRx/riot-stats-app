@@ -112,11 +112,14 @@ async function refreshSquadCache() {
 }
 
 function invalidateSquadCache() {
-  // Set reload timer immediately when fetch completes — rank refresh runs in background within this window
-  scheduleReloadAt = Date.now() + 2 * 60 * 1000;
-  saveScheduleState();
-  console.log("🔄 Fetch complete — reload in 2 min, refreshing rank cache in background...");
-  refreshSquadCache().catch(e => console.log("❌ Squad refresh failed:", e.message));
+  // Refresh squad cache, THEN set reload timer (so fresh data is written before page reloads)
+  console.log("🔄 Fetch complete — refreshing squad cache, reload in 2 min...");
+  refreshSquadCache()
+    .then(() => {
+      scheduleReloadAt = Date.now() + 2 * 60 * 1000;
+      saveScheduleState();
+    })
+    .catch(e => console.log("❌ Squad refresh failed:", e.message));
 }
 
 // --- Routes ---
