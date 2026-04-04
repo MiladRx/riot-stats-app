@@ -20,13 +20,15 @@ export function getWeekKey() {
   return `${thisFriday.getUTCFullYear()}-F${String(weekNum).padStart(2, "0")}`;
 }
 
-// Next Friday 00:00 UTC in ms
+// Next Saturday 23:59 UTC in ms
 export function getNextResetMs() {
   const now = new Date();
   const dow = now.getUTCDay();
-  const daysUntilFri = (5 - dow + 7) % 7 || 7; // always next Friday, never today
-  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysUntilFri));
-  return next.getTime();
+  const daysUntilSat = (6 - dow + 7) % 7 || 7; // always next Saturday, never today
+  const nextSat = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysUntilSat));
+  // Set to 23:59:00 UTC
+  nextSat.setUTCHours(23, 59, 0, 0);
+  return nextSat.getTime();
 }
 
 function snapPath(weekKey) {
