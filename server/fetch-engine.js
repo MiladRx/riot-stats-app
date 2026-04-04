@@ -1,6 +1,6 @@
 import { riotFetch } from "./riot-api.js";
 import { loadSeasonCache, saveSeasonCache } from "./season-cache.js";
-import { FULL_SQUAD, FETCH_DELAY_MS, SEASONS, QUEUE_IDS, MAX_MATCH_PAGES_PER_PLAYER } from "./config.js";
+import { FULL_SQUAD, FETCH_DELAY_MS, SEASONS, QUEUE_IDS } from "./config.js";
 
 export const fetchJob = {
   running: false,
@@ -44,7 +44,6 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
     ]);
     const initialCount = knownIds.size;
     jobLog(`👤 ${gameName}: ${initialCount} cached — fetching Season ${season} ${mode}...`);
-    jobLog(`📊 DEBUG: cache[${key}] exists=${!!cache[key]}, matches=${Object.keys(cache[key].matches || {}).length}, fetchedIds=${(cache[key].fetchedIds || []).length}, knownIds=${knownIds.size}`);
 
     // Paginate match IDs — stop early if a full page is all cached (nothing new further back)
     let start = 0;
@@ -68,8 +67,6 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
 
       const newOnPage = pageIds.filter(id => !knownIds.has(id));
       allIds = allIds.concat(newOnPage);
-
-      jobLog(`📊 DEBUG page ${start}: got ${pageIds.length} IDs, ${newOnPage.length} new, knownIds=${knownIds.size}`);
 
       // Early stop: entire page already cached — nothing new further back in history
       if (newOnPage.length === 0) {
