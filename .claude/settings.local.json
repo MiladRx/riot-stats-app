@@ -23,7 +23,9 @@
       "Bash(node -e \"const j=JSON.parse\\(require\\(''fs''\\).readFileSync\\(''C:/Users/milad/AppData/Local/Temp/fetch2.json'',''utf8''\\)\\);console.log\\(JSON.stringify\\(j\\)\\);\")",
       "Bash(\"C:/Users/milad/AppData/Local/Temp/fstatus2.json\")",
       "Bash(curl -s \"http://localhost:3000/power-rankings\")",
-      "Bash(\"C:/Users/milad/AppData/Local/Temp/pr.json\")"
+      "Bash(\"C:/Users/milad/AppData/Local/Temp/pr.json\")",
+      "WebFetch(domain:www.leagueofgraphs.com)",
+      "Bash(del \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\power-snapshot-2026-F14.json\")"
     ]
   }
 }

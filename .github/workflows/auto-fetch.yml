@@ -1,22 +1,21 @@
-name: Auto-Fetch Trigger
+name: Full Cycle Trigger
 
 on:
   schedule:
-    # Every 10 minutes
-    - cron: '*/10 * * * *'
-  workflow_dispatch: # Allow manual trigger from GitHub UI
+    # Every 5 minutes — fetch new games + refresh ranks + reload page
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
 
 jobs:
-  trigger-fetch:
+  full-cycle:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger auto-fetch
+      - name: Trigger full cycle
         run: |
-          curl -X POST https://riot-stat-app-milad.vercel.app/fetch \
+          curl -X POST https://riot-stat-app-milad.vercel.app/full-cycle \
             -H "Content-Type: application/json" \
-            -d '{"season": "2026", "mode": "solo"}' \
             --max-time 30 \
             --retry 2
 
       - name: Log success
-        run: echo "✅ Auto-fetch triggered successfully"
+        run: echo "✅ Full cycle triggered"

@@ -379,23 +379,48 @@ app.get("/compare/:keyA/:keyB", (req, res) => {
 });
 
 // ─────────────────────────────────────────────
-// Auto rank refresh (local dev only — on Vercel, GitHub Actions calls /force-refresh)
+// Full Cycle: deep fetch → rank refresh → reload
+// Called on launch, every 5 min locally, and by GitHub Actions via /full-cycle
 // ─────────────────────────────────────────────
-const RANK_REFRESH_INTERVAL = 5 * 60 * 1000;
-setInterval(async () => {
-  if (fetchJob.running) return;
-  console.log("🔃 Auto rank refresh...");
+let cycleRunning = false;
+
+async function runFullCycle() {
+  if (cycleRunning) { console.log("⏭ Full cycle skipped (already running)"); return; }
+  cycleRunning = true;
+  console.log("🔁 Full cycle started — fetch → rank refresh → reload");
   try {
+    // Step 1: Deep fetch (match history) — early-stop means fast if no new games
+    await new Promise(resolve => {
+      if (fetchJob.running) { resolve(); return; }
+      runFetch(CURRENT_SEASON, "solo", null, resolve);
+    });
+    // Step 2: Rank refresh (LP, wins, losses) — always fresh
     await refreshSquadCache();
+    // Step 3: Schedule page reload so frontend gets new data
     scheduleReloadAt = Date.now() + 2 * 60 * 1000;
+    console.log("✅ Full cycle complete — reload in 2 min");
   } catch (e) {
-    console.log("❌ Auto rank refresh failed:", e.message);
+    console.log("❌ Full cycle failed:", e.message);
+  } finally {
+    cycleRunning = false;
   }
-}, RANK_REFRESH_INTERVAL);
+}
+
+// GitHub Actions calls this every 5 min — runs full cycle and waits for completion
+app.post("/full-cycle", async (req, res) => {
+  if (cycleRunning) return res.json({ status: "already_running" });
+  runFullCycle(); // don't await — respond immediately so GH Actions doesn't timeout
+  res.json({ status: "started" });
+});
+
+// Local dev: auto full cycle every 5 min
+setInterval(runFullCycle, 5 * 60 * 1000);
 
 // ─────────────────────────────────────────────
-// Start
+// Start — run full cycle immediately on launch
 // ─────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log("🚀 Running full cycle on launch...");
+  runFullCycle();
 });
