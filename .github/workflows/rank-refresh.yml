@@ -1,0 +1,21 @@
+name: Rank Refresh
+
+on:
+  schedule:
+    # Every 5 minutes — updates LP, wins, losses without deep match history fetch
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  rank-refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger rank refresh
+        run: |
+          curl -X POST https://riot-stat-app-milad.vercel.app/force-refresh \
+            -H "Content-Type: application/json" \
+            --max-time 60 \
+            --retry 2
+
+      - name: Log success
+        run: echo "✅ Rank refresh triggered"
