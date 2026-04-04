@@ -80,6 +80,8 @@ async function refreshSquadCache() {
     console.log(`📸 Power ranking snapshot created for ${weekKey}`);
   }
 
+  // Schedule page reload so frontend sees updated rank data
+  scheduleReloadAt = Date.now() + 2 * 60 * 1000;
 }
 
 function invalidateSquadCache() {
