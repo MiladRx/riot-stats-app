@@ -19,8 +19,11 @@ export const FULL_SQUAD = [
   { gameName: "Fåce", tagLine: "TAP" },
   { gameName: "Milad", tagLine: "EXE" },
   { gameName: "LittlestJeff1", tagLine: "goyem" },
+  { gameName: "DÅRK", tagLine: "ABO" },
+  { gameName: "DARWIZZY", tagLine: "HØES" },
+  { gameName: "La Cabra II", tagLine: "Qlawi" },
 ];
 
 export const CACHE_DURATION = 10 * 60 * 1000;       // 10 minutes
-export const FETCH_DELAY_MS = 1350;                  // ~44 req/min — safely under Riot 100/2min
-export const AUTO_FETCH_INTERVAL = 10 * 60 * 1000;  // 10 minutes
+export const FETCH_DELAY_MS = 1250;                  // ~48 req/min — safely under Riot 100/2min
+export const AUTO_FETCH_INTERVAL = 5 * 60 * 1000;   // 5 minutes

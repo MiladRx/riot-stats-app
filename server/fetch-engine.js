@@ -13,6 +13,15 @@ export const fetchJob = {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// Shared rate-limit queue — ensures FETCH_DELAY_MS between every API call
+// regardless of how many players run concurrently
+let _rateQueue = Promise.resolve();
+function rateFetch(url) {
+  const slot = _rateQueue;
+  _rateQueue = _rateQueue.then(() => sleep(FETCH_DELAY_MS));
+  return slot.then(() => riotFetch(url));
+}
+
 function jobLog(msg) {
   const ts = new Date().toISOString().slice(11, 19);
   const line = `[${ts}] ${msg}`;
@@ -29,8 +38,7 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
   fetchJob.progress[key] = { gameName, status: "starting", fetched: 0, newThisRun: 0 };
 
   try {
-    await sleep(FETCH_DELAY_MS);
-    const account = await riotFetch(
+    const account = await rateFetch(
       `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
     );
     const { puuid } = account;
@@ -53,15 +61,13 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
 
     while (true) {
       if (!fetchJob.running) { jobLog(`⏹ ${gameName}: stopped`); break; }
-      await sleep(FETCH_DELAY_MS);
-
       let url = `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=${queue}&start=${start}&count=${PAGE}`;
       if (seasonInfo?.start) url += `&startTime=${seasonInfo.start}`;
       if (seasonInfo?.end)   url += `&endTime=${seasonInfo.end}`;
 
       let pageIds;
       try {
-        pageIds = await riotFetch(url);
+        pageIds = await rateFetch(url);
       } catch (e) { jobLog(`❌ ${gameName}: page ${start} failed — ${e.message}`); break; }
 
       if (!pageIds || pageIds.length === 0) break;
@@ -83,9 +89,8 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
       // Live status in logs (shows every match being fetched)
       jobLog(`⏳ ${gameName}: fetching match ${currentFetch} of ${totalToFetch}...`);
 
-      await sleep(FETCH_DELAY_MS);
       try {
-        const md = await riotFetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${matchId}`);
+        const md = await rateFetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${matchId}`);
         const info = md.info;
         const self = info.participants.find(p => p.puuid === puuid);
         if (!self) { knownIds.add(matchId); continue; }
@@ -169,13 +174,11 @@ export async function runFetch(season, mode, players, onComplete) {
   fetchJob.mode = mode;
   fetchJob.progress = {};
   fetchJob.log = [];
+  _rateQueue = Promise.resolve(); // reset rate limiter
 
-  jobLog(`🚀 Fetch started — Season ${season} · ${mode.toUpperCase()} (${targets.length} player${targets.length !== 1 ? "s" : ""})`);
+  jobLog(`🚀 Fetch started — Season ${season} · ${mode.toUpperCase()} (${targets.length} players, concurrent)`);
 
-  for (const p of targets) {
-    if (!fetchJob.running) break;
-    await fetchForPlayer(p.gameName, p.tagLine, season, mode);
-  }
+  await Promise.all(targets.map(p => fetchForPlayer(p.gameName, p.tagLine, season, mode)));
 
   fetchJob.running = false;
   jobLog("🎉 Fetch complete!");

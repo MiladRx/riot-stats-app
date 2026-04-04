@@ -40,11 +40,7 @@ function _updatePageHeader() {
   var h1 = document.getElementById("page-title");
   var sub = document.getElementById("page-subtitle");
   var col = document.getElementById("lb-rank-header");
-  if (h1) {
-    var timer = document.getElementById("refreshTimer");
-    h1.textContent = t.h1 + " ";
-    if (timer) h1.appendChild(timer);
-  }
+  if (h1) h1.textContent = t.h1;
   if (sub) sub.textContent = t.sub;
   if (col) col.textContent = t.rankCol;
 }
@@ -111,13 +107,20 @@ function loadSquadStats(season, mode) {
       }
       if (data.ddragonVersion) {
         ICON_BASE = "https://ddragon.leagueoflegends.com/cdn/" + data.ddragonVersion + "/img/profileicon/";
+        window._ddragonVersion = data.ddragonVersion;
       }
+      window._currentMode = _boardMode;
+      window._currentSeason = _boardSeason;
       renderBoard();
       document.getElementById("lastUpdated").textContent = "";
     })
     .catch(function(e) {
       document.getElementById("board").innerHTML = '<div style="text-align:center;color:var(--red);padding:40px">' + e.message + '</div>';
     });
+}
+
+function _badge(type, icon, label, tip) {
+  return '<span class="badge badge-' + type + '" data-tip="' + tip.replace(/"/g, '&quot;') + '">' + icon + ' ' + label + '</span>';
 }
 
 function cardHTML(p, i, rankPos) {
@@ -151,104 +154,122 @@ function cardHTML(p, i, rankPos) {
   var s = p.solo;
   var rankClass = rankPos <= 3 ? "rank-" + rankPos : "";
 
-  // Multi-Badge Identity System (Max 3)
-  var badgesArr = [];
+  // ── Badge System ──────────────────────────────────────────
   var totalGames = s.wins + s.losses;
-  var kdaVal = parseFloat(s.kda) || 0;
-  var deathsVal = parseFloat(s.deaths) || 0;
+  var kdaVal     = parseFloat(s.kda) || 0;
+  var deathsVal  = parseFloat(s.deaths) || 0;
   var assistsVal = parseFloat(s.assists) || 0;
-  var killsVal = parseFloat(s.kills) || 0;
-  var wrVal = s.winRate;
+  var killsVal   = parseFloat(s.kills) || 0;
+  var wrVal      = s.winRate;
+  var perfectKda = s.kda === "Perfect";
 
-  // TIER 1: DEATH / FEEDING
-  if (deathsVal >= 8.0) {
-    badgesArr.push('<span class="badge badge-feeder" data-tip="Averaging ' + deathsVal.toFixed(1) + ' deaths per game in their last 10. Someone call an ambulance.">☠ Inting</span>');
-  } else if (deathsVal >= 6.5 && kdaVal <= 1.5) {
-    badgesArr.push('<span class="badge badge-feeder-soft" data-tip="High deaths (' + deathsVal.toFixed(1) + ' avg) and a KDA of ' + kdaVal.toFixed(2) + '. Not great, not terrible.">💀 Dying A Lot</span>');
+  // ── 1. PERFORMANCE BADGE (based on last-10 stats) ── pick ONE
+  var perfBadge = '';
+  if (deathsVal >= 7.5) {
+    perfBadge = _badge('feeder', '☠', 'Inting',
+      deathsVal.toFixed(1) + ' deaths per game. The enemy jungler sends their regards.');
+  } else if (deathsVal >= 6.0 && kdaVal <= 2.0) {
+    perfBadge = _badge('feeder-soft', '💀', 'Feeding',
+      kdaVal.toFixed(2) + ' KDA with ' + deathsVal.toFixed(1) + ' avg deaths. Playing the game generously.');
+  } else if (perfectKda || kdaVal >= 4.5) {
+    var kdaStr = perfectKda ? 'Perfect (0 deaths)' : kdaVal.toFixed(2);
+    perfBadge = _badge('godlike', '✦', 'Godlike',
+      kdaStr + ' KDA — ' + killsVal.toFixed(1) + '/' + deathsVal.toFixed(1) + '/' + assistsVal.toFixed(1) + '. Cannot be touched.');
+  } else if (kdaVal >= 3.0 && killsVal >= 6.0 && deathsVal < 5.5) {
+    perfBadge = _badge('carry', '⚡', 'Carrying',
+      kdaVal.toFixed(2) + ' KDA, ' + killsVal.toFixed(1) + ' kills/game. The team eats because of them.');
+  } else if (killsVal >= 9.0 && deathsVal < 6.5) {
+    perfBadge = _badge('slayer', '🩸', 'Slayer',
+      killsVal.toFixed(1) + ' kills per game. Their damage profile is mostly faces.');
+  } else if (assistsVal >= 13.0 && killsVal <= 5.0) {
+    perfBadge = _badge('support', '🛡', 'Playmaker',
+      assistsVal.toFixed(1) + ' assists, ' + killsVal.toFixed(1) + ' kills. Does the work, skips the glory.');
+  } else if (assistsVal >= 9.0 && kdaVal >= 2.5 && killsVal <= 7.0) {
+    perfBadge = _badge('support', '🤝', 'Team Player',
+      assistsVal.toFixed(1) + ' avg assists at ' + kdaVal.toFixed(2) + ' KDA. Wins as a unit, not an individual.');
   }
 
-  // TIER 2: KDA / PERFORMANCE
-  if (s.kda === "Perfect" || kdaVal >= 5.0) {
-    badgesArr.push('<span class="badge badge-godlike" data-tip="KDA of ' + (s.kda === "Perfect" ? "Perfect (0 deaths)" : kdaVal.toFixed(2)) + ' over last 10 games. Practically untouchable.">✦ Godlike KDA</span>');
-  } else if (kdaVal >= 3.5 && deathsVal < 5.0) {
-    badgesArr.push('<span class="badge badge-carry" data-tip="KDA of ' + kdaVal.toFixed(2) + ' with only ' + deathsVal.toFixed(1) + ' avg deaths. Carrying hard.">⚡ Carry Mode</span>');
-  }
-
-  // TIER 3: PLAYSTYLE
-  if (killsVal >= 12.0) {
-    badgesArr.push('<span class="badge badge-slayer" data-tip="Averaging ' + killsVal.toFixed(1) + ' kills per game. Pure bloodlust.">🩸 Slayer</span>');
-  } else if (killsVal >= 9.0 && deathsVal < 6.0) {
-    badgesArr.push('<span class="badge badge-hyper" data-tip="' + killsVal.toFixed(1) + ' avg kills with manageable deaths. A hyper carry doing hyper carry things.">🔪 Hyper Carry</span>');
-  } else if (assistsVal >= 15.0 && killsVal <= 4.0) {
-    badgesArr.push('<span class="badge badge-support" data-tip="' + assistsVal.toFixed(1) + ' avg assists and only ' + killsVal.toFixed(1) + ' kills. Living for the team, not the scoreboard.">🛡 Playmaker</span>');
-  } else if (assistsVal >= 10.0 && killsVal <= 6.0) {
-    badgesArr.push('<span class="badge badge-support" data-tip="' + assistsVal.toFixed(1) + ' avg assists. Prefers setting up kills over taking them.">🤝 Team Player</span>');
-  }
-
-  // TIER 4: SEASON WIN RATE + VOLUME
-  if (wrVal >= 62 && totalGames >= 30) {
-    badgesArr.push('<span class="badge badge-smurf" data-tip="' + wrVal + '% win rate over ' + totalGames + ' games. Either smurfing or criminally underranked.">👾 Smurf Alert</span>');
-  } else if (wrVal >= 56 && totalGames >= 20) {
-    badgesArr.push('<span class="badge badge-climbing" data-tip="' + wrVal + '% win rate across ' + totalGames + ' games this season. LP going up.">📈 Climbing</span>');
-  } else if (wrVal >= 52 && totalGames >= 50) {
-    badgesArr.push('<span class="badge badge-consistent" data-tip="Holding ' + wrVal + '% over ' + totalGames + ' games. Steady and reliable.">✔ Consistent</span>');
-  } else if (wrVal <= 45 && totalGames >= 30) {
-    badgesArr.push('<span class="badge badge-hardstuck" data-tip="' + wrVal + '% win rate after ' + totalGames + ' games. This might be their elo.">📉 Hardstuck</span>');
-  } else if (wrVal <= 48 && totalGames >= 20) {
-    badgesArr.push('<span class="badge badge-trenches" data-tip="' + wrVal + '% win rate. Losing more than winning but still grinding.">⛏ In the Trenches</span>');
-  }
-
-  // TIER 5: VOLUME / GRIND
-  if (totalGames >= 500) {
-    badgesArr.push('<span class="badge badge-grinder" data-tip="' + totalGames + ' games played this season. Touch grass.">💿 No-Lifer</span>');
-  } else if (totalGames >= 300 && wrVal >= 48 && wrVal <= 52) {
-    badgesArr.push('<span class="badge badge-grinder" data-tip="' + totalGames + ' games at a ~50% win rate. The definition of a grinder.">⚔ True Grinder</span>');
-  } else if (totalGames <= 20 && totalGames > 0) {
-    badgesArr.push('<span class="badge badge-fresh" data-tip="Only ' + totalGames + ' games played this season. Just getting started.">🌱 Fresh Season</span>');
-  }
-
-  // TIER 6: RIOT NATIVE (Hot Streak)
+  // ── 2. SEASON BADGE (based on full record) ── pick ONE
+  var seasonBadge = '';
   if (s.hotStreak) {
-    badgesArr.push('<span class="badge badge-streak" data-tip="Currently on a winning streak. Don\'t queue into them right now.">🔥 Hot Streak</span>');
+    seasonBadge = _badge('streak', '🔥', 'Hot Streak',
+      'On a winning streak right now. Best to avoid them in queue.');
+  } else if (totalGames >= 500) {
+    seasonBadge = _badge('grinder', '💿', 'No-Lifer',
+      totalGames + ' games this split. Grass is a myth to this person.');
+  } else if (wrVal >= 62 && totalGames >= 25) {
+    seasonBadge = _badge('smurf', '👾', 'Smurf?',
+      wrVal + '% WR over ' + totalGames + ' games. Either boosted or hiding their MMR.');
+  } else if (wrVal >= 56 && totalGames >= 15) {
+    seasonBadge = _badge('climbing', '📈', 'Climbing',
+      wrVal + '% WR — ' + s.wins + 'W / ' + s.losses + 'L. LP is going up this split.');
+  } else if (wrVal >= 52 && totalGames >= 40) {
+    seasonBadge = _badge('consistent', '✔', 'Consistent',
+      'Holding ' + wrVal + '% over ' + totalGames + ' games. Slow and steady wins the split.');
+  } else if (wrVal <= 44 && totalGames >= 35) {
+    seasonBadge = _badge('hardstuck', '📉', 'Hardstuck',
+      wrVal + '% after ' + totalGames + ' games. The matchmaking has spoken.');
+  } else if (wrVal <= 48 && totalGames >= 20) {
+    seasonBadge = _badge('trenches', '⛏', 'Struggling',
+      wrVal + '% WR across ' + totalGames + ' games. More losses than wins, but still queuing up.');
+  } else if (totalGames >= 250) {
+    seasonBadge = _badge('grinder', '⚔', 'Grinder',
+      totalGames + ' games deep this season. League is their full-time job.');
+  } else if (totalGames <= 12 && totalGames > 0) {
+    seasonBadge = _badge('fresh', '🌱', 'Fresh Start',
+      'Only ' + totalGames + ' games in. The split has barely begun for them.');
   }
 
-  // FALLBACK
+  // ── Combine: perf first, then season. Max 2 ──
+  var badgesArr = [];
+  if (perfBadge)   badgesArr.push(perfBadge);
+  if (seasonBadge) badgesArr.push(seasonBadge);
+
   if (badgesArr.length === 0) {
-    badgesArr.push('<span class="badge badge-neutral" data-tip="Nothing remarkable to report. Perfectly average in every way.">〜 Mid</span>');
+    badgesArr.push(_badge('neutral', '〜', 'Average',
+      wrVal + '% WR, ' + kdaVal.toFixed(2) + ' KDA. Nothing stands out — yet.'));
   }
 
-  var badges = badgesArr.slice(0, 3).join("");
+  var badges = badgesArr.join('');
 
-  // LIVE badge
   if (p.isLive) {
-    badges = '<span class="badge" style="background:rgba(255,69,58,0.2);color:#ff7369;border:1px solid rgba(255,69,58,0.5);box-shadow:0 0 8px rgba(255,69,58,0.4);animation:pulse 2s infinite">🔴 LIVE</span>' + badges;
+    badges = _badge('live', '🔴', 'Live', 'Currently in a game.') + badges;
   }
 
   var tierCol = '';
   if (p.mode === 'clash') {
-    // Clash has no rank — show solo rank as a strength reference pill
     var soloStrHtml = '';
     if (p.liveRank && p.liveRank.tier) {
-      soloStrHtml = '<div class="tier-name t-' + tc(p.liveRank.tier) + '" style="font-size:0.85rem">'
-        + p.liveRank.tier + ' ' + p.liveRank.rank + '</div>'
-        + '<div style="font-size:0.65rem;color:var(--text3);margin-top:2px;letter-spacing:.04em">Solo rank</div>';
+      var lrKey2 = tc(p.liveRank.tier);
+      soloStrHtml = '<div class="tier-info"><div class="tier-name t-' + lrKey2 + '">' + p.liveRank.tier + ' ' + p.liveRank.rank + '</div>'
+        + '<div class="tier-lp">Solo rank</div></div>';
     } else {
-      soloStrHtml = '<div style="font-size:0.75rem;color:var(--text3)">Unranked</div>';
+      soloStrHtml = '<div class="tier-info"><div style="font-size:0.75rem;color:var(--text3)">Unranked</div></div>';
     }
-    tierCol = '<div class="tier-col"><div class="tier-info">' + soloStrHtml + '</div></div>';
+    tierCol = '<div class="tier-col">' + soloStrHtml + '</div>';
   } else if (p.cached) {
     var lrHtml = '';
     if (!_hideRank && p.liveRank && p.liveRank.tier) {
-      lrHtml = '<div class="tier-name t-' + tc(p.liveRank.tier) + '" style="opacity:0.65;font-size:0.8rem">'
-        + p.liveRank.tier + ' ' + p.liveRank.rank + '</div>';
+      var lrKey3 = tc(p.liveRank.tier);
+      lrHtml = '<div class="tier-info"><div class="tier-name t-' + lrKey3 + '" style="opacity:0.7">' + p.liveRank.tier + ' ' + p.liveRank.rank + '</div></div>';
     }
     var gamesHtml = _hideRank
       ? '<div style="font-size:0.9rem;font-weight:700;visibility:hidden">' + (s.wins + s.losses) + ' games</div>'
       : '';
-    tierCol = '<div class="tier-col"><div class="tier-info">' + lrHtml + gamesHtml + '</div></div>';
+    tierCol = '<div class="tier-col">' + lrHtml + gamesHtml + '</div>';
   } else {
+    var tk = tc(s.tier);
     tierCol = '<div class="tier-col">'
-      + '<div class="tier-info"><div class="tier-name t-' + tc(s.tier) + '">' + s.tier + ' ' + s.rank + '</div><div class="tier-lp">' + s.lp + ' LP</div></div></div>';
+      + '<div class="tier-info"><div class="tier-name t-' + tk + '">' + s.tier + ' ' + s.rank + '</div><div class="tier-lp">' + s.lp + ' LP</div></div>'
+      + '</div>';
+  }
+
+  // Tier accent class for left border color
+  var tierAccent = '';
+  if (!p.cached && s.tier) {
+    tierAccent = ' t-' + tc(s.tier) + '-accent';
+  } else if (p.liveRank && p.liveRank.tier) {
+    tierAccent = ' t-' + tc(p.liveRank.tier) + '-accent';
   }
 
   var headerStr = '<div class="card-header">'
@@ -268,7 +289,7 @@ function cardHTML(p, i, rankPos) {
 
   var detailStr = '<div class="detail-wrapper"><div class="detail-inner">' + renderDetail(p, i) + '</div></div>';
 
-  return '<div class="player-card ' + rankClass + '" ' + delay + ' id="player-card-' + i + '" onclick="togglePlayer(' + i + ')">'
+  return '<div class="player-card ' + rankClass + tierAccent + '" ' + delay + ' id="player-card-' + i + '" onclick="togglePlayer(' + i + ')">'
     + headerStr + detailStr
     + '</div>';
 }
@@ -312,7 +333,10 @@ function loadSquad() {
       allData = data.players || [];
       if (data.ddragonVersion) {
         ICON_BASE = "https://ddragon.leagueoflegends.com/cdn/" + data.ddragonVersion + "/img/profileicon/";
+        window._ddragonVersion = data.ddragonVersion;
       }
+      window._currentMode = _boardMode;
+      window._currentSeason = _boardSeason;
       renderBoard();
       document.getElementById("lastUpdated").textContent = "";
     })

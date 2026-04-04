@@ -24,21 +24,70 @@ import { loadSeasonCache, getSeasonCacheSummary } from "./server/season-cache.js
 import { fetchJob, runFetch } from "./server/fetch-engine.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
 import { buildLineups } from "./server/clash.js";
+import { getWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, computeRankings } from "./server/power-rankings.js";
 
 loadDDragon();
 
 // --- Squad Cache ---
+const SQUAD_CACHE_FILE = path.join(__dirname, "data", "squad-live-cache.json");
 let cachedSquadData = null;
 let lastFetchTime = 0;
 let scheduleReloadAt = null;
 
+// Load persisted squad cache on startup — always serve stale file over nothing
+try {
+  const raw = fs.readFileSync(SQUAD_CACHE_FILE, "utf8");
+  const saved = JSON.parse(raw);
+  if (saved.players) {
+    cachedSquadData = saved.players;
+    lastFetchTime = saved.cachedAt;
+    console.log("⚡ Loaded squad cache from file.");
+  }
+} catch (e) {}
+
+// Refresh rank data in the background, write new file, then swap cache atomically
+async function refreshSquadCache() {
+  console.log("🔄 Background squad refresh started...");
+  const results = [];
+  for (let i = 0; i < FULL_SQUAD.length; i++) {
+    const p = FULL_SQUAD[i];
+    try {
+      const data = await getPlayerStats(p.gameName, p.tagLine);
+      results.push({ status: "fulfilled", value: data });
+    } catch (err) {
+      results.push({ status: "rejected", reason: err, player: p });
+    }
+    if (i < FULL_SQUAD.length - 1) await new Promise(r => setTimeout(r, 1500));
+  }
+
+  const squad = results.map((r, i) => {
+    if (r.status === "fulfilled") return r.value;
+    const p = r.player || FULL_SQUAD[i];
+    return { gameName: p.gameName, tagLine: p.tagLine, error: r.reason?.message ?? "Unknown error", status: r.reason?.status ?? 500 };
+  });
+  squad.sort((a, b) => (b.solo?.sortScore ?? -1) - (a.solo?.sortScore ?? -1));
+
+  // Atomically swap — old data served until this point
+  cachedSquadData = squad;
+  lastFetchTime = Date.now();
+  try { fs.writeFileSync(SQUAD_CACHE_FILE, JSON.stringify({ players: squad, cachedAt: lastFetchTime })); } catch (e) {}
+  console.log("✅ Squad cache refreshed and saved to file.");
+
+  // Snapshot
+  const weekKey = getWeekKey();
+  if (!loadSnapshot(weekKey)) {
+    saveSnapshot(weekKey, cachedSquadData);
+    console.log(`📸 Power ranking snapshot created for ${weekKey}`);
+  }
+
+  // Tell frontend to reload 3 min from now
+  scheduleReloadAt = Date.now() + 3 * 60 * 1000;
+}
+
 function invalidateSquadCache() {
-  setTimeout(() => {
-    console.log("🔄 Auto-reloading squad cache (2 min after deep fetch)...");
-    cachedSquadData = null;
-    lastFetchTime = 0;
-    scheduleReloadAt = Date.now() + 2 * 60 * 1000;
-  }, 2 * 60 * 1000);
+  // Don't wipe the cache — keep serving old data while background refresh runs
+  console.log("🔄 Fetch complete — refreshing squad cache in background...");
+  refreshSquadCache().catch(e => console.log("❌ Squad refresh failed:", e.message));
 }
 
 // --- Routes ---
@@ -49,36 +98,15 @@ app.get("/stats", async (req, res) => {
 });
 
 app.get("/squad", async (req, res) => {
-  const now = Date.now();
-  if (cachedSquadData && (now - lastFetchTime < CACHE_DURATION)) {
+  // Always serve from cache — file cache survives restarts
+  if (cachedSquadData) {
     console.log("⚡ Serving squad data from cache...");
     return res.json({ players: cachedSquadData, cachedAt: lastFetchTime, expiresAt: lastFetchTime + CACHE_DURATION, ddragonVersion });
   }
 
-  console.log("🔄 Fetching fresh squad data...");
-  const results = [];
-  for (const p of FULL_SQUAD) {
-    try {
-      console.log(`Fetching data for ${p.gameName}...`);
-      const data = await getPlayerStats(p.gameName, p.tagLine);
-      results.push({ status: "fulfilled", value: data });
-    } catch (err) {
-      console.log(`❌ Failed to fetch ${p.gameName}: ${err.message}`);
-      results.push({ status: "rejected", reason: err });
-    }
-    await new Promise(resolve => setTimeout(resolve, 300));
-  }
-
-  const squad = results.map((r, i) => {
-    if (r.status === "fulfilled") return r.value;
-    return { gameName: FULL_SQUAD[i].gameName, tagLine: FULL_SQUAD[i].tagLine, error: r.reason?.message ?? "Unknown error", status: r.reason?.status ?? 500 };
-  });
-
-  squad.sort((a, b) => (b.solo?.sortScore ?? -1) - (a.solo?.sortScore ?? -1));
-  cachedSquadData = squad;
-  lastFetchTime = Date.now();
-  console.log("✅ Squad data updated and cached!");
-
+  // No cache at all (first ever run, no file) — do a blocking fetch then save
+  console.log("🆕 No cache found — doing initial squad fetch...");
+  await refreshSquadCache();
   res.json({ players: cachedSquadData, cachedAt: lastFetchTime, expiresAt: lastFetchTime + CACHE_DURATION, ddragonVersion });
 });
 
@@ -132,8 +160,10 @@ app.get("/cache-summary", (req, res) => {
 });
 
 // --- Available seasons (only those with actual cached data) ---
+const _seasonsAvailableCache = {};
 app.get("/seasons-available", (req, res) => {
   const { mode = "solo" } = req.query;
+  if (_seasonsAvailableCache[mode]) return res.json({ available: _seasonsAvailableCache[mode] });
   const dataDir = path.join(__dirname, "data");
   const available = [];
   for (const season of Object.keys(SEASONS)) {
@@ -141,12 +171,12 @@ app.get("/seasons-available", (req, res) => {
       const p = path.join(dataDir, `season-${season}-${mode}.json`);
       if (fs.existsSync(p)) {
         const cache = JSON.parse(fs.readFileSync(p, "utf8"));
-        // Check at least one player has matches
         const hasData = Object.values(cache).some(e => e.matches && Object.keys(e.matches).length > 0);
         if (hasData) available.push(season);
       }
     } catch (e) {}
   }
+  _seasonsAvailableCache[mode] = available;
   res.json({ available });
 });
 
@@ -263,6 +293,24 @@ app.get("/squad-stats", (req, res) => {
   players.sort((a, b) => (b.solo?.sortScore ?? -9999) - (a.solo?.sortScore ?? -9999));
   const hideRank = season !== CURRENT_SEASON && mode !== "clash";
   res.json({ players, season, mode, hideRank, ddragonVersion });
+});
+
+// --- Power Rankings ---
+app.get("/power-rankings", (req, res) => {
+  if (!cachedSquadData) return res.status(503).json({ error: "Squad data not loaded yet." });
+  const weekKey = getWeekKey();
+  const snapshot = loadSnapshot(weekKey);
+  if (!snapshot) return res.status(503).json({ error: "Weekly snapshot not ready yet. Check back in a moment." });
+  const rankings = computeRankings(cachedSquadData, snapshot);
+  res.json({ rankings, weekKey, nextResetAt: getNextResetMs(), snapshotAt: snapshot.createdAt, ddragonVersion });
+});
+
+// Manually refresh snapshot (for testing/admin)
+app.post("/power-rankings/reset", (req, res) => {
+  if (!cachedSquadData) return res.status(503).json({ error: "No squad data." });
+  const weekKey = getWeekKey();
+  const snapshot = saveSnapshot(weekKey, cachedSquadData);
+  res.json({ ok: true, weekKey, players: Object.keys(snapshot.players).length });
 });
 
 // --- Clash Lineup ---
@@ -385,7 +433,7 @@ async function runAutoFetchCycle() {
     return;
   }
   console.log("⏰ Auto fetch triggered for season " + CURRENT_SEASON);
-  const modes = ["solo", "flex", "clash"];
+  const modes = ["solo", "flex"];
   for (const mode of modes) {
     await new Promise(resolve => {
       runFetch(CURRENT_SEASON, mode, null, resolve);
@@ -408,4 +456,9 @@ app.get("/schedule", (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
   startAutoFetch();
+  // If no cache file exists, fetch immediately on startup
+  if (!cachedSquadData) {
+    console.log("🆕 No squad cache found — fetching on startup...");
+    refreshSquadCache().catch(e => console.log("❌ Startup fetch failed:", e.message));
+  }
 });

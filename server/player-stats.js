@@ -25,48 +25,32 @@ export async function loadDDragon() {
 
 // --- Player Stats & KDA Logic ---
 export async function getPlayerStats(gameName, tagLine) {
-  // Step 1: PUUID
+  // Step 1: PUUID (must be first — everything else depends on it)
   const account = await riotFetch(
     `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
   );
   const { puuid } = account;
 
-  // Step 2: Ranked entries
-  const allEntries = await riotFetch(
-    `https://eun1.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`
-  );
+  // Steps 2-5: All independent — run in parallel
+  const [allEntries, summonerResult, isLiveResult, masteryResult] = await Promise.all([
+    riotFetch(`https://eun1.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`),
+    riotFetch(`https://eun1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`).catch(() => ({})),
+    riotFetch(`https://eun1.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/${puuid}`).then(() => true).catch(() => false),
+    riotFetch(`https://eun1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=1`).catch(() => null),
+  ]);
 
-  // Step 3: Summoner info (Profile Icon)
-  let summoner = {};
-  try {
-    summoner = await riotFetch(`https://eun1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`);
-  } catch (e) { }
+  const summoner = summonerResult;
+  const isLive = isLiveResult;
 
-  // Step 4: Live Game Check
-  let isLive = false;
-  try {
-    await riotFetch(`https://eun1.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/${puuid}`);
-    isLive = true;
-  } catch (e) { }
-
-  // Step 5: Top Champion Mastery
   let topChamp = null;
-  try {
-    const mastery = await riotFetch(`https://eun1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=1`);
-    if (mastery && mastery.length > 0) {
-      const champInfo = championMap[String(mastery[0].championId)];
-      if (champInfo) {
-        topChamp = {
-          name: champInfo.name,
-          id: champInfo.id,
-          points: mastery[0].championPoints,
-          version: ddragonVersion
-        };
-      }
+  if (masteryResult && masteryResult.length > 0) {
+    const champInfo = championMap[String(masteryResult[0].championId)];
+    if (champInfo) {
+      topChamp = { name: champInfo.name, id: champInfo.id, points: masteryResult[0].championPoints, version: ddragonVersion };
     }
-  } catch (e) { }
+  }
 
-  // Step 6: Compute stats from match cache
+  // Step 6: Compute stats from match cache (sync — already in memory)
   let avgKills = "0.0", avgDeaths = "0.0", avgAssists = "0.0", kdaRatio = "0.00";
   let topRole = null, lpEstimate = null;
   let avgCsMin = null, avgVision = null, avgDamage = null, avgDuration = null;
@@ -76,7 +60,7 @@ export async function getPlayerStats(gameName, tagLine) {
   try {
     const cache = loadSeasonCache(CURRENT_SEASON, "solo");
     const cacheKey = `${gameName}#${tagLine}`.toLowerCase();
-    const cached = cache[cacheKey] && cache[cacheKey].matches ? cache[cacheKey].matches : null;
+    const cached = cache[cacheKey]?.matches || null;
 
     if (cached && Object.keys(cached).length > 0) {
       const recent = Object.values(cached);
@@ -85,15 +69,15 @@ export async function getPlayerStats(gameName, tagLine) {
       const champStats = {};
 
       for (const m of recent) {
-        totalKills += m.kills || 0;
-        totalDeaths += m.deaths || 0;
+        totalKills   += m.kills   || 0;
+        totalDeaths  += m.deaths  || 0;
         totalAssists += m.assists || 0;
-        totalCS += m.cs || 0;
-        totalVision += m.vision || 0;
-        totalDamage += m.damage || 0;
+        totalCS      += m.cs      || 0;
+        totalVision  += m.vision  || 0;
+        totalDamage  += m.damage  || 0;
         totalDuration += m.duration || 0;
-        totalPentas += m.pentas || 0;
-        totalGold += m.gold || 0;
+        totalPentas  += m.pentas  || 0;
+        totalGold    += m.gold    || 0;
         validGames++;
         if (m.win) recentWins++;
         if (m.role) positionCounts[m.role] = (positionCounts[m.role] || 0) + 1;
@@ -105,40 +89,34 @@ export async function getPlayerStats(gameName, tagLine) {
       }
 
       if (validGames > 0) {
-        avgKills = (totalKills / validGames).toFixed(1);
-        avgDeaths = (totalDeaths / validGames).toFixed(1);
+        avgKills   = (totalKills / validGames).toFixed(1);
+        avgDeaths  = (totalDeaths / validGames).toFixed(1);
         avgAssists = (totalAssists / validGames).toFixed(1);
-        kdaRatio = totalDeaths === 0 ? "Perfect" : ((totalKills + totalAssists) / totalDeaths).toFixed(2);
+        kdaRatio   = totalDeaths === 0 ? "Perfect" : ((totalKills + totalAssists) / totalDeaths).toFixed(2);
         lpEstimate = (recentWins - (validGames - recentWins)) * 20;
-        avgCsMin = totalDuration > 0 ? (totalCS / (totalDuration / 60)).toFixed(1) : null;
-        avgVision = (totalVision / validGames).toFixed(1);
-        avgDamage = Math.round(totalDamage / validGames);
+        avgCsMin   = totalDuration > 0 ? (totalCS / (totalDuration / 60)).toFixed(1) : null;
+        avgVision  = (totalVision / validGames).toFixed(1);
+        avgDamage  = Math.round(totalDamage / validGames);
         avgDuration = Math.round(totalDuration / validGames / 60);
-        pentas = totalPentas;
+        pentas     = totalPentas;
       }
 
       if (Object.keys(positionCounts).length > 0)
         topRole = Object.entries(positionCounts).sort((a, b) => b[1] - a[1])[0][0];
 
-      // Current win/loss streak
       const sortedByTime = recent.slice().sort((a, b) => b.ts - a.ts);
       if (sortedByTime.length > 0) {
         const streakWin = sortedByTime[0].win;
-        for (const m of sortedByTime) {
-          if (m.win === streakWin) streak++;
-          else break;
-        }
+        for (const m of sortedByTime) { if (m.win === streakWin) streak++; else break; }
         if (!streakWin) streak = -streak;
       }
 
-      // Best win streak & worst loss streak
       let curRun = 0, curLRun = 0;
       for (const m of sortedByTime.slice().reverse()) {
         if (m.win) { curRun++; if (curRun > bestStreak) bestStreak = curRun; curLRun = 0; }
         else { curLRun++; if (curLRun > bestLStreak) bestLStreak = curLRun; curRun = 0; }
       }
 
-      // Most played champion from cache
       const champEntries = Object.entries(champStats).sort((a, b) => b[1].games - a[1].games);
       if (champEntries.length > 0) {
         const [name, { games, wins }] = champEntries[0];
@@ -157,8 +135,8 @@ export async function getPlayerStats(gameName, tagLine) {
     tagLine: account.tagLine,
     summonerLevel: summoner.summonerLevel ?? null,
     profileIconId: summoner.profileIconId ?? 1,
-    isLive: isLive,
-    topChamp: topChamp,
+    isLive,
+    topChamp,
     flex: flexEntry ? {
       tier: flexEntry.tier,
       rank: flexEntry.rank,
@@ -175,28 +153,11 @@ export async function getPlayerStats(gameName, tagLine) {
       losses: solo.losses,
       winRate: Math.round((solo.wins / (solo.wins + solo.losses)) * 100),
       sortScore: (tierOrder[solo.tier] ?? -1) * 400 + (rankOrder[solo.rank] ?? 0) * 100 + solo.leaguePoints,
-      kills: avgKills,
-      deaths: avgDeaths,
-      assists: avgAssists,
-      kda: kdaRatio,
-      lpEstimate: lpEstimate,
-      topRole: topRole,
-      avgCsMin: avgCsMin,
-      avgVision: avgVision,
-      avgDamage: avgDamage,
-      avgDuration: avgDuration,
-      totalTimeSecs: totalDuration,
-      totalKills: totalKills,
-      totalDeaths: totalDeaths,
-      totalAssists: totalAssists,
-      totalCS: totalCS,
-      totalDamage: totalDamage,
-      totalGold: totalGold,
-      pentas: pentas,
-      streak: streak,
-      bestStreak: bestStreak,
-      bestLStreak: bestLStreak,
-      topCachedChamp: topCachedChamp,
+      kills: avgKills, deaths: avgDeaths, assists: avgAssists, kda: kdaRatio,
+      lpEstimate, topRole, avgCsMin, avgVision, avgDamage, avgDuration,
+      totalTimeSecs: totalDuration, totalKills, totalDeaths, totalAssists,
+      totalCS, totalDamage, totalGold, pentas, streak, bestStreak, bestLStreak,
+      topCachedChamp,
     } : null,
   };
 }

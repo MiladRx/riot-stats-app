@@ -3,7 +3,25 @@
     "allow": [
       "mcp__Claude_Preview__preview_start",
       "Bash(echo ':*)",
-      "Bash(\"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\public\\\\css\\\\base.css\")"
+      "Bash(\"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\public\\\\css\\\\base.css\")",
+      "Bash(python3 -c \"import sys,json; lines=sys.stdin.readlines\\(\\); msgs=[json.loads\\(l\\) for l in lines[-50:]]; [print\\(m.get\\(''''role'''',''''''''\\),'''':'''',str\\(m.get\\(''''content'''',''''''''\\)\\)[:500]\\) for m in msgs if m.get\\(''''role''''\\) in \\(''''user'''',''''assistant''''\\)]\")",
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \":*)",
+      "Bash(ls C:UsersmiladDocumentsriot-stats-app*.json)",
+      "Bash(curl -s \"http://localhost:3000/squad\")",
+      "Bash(curl -s \"http://localhost:3000/fetch-status\")",
+      "Bash(node -e \"process.stdin.resume\\(\\);process.stdin.setEncoding\\(''''utf8''''\\);let d='''''''';process.stdin.on\\(''''data'''',c=>d+=c\\);process.stdin.on\\(''''end'''',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\(''''Running:'''',j.running,''''| Season:'''',j.season,''''| Mode:'''',j.mode,''''| Progress entries:'''',Object.keys\\(j.progress||{}\\).length,''''| Log lines:'''',j.log?.length\\);}\\)\")",
+      "Bash(curl -s \"http://localhost:3000/schedule\")",
+      "Bash(node -e \"process.stdin.resume\\(\\);process.stdin.setEncoding\\(''''utf8''''\\);let d='''''''';process.stdin.on\\(''''data'''',c=>d+=c\\);process.stdin.on\\(''''end'''',\\(\\)=>{const j=JSON.parse\\(d\\);const now=Date.now\\(\\);console.log\\(''''Next fetch in:'''',Math.round\\(\\(j.nextFetchAt-now\\)/1000\\)+''''s'''',''''| Fetch running:'''',j.fetchRunning,''''| Interval:'''',j.interval/1000+''''s''''\\);}\\);\")",
+      "Bash(\"C:/Users/milad/AppData/Local/Temp/squad2.json\")",
+      "Bash(curl -s -X POST \"http://localhost:3000/fetch\" -H \"Content-Type: application/json\" -d \"{\"\"season\"\":\"\"2026\"\",\"\"mode\"\":\"\"solo\"\",\"\"players\"\":[\"\"adam1276\"\"]}\")",
+      "Bash(\"C:/Users/milad/AppData/Local/Temp/fetch_test.json\")",
+      "Bash(node -e \"const j=JSON.parse\\(require\\(''fs''\\).readFileSync\\(''C:/Users/milad/AppData/Local/Temp/fetch_test.json'',''utf8''\\)\\);console.log\\(JSON.stringify\\(j\\)\\);\")",
+      "Bash(\"C:/Users/milad/AppData/Local/Temp/fstatus.json\")",
+      "Bash(curl -s -X POST \"http://localhost:3000/fetch\" -H \"Content-Type: application/json\" -d \"{\"\"season\"\":\"\"2026\"\",\"\"mode\"\":\"\"solo\"\"}\")",
+      "Bash(\"C:/Users/milad/AppData/Local/Temp/fetch2.json\")",
+      "Bash(node -e \"const j=JSON.parse\\(require\\(''fs''\\).readFileSync\\(''C:/Users/milad/AppData/Local/Temp/fetch2.json'',''utf8''\\)\\);console.log\\(JSON.stringify\\(j\\)\\);\")",
+      "Bash(\"C:/Users/milad/AppData/Local/Temp/fstatus2.json\")"
     ]
   }
 }

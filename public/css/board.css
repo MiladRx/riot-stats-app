@@ -1,39 +1,37 @@
 /* ── Board Filter Bar ── */
 .board-filter-bar {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 18px; padding: 2px 0;
 }
-.bf-seasons, .bf-modes { display: flex; gap: 6px; flex-wrap: wrap; }
+.bf-seasons, .bf-modes { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+
+/* Divider between season and mode pills */
 .bf-seasons::after {
-  content: ""; width: 1px; height: 22px; background: rgba(255,255,255,0.1);
-  align-self: center; margin-left: 4px;
+  content: ""; width: 1px; height: 20px; background: rgba(255,255,255,0.09);
+  align-self: center; margin-left: 8px;
 }
 
-.bf-season {
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
-  color: var(--text3); border-radius: 100px; padding: 5px 14px;
-  font-size: 0.72rem; font-weight: 700; cursor: pointer;
+.bf-season, .bf-mode {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text3); border-radius: 8px; padding: 5px 13px;
+  font-size: 0.7rem; font-weight: 700; cursor: pointer;
   font-family: "DM Sans", sans-serif; transition: all 0.15s;
+  letter-spacing: 0.3px;
 }
-.bf-season:hover { background: rgba(255,255,255,0.09); color: var(--text2); border-color: rgba(255,255,255,0.18); }
-.bf-season.active { background: rgba(255,255,255,0.11); border-color: rgba(255,255,255,0.3); color: var(--text1); }
+.bf-season:hover, .bf-mode:hover { background: rgba(255,255,255,0.08); color: var(--text2); border-color: rgba(255,255,255,0.16); }
 
-.bf-mode {
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
-  color: var(--text3); border-radius: 100px; padding: 5px 14px;
-  font-size: 0.72rem; font-weight: 700; cursor: pointer;
-  font-family: "DM Sans", sans-serif; transition: all 0.15s;
+.bf-season.active {
+  background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25);
+  color: var(--text);
 }
-.bf-mode:hover { background: rgba(255,255,255,0.09); color: var(--text2); border-color: rgba(255,255,255,0.18); }
-.bf-mode.active.solo  { background: rgba(10,132,255,0.14); border-color: rgba(10,132,255,0.45); color: #7eb8ff; }
+.bf-mode.active.solo  { background: rgba(10,132,255,0.15); border-color: rgba(10,132,255,0.45); color: #7eb8ff; }
 .bf-mode.active.flex  { background: rgba(48,209,88,0.12); border-color: rgba(48,209,88,0.4); color: var(--green); }
 .bf-mode.active.clash { background: rgba(191,90,242,0.14); border-color: rgba(191,90,242,0.45); color: #d090f8; }
 
 /* Mode tag inside card tier column (for cached seasons) */
 .bf-mode-tag {
-  font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 0.5px; padding: 2px 8px; border-radius: 100px;
-  display: inline-block;
+  font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.5px; padding: 2px 8px; border-radius: 6px; display: inline-block;
 }
 .bf-mode-tag.solo  { background: rgba(10,132,255,0.14); color: #7eb8ff; border: 1px solid rgba(10,132,255,0.3); }
 .bf-mode-tag.flex  { background: rgba(48,209,88,0.12); color: var(--green); border: 1px solid rgba(48,209,88,0.28); }
@@ -44,61 +42,89 @@
   background: var(--bg2);
   border: 1px solid var(--sep);
   border-radius: var(--radius);
-  margin-bottom: 12px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 10px;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  animation: slideUp 0.5s ease both;
+  animation: slideUp 0.45s ease both;
   overflow: hidden;
+  position: relative;
 }
 .player-card:hover {
   background: var(--bg3);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.13);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.45);
 }
 
-/* ── Expanded State & Rank Highlights ── */
+/* ── Expanded State ── */
 .player-card.open {
-  border-color: rgba(10, 132, 255, 0.6) !important;
-  background: linear-gradient(180deg, rgba(10, 132, 255, 0.08) 0%, var(--bg2) 100%) !important;
-  box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.3), 0 12px 30px rgba(0,0,0,0.5);
+  border-color: rgba(10, 132, 255, 0.55) !important;
+  background: linear-gradient(180deg, rgba(10, 132, 255, 0.07) 0%, var(--bg2) 120px) !important;
+  box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.25), 0 16px 36px rgba(0,0,0,0.5);
   transform: translateY(-2px);
+  overflow: visible;
 }
-.player-card.rank-1 { border-color: rgba(255, 214, 10, 0.3); background: linear-gradient(90deg, rgba(255, 214, 10, 0.05) 0%, var(--bg2) 50%); }
-.player-card.rank-2 { border-color: rgba(168, 178, 189, 0.25); background: linear-gradient(90deg, rgba(168, 178, 189, 0.04) 0%, var(--bg2) 50%); }
-.player-card.rank-3 { border-color: rgba(205, 127, 50, 0.25); background: linear-gradient(90deg, rgba(205, 127, 50, 0.04) 0%, var(--bg2) 50%); }
-.player-card.is-error { opacity: 0.5; cursor: default; }
+
+/* ── Rank highlights ── */
+.player-card.rank-1 {
+  border-color: rgba(255, 214, 10, 0.28);
+  background: linear-gradient(105deg, rgba(255,214,10,0.06) 0%, var(--bg2) 45%);
+}
+.player-card.rank-2 {
+  border-color: rgba(168, 178, 189, 0.2);
+  background: linear-gradient(105deg, rgba(168,178,189,0.04) 0%, var(--bg2) 45%);
+}
+.player-card.rank-3 {
+  border-color: rgba(205, 127, 50, 0.22);
+  background: linear-gradient(105deg, rgba(205,127,50,0.04) 0%, var(--bg2) 45%);
+}
+
+.player-card.is-error { opacity: 0.45; cursor: default; }
 .player-card.is-error:hover { transform: none; box-shadow: none; background: var(--bg2); }
 
 /* ── Card header (Desktop) ── */
-.card-header { display: grid; grid-template-columns: 40px 1.5fr 140px 120px 100px 80px 40px; gap: 16px; align-items: center; padding: 18px 20px; }
+.card-header {
+  display: grid; grid-template-columns: 40px 1.5fr 150px 120px 100px 80px 40px;
+  gap: 16px; align-items: center; padding: 16px 20px;
+}
 
 /* ── Rank number ── */
-.rank-num { font-family: "Bebas Neue", sans-serif; font-size: 1.4rem; color: var(--text3); text-align: center; }
-.rank-1 .rank-num { color: var(--yellow); text-shadow: 0 0 12px rgba(255, 214, 10, 0.4); }
-.rank-2 .rank-num { color: var(--text); }
-.rank-3 .rank-num { color: var(--tier-bronze); }
+.rank-num {
+  font-family: "Bebas Neue", sans-serif; font-size: 1.5rem;
+  color: var(--text3); text-align: center; line-height: 1;
+}
+.rank-1 .rank-num { color: var(--yellow); text-shadow: 0 0 16px rgba(255,214,10,0.5); font-size: 1.7rem; }
+.rank-2 .rank-num { color: var(--tier-silver); font-size: 1.6rem; }
+.rank-3 .rank-num { color: var(--tier-bronze); font-size: 1.55rem; }
 
 /* ── Player identity ── */
 .player-id { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.icon-wrap { position: relative; flex-shrink: 0; width: 44px; height: 44px; }
-.icon-wrap img { width: 100%; height: 100%; border-radius: 12px; object-fit: cover; }
-.level-badge { position: absolute; bottom: -6px; right: -6px; background: var(--bg1); border: 1px solid var(--sep); border-radius: 6px; font-size: 0.6rem; font-weight: 700; padding: 2px 4px; color: var(--text); }
+.icon-wrap { position: relative; flex-shrink: 0; width: 46px; height: 46px; }
+.icon-wrap img { width: 100%; height: 100%; border-radius: 12px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); }
+.level-badge {
+  position: absolute; bottom: -5px; right: -6px;
+  background: var(--bg1); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px; font-size: 0.58rem; font-weight: 700; padding: 1px 4px; color: var(--text2);
+}
 .player-name { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.player-name .name { font-weight: 600; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.player-name .tag { font-size: 0.75rem; color: var(--text3); }
+.player-name .name { font-weight: 700; font-size: 0.98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-name .tag { font-size: 0.72rem; color: var(--text3); font-weight: 500; }
 
 /* ── Tier column ── */
-.tier-col { display: flex; align-items: center; gap: 8px; }
-.tier-info .tier-name { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase; }
-.tier-info .tier-lp { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
+.tier-col { display: flex; align-items: center; gap: 10px; }
+.tier-emblem-sm {
+  width: 38px; height: 38px; object-fit: contain; flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}
+.tier-info .tier-name { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.4px; }
+.tier-info .tier-lp { font-size: 0.72rem; color: var(--text3); margin-top: 2px; font-weight: 600; }
 
 /* ── W/L column ── */
 .wl-col { text-align: center; width: 100%; }
-.wl-numbers { font-size: 0.85rem; color: var(--text2); display: flex; justify-content: center; gap: 4px; font-weight: 500; }
+.wl-numbers { font-size: 0.82rem; color: var(--text2); display: flex; justify-content: center; gap: 4px; font-weight: 500; }
 .wl-numbers .w { color: var(--green); font-weight: 700; }
 .wl-numbers .l { color: var(--red); font-weight: 700; }
-.wl-bar { margin-top: 8px; height: 4px; border-radius: 4px; background: rgba(255,69,58,0.3); overflow: hidden; display: flex; }
+.wl-bar { margin-top: 7px; height: 3px; border-radius: 4px; background: rgba(255,69,58,0.25); overflow: hidden; display: flex; }
 .wl-bar-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width 1s ease-out; }
 
 /* ── WR ring ── */
@@ -106,12 +132,90 @@
 .wr-ring { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; position: relative; }
 .wr-ring svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
 .wr-ring circle { transition: stroke-dasharray 1s ease-out; }
-.wr-ring .wr-text { position: relative; z-index: 1; font-size: 0.7rem; font-weight: 700; }
+.wr-ring .wr-text { position: relative; z-index: 1; font-size: 0.68rem; font-weight: 700; }
 
 /* ── Games column ── */
 .games-col { text-align: center; }
 .games-col .g-num { font-size: 1.1rem; font-weight: 700; }
-.games-col .g-label { font-size: 0.65rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.games-col .g-label { font-size: 0.6rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; font-weight: 700; }
+
+/* ── VS Compare Button ── */
+.vs-btn {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--sep);
+  color: var(--text3); border-radius: 9px; width: 32px; height: 32px; cursor: pointer;
+  font-size: 0.75rem; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.vs-btn:hover { background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.4); color: var(--accent); }
+.player-card.compare-selected { border-color: rgba(10,132,255,0.5); box-shadow: 0 0 0 2px rgba(10,132,255,0.2); }
+.player-card.compare-selected .vs-btn { background: rgba(10,132,255,0.15); border-color: rgba(10,132,255,0.5); color: var(--accent); }
+
+/* ── Badge subrow ── */
+.card-badge-row {
+  /* align with player name: 46px avatar + 14px gap */
+  padding: 4px 0 10px calc(46px + 14px);
+}
+.card-badge-row .badge-row { margin-top: 0; }
+
+@media(max-width: 768px) {
+  .card-badge-row { padding-left: calc(36px + 10px); padding-bottom: 8px; }
+}
+
+/* ── Badges ── */
+.badge-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.6rem; font-weight: 800; padding: 3px 9px;
+  border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;
+  white-space: nowrap; line-height: 1.5; cursor: default;
+  position: relative;
+}
+
+/* Negative — red family */
+.badge-feeder      { background: rgba(255,59,48,0.2);  color: #ff6058; border: 1px solid rgba(255,59,48,0.5);  box-shadow: 0 0 10px rgba(255,59,48,0.15); }
+.badge-feeder-soft { background: rgba(255,59,48,0.11); color: #d95b53; border: 1px solid rgba(255,59,48,0.3); }
+.badge-hardstuck   { background: rgba(255,59,48,0.11); color: #c94f47; border: 1px solid rgba(255,59,48,0.28); }
+
+/* Elite — gold/yellow */
+.badge-godlike { background: rgba(255,214,10,0.14); color: #f5c800; border: 1px solid rgba(255,214,10,0.42); box-shadow: 0 0 10px rgba(255,214,10,0.14); }
+
+/* Positive performance — blue */
+.badge-carry   { background: rgba(10,132,255,0.15); color: #5aabff; border: 1px solid rgba(10,132,255,0.4); }
+
+/* Aggression — orange/red */
+.badge-slayer  { background: rgba(255,80,50,0.15);  color: #ff7055; border: 1px solid rgba(255,80,50,0.38); }
+
+/* Support/utility — green */
+.badge-support { background: rgba(48,209,88,0.13);  color: #44d468; border: 1px solid rgba(48,209,88,0.38); }
+
+/* Season momentum — blue teal */
+.badge-climbing   { background: rgba(10,132,255,0.13); color: #4da0ff; border: 1px solid rgba(10,132,255,0.35); }
+.badge-consistent { background: rgba(48,209,88,0.10);  color: #52cc6e; border: 1px solid rgba(48,209,88,0.30); }
+
+/* Negative season — muted orange */
+.badge-trenches { background: rgba(255,159,10,0.12); color: #e8930a; border: 1px solid rgba(255,159,10,0.32); }
+
+/* Purple — outlier/smurf */
+.badge-smurf { background: rgba(191,90,242,0.16); color: #cc7ff5; border: 1px solid rgba(191,90,242,0.44); box-shadow: 0 0 10px rgba(191,90,242,0.14); }
+
+/* Volume — iron/brown */
+.badge-grinder { background: rgba(130,115,100,0.15); color: #a89a88; border: 1px solid rgba(130,115,100,0.35); }
+
+/* Fresh — soft green */
+.badge-fresh { background: rgba(48,209,88,0.10); color: #5dde84; border: 1px solid rgba(48,209,88,0.28); }
+
+/* Hot streak — orange glow */
+.badge-streak { background: rgba(255,149,0,0.16); color: #ff9900; border: 1px solid rgba(255,149,0,0.42); box-shadow: 0 0 8px rgba(255,149,0,0.14); }
+
+/* Live — red pulse */
+.badge-live { background: rgba(255,59,48,0.2); color: #ff6058; border: 1px solid rgba(255,59,48,0.5); box-shadow: 0 0 10px rgba(255,59,48,0.3); animation: pulse 2s infinite; }
+
+/* Neutral */
+.badge-neutral { background: rgba(255,255,255,0.05); color: var(--text3); border: 1px solid rgba(255,255,255,0.1); }
+
+/* ── Skeletons ── */
+.skeleton { background: var(--bg2); border: 1px solid var(--sep); border-radius: var(--radius); margin-bottom: 10px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; }
+.skel-block { background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%); background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius: 8px; }
 
 /* ── Responsive Mobile ── */
 @media(max-width: 768px) {
@@ -119,8 +223,7 @@
   .card-header {
     grid-template-columns: 30px 1fr auto;
     grid-template-rows: auto auto;
-    gap: 16px 12px;
-    padding: 18px 16px;
+    gap: 14px 10px; padding: 16px 14px;
   }
   .rank-num { grid-column: 1; grid-row: 1; text-align: left; font-size: 1.2rem; }
   .player-id { grid-column: 2; grid-row: 1; }
@@ -131,61 +234,6 @@
   .wr-col { grid-column: 3; grid-row: 2; justify-self: end; }
   .games-col { display: none; }
 }
-
-/* ── Badges ── */
-.badge-row { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
-.badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 0.58rem; font-weight: 800; padding: 3px 9px;
-  border-radius: 5px; letter-spacing: 0.6px; text-transform: uppercase;
-  white-space: nowrap; line-height: 1.4;
-  backdrop-filter: blur(4px);
-}
-.badge-feeder      { background: rgba(255,69,58,0.18);   color: #ff6b61; border: 1px solid rgba(255,69,58,0.45);  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
-.badge-feeder-soft { background: rgba(255,69,58,0.10);   color: #e0574d; border: 1px solid rgba(255,69,58,0.28); }
-.badge-godlike { background: rgba(255,214,10,0.16); color: var(--yellow); border: 1px solid rgba(255,214,10,0.40); box-shadow: 0 0 8px rgba(255,214,10,0.12); }
-.badge-carry   { background: rgba(10,132,255,0.14); color: #4da6ff;       border: 1px solid rgba(10,132,255,0.38); }
-.badge-slayer  { background: rgba(220,50,47,0.16);  color: #ff7369; border: 1px solid rgba(220,50,47,0.38); }
-.badge-hyper   { background: rgba(255,100,60,0.14); color: #ff8c69; border: 1px solid rgba(255,100,60,0.32); }
-.badge-support { background: rgba(48,209,88,0.13);  color: var(--green); border: 1px solid rgba(48,209,88,0.35); }
-.badge-smurf      { background: rgba(191,90,242,0.16); color: var(--purple); border: 1px solid rgba(191,90,242,0.42); box-shadow: 0 0 8px rgba(191,90,242,0.12); }
-.badge-climbing   { background: rgba(10,132,255,0.13); color: var(--accent);  border: 1px solid rgba(10,132,255,0.35); }
-.badge-consistent { background: rgba(48,209,88,0.10);  color: #58d67e;        border: 1px solid rgba(48,209,88,0.28); }
-.badge-hardstuck  { background: rgba(255,69,58,0.12);  color: #d94f46;        border: 1px solid rgba(255,69,58,0.28); }
-.badge-trenches   { background: rgba(255,159,10,0.13); color: var(--orange);  border: 1px solid rgba(255,159,10,0.32); }
-.badge-grinder { background: rgba(140,123,107,0.15); color: #b0a090; border: 1px solid rgba(140,123,107,0.35); }
-.badge-fresh   { background: rgba(48,209,88,0.11);   color: #5dde84; border: 1px solid rgba(48,209,88,0.30); }
-.badge-streak  { background: rgba(255,159,10,0.16); color: var(--orange); border: 1px solid rgba(255,159,10,0.40); box-shadow: 0 0 6px rgba(255,159,10,0.10); }
-.badge-neutral { background: rgba(255,255,255,0.05); color: var(--text3); border: 1px solid rgba(255,255,255,0.12); }
-
-/* ── Tier colors ── */
-.t-iron { color: var(--tier-iron); } .t-bronze { color: var(--tier-bronze); } .t-silver { color: var(--tier-silver); }
-.t-gold { color: var(--tier-gold); text-shadow: 0 0 10px rgba(200,155,60,0.3); }
-.t-platinum { color: var(--tier-platinum); } .t-emerald { color: var(--tier-emerald); }
-.t-diamond { color: var(--tier-diamond); } .t-master { color: var(--tier-master); }
-.t-grandmaster { color: var(--tier-grandmaster); } .t-challenger { color: var(--tier-challenger); }
-.wr-good { color: var(--green); } .wr-ok { color: var(--orange); } .wr-bad { color: var(--red); }
-
-/* ── Skeletons ── */
-.skeleton { background: var(--bg2); border: 1px solid var(--sep); border-radius: var(--radius); margin-bottom: 12px; padding: 20px; display: flex; align-items: center; gap: 16px; }
-.skel-block { background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
-
-/* ── VS Compare Button ── */
-.vs-btn {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--sep);
-  color: var(--text3);
-  border-radius: 8px;
-  width: 32px; height: 32px;
-  cursor: pointer;
-  font-size: 0.75rem;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-.vs-btn:hover { background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.4); color: var(--accent); }
-.player-card.compare-selected { border-color: rgba(10,132,255,0.5); box-shadow: 0 0 0 2px rgba(10,132,255,0.2); }
-.player-card.compare-selected .vs-btn { background: rgba(10,132,255,0.15); border-color: rgba(10,132,255,0.5); color: var(--accent); }
 
 @media(max-width: 500px) {
   .vs-btn { display: none; }

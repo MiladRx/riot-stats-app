@@ -5,6 +5,7 @@ var _clashActiveTab = 0;
 
 // ── Open / Close ──────────────────────────────────────────────────────────────
 function openClashModal() {
+  _devAuthGate(function() {
   document.getElementById("clash-modal").classList.remove("hidden");
   document.body.style.overflow = "hidden";
   _clashActiveTab = 0;
@@ -17,6 +18,7 @@ function openClashModal() {
       _renderClash();
     })
     .catch(function() { _renderClashError("Failed to load — is the server running?"); });
+  });
 }
 
 function closeClashModal() {

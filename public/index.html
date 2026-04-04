@@ -15,18 +15,20 @@
   <link rel="stylesheet" href="css/tooltips.css" />
   <link rel="stylesheet" href="css/clash.css" />
   <link rel="stylesheet" href="css/fetch-dashboard.css" />
+  <link rel="stylesheet" href="css/power-rankings.css" />
 </head>
 <body>
   <div class="bg-glow"></div>
   <div class="wrap">
     <header>
       <div class="header-left">
-        <h1 id="page-title">Solo / Duo Ranked <span class="h1-timer" id="refreshTimer"></span></h1>
+        <h1 id="page-title">Solo / Duo Ranked</h1>
         <p id="page-subtitle">Solo / Duo Ranked · EUNE</p>
       </div>
       <div class="header-right">
-        <button id="fd-header-btn" class="fetch-dash-btn dev-locked" data-tip="In development" onclick="return false">📊 <span>Fetch</span></button>
-        <button class="clash-btn dev-locked" data-tip="In development" onclick="return false">⚔️ <span>Clash Builder</span></button>
+        <button class="pr-btn" onclick="openPowerRankings()"><span class="pr-btn-icon">👑</span> Power Rankings</button>
+        <button id="fd-header-btn" class="fetch-dash-btn" onclick="openFetchDashboard()">📊 <span>Fetch</span></button>
+        <button class="clash-btn" onclick="openClashModal()">⚔️ <span>Clash Builder</span></button>
       </div>
     </header>
 
@@ -39,8 +41,8 @@
       <div>#</div>
       <div>Player</div>
       <div id="lb-rank-header">Rank</div>
-      <div>Record</div>
-      <div>Win Rate</div>
+      <div style="text-align:center">Record</div>
+      <div style="text-align:center">Win Rate</div>
       <div style="text-align:center">Games</div>
       <div></div>
     </div>
@@ -109,6 +111,62 @@
     </div>
   </div>
 
+  <!-- Power Rankings Modal -->
+  <div id="pr-modal" class="pr-modal hidden">
+    <div class="pr-backdrop" onclick="closePowerRankings()"></div>
+    <div class="pr-panel">
+      <div class="pr-handle"></div>
+      <div class="pr-header">
+        <div class="pr-header-left">
+          <div class="pr-title">Power Rankings</div>
+          <div class="pr-header-meta">
+            <span id="pr-week-badge" class="pr-week-badge">Week —</span>
+            <span id="pr-reset-badge" class="pr-reset-badge">Resets in —</span>
+          </div>
+        </div>
+        <button class="pr-close" onclick="closePowerRankings()">✕</button>
+      </div>
+      <div class="pr-infobar">
+        <div class="pr-infobar-item"><div class="pr-infobar-dot" style="background:#ffd700"></div><span class="pr-infobar-label">LP Change</span> rank progress</div>
+        <div class="pr-infobar-sep"></div>
+        <div class="pr-infobar-item"><div class="pr-infobar-dot" style="background:#7eb8ff"></div><span class="pr-infobar-label">W/L</span> weekly record</div>
+        <div class="pr-infobar-sep"></div>
+        <div class="pr-infobar-item"><div class="pr-infobar-dot" style="background:#4ade80"></div><span class="pr-infobar-label">Weekly WR</span> performance</div>
+        <div class="pr-infobar-formula">LP + games×5 + wins×3</div>
+      </div>
+      <div id="pr-body"></div>
+    </div>
+  </div>
+
+  <!-- Champion History Modal -->
+  <div id="ch-modal" class="ch-modal hidden">
+    <div class="ch-backdrop" onclick="closeChampHistory()"></div>
+    <div class="ch-panel">
+      <div class="ch-header">
+        <div class="ch-header-left">
+          <div class="ch-avatar-wrap">
+            <img id="ch-player-icon" class="ch-player-icon" src="" />
+          </div>
+          <div>
+            <div class="ch-player-name" id="ch-player-name">—</div>
+            <div class="ch-player-sub" id="ch-player-sub">Champion History</div>
+          </div>
+        </div>
+        <button class="ch-close" onclick="closeChampHistory()">✕</button>
+      </div>
+      <div class="ch-highlights" id="ch-highlights"></div>
+      <div class="ch-toolbar">
+        <input class="ch-search" id="ch-search" placeholder="Search champion…" oninput="filterChampions()" />
+        <div class="ch-sort-btns">
+          <button class="ch-sort-btn active" data-sort="games" onclick="sortChampions('games',this)">Games</button>
+          <button class="ch-sort-btn" data-sort="wr" onclick="sortChampions('wr',this)">Win Rate</button>
+          <button class="ch-sort-btn" data-sort="kda" onclick="sortChampions('kda',this)">KDA</button>
+        </div>
+      </div>
+      <div class="ch-list" id="ch-list"></div>
+    </div>
+  </div>
+
   <div id="compare-modal" class="compare-modal hidden">
     <div class="compare-backdrop" onclick="closeCompareModal()"></div>
     <div class="compare-panel">
@@ -116,6 +174,22 @@
     </div>
   </div>
 
+<link rel="stylesheet" href="css/champ-history.css" />
+
+<!-- Dev Auth Modal -->
+<div id="dev-auth-modal" class="dev-auth-overlay hidden">
+  <div class="dev-auth-box">
+    <div class="dev-auth-title">🔒 Dev Access</div>
+    <input class="dev-auth-input" id="dev-auth-input" type="password" placeholder="Password" autocomplete="off" />
+    <div class="dev-auth-error hidden" id="dev-auth-error">Incorrect password</div>
+    <div class="dev-auth-btns">
+      <button class="dev-auth-cancel" onclick="_devAuthCancel()">Cancel</button>
+      <button class="dev-auth-submit" onclick="_devAuthSubmit()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/dev-auth.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/detail.js"></script>
 <script src="js/board.js"></script>
@@ -123,6 +197,8 @@
 <script src="js/compare.js"></script>
 <script src="js/tooltips.js"></script>
 <script src="js/clash.js"></script>
+<script src="js/champ-history.js"></script>
+<script src="js/power-rankings.js"></script>
 <script src="js/schedule.js"></script>
 </body>
 </html>

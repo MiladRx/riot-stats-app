@@ -16,11 +16,13 @@ var FD_MODES   = [
 
 // ── Open / Close ──────────────────────────────────────────────────────────────
 function openFetchDashboard() {
-  document.getElementById("fd-modal").classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-  _fdOpen = true;
-  _fdRefreshSummary();
-  _fdPollStatus();
+  _devAuthGate(function() {
+    document.getElementById("fd-modal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    _fdOpen = true;
+    _fdRefreshSummary();
+    _fdPollStatus();
+  });
 }
 
 function closeFetchDashboard() {

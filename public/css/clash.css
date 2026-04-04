@@ -3,9 +3,8 @@
   background: linear-gradient(135deg, rgba(191,90,242,0.18) 0%, rgba(10,132,255,0.12) 100%);
   border: 1px solid rgba(191,90,242,0.4);
   color: #d090f8;
-  border-radius: 100px;
-  height: 40px;
-  padding: 0 18px;
+  border-radius: 10px;
+  padding: 8px 14px;
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;

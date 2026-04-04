@@ -1,0 +1,90 @@
+{
+  "week": "2026-F14",
+  "createdAt": 1775241446149,
+  "players": {
+    "adam1276#eune": {
+      "tier": "DIAMOND",
+      "rank": "II",
+      "lp": 83,
+      "wins": 176,
+      "losses": 156
+    },
+    "la cabra#iii": {
+      "tier": "DIAMOND",
+      "rank": "IV",
+      "lp": 13,
+      "wins": 190,
+      "losses": 181
+    },
+    "littlestjeff1#goyem": {
+      "tier": "DIAMOND",
+      "rank": "IV",
+      "lp": 0,
+      "wins": 105,
+      "losses": 99
+    },
+    "spirifan3#faker": {
+      "tier": "EMERALD",
+      "rank": "III",
+      "lp": 51,
+      "wins": 93,
+      "losses": 73
+    },
+    "fåce#tap": {
+      "tier": "EMERALD",
+      "rank": "IV",
+      "lp": 2,
+      "wins": 188,
+      "losses": 182
+    },
+    "mohsh#eune": {
+      "tier": "PLATINUM",
+      "rank": "I",
+      "lp": 81,
+      "wins": 256,
+      "losses": 252
+    },
+    "moroccan dealer#pimp": {
+      "tier": "PLATINUM",
+      "rank": "I",
+      "lp": 25,
+      "wins": 67,
+      "losses": 66
+    },
+    "pas på#00007": {
+      "tier": "PLATINUM",
+      "rank": "IV",
+      "lp": 22,
+      "wins": 69,
+      "losses": 67
+    },
+    "milad#exe": {
+      "tier": "BRONZE",
+      "rank": "III",
+      "lp": 55,
+      "wins": 3,
+      "losses": 2
+    },
+    "dårk#abo": {
+      "tier": "SILVER",
+      "rank": "I",
+      "lp": 62,
+      "wins": 7,
+      "losses": 3
+    },
+    "darwizzy#høes": {
+      "tier": "EMERALD",
+      "rank": "III",
+      "lp": 95,
+      "wins": 52,
+      "losses": 40
+    },
+    "la cabra ii#qlawi": {
+      "tier": "EMERALD",
+      "rank": "III",
+      "lp": 6,
+      "wins": 40,
+      "losses": 34
+    }
+  }
+}
