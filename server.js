@@ -474,8 +474,10 @@ async function runAutoFetchCycle() {
 }
 
 app.get("/schedule", (req, res) => {
+  // On Vercel serverless nextFetchAt may be null — calculate from last fetch time as fallback
+  const computedNextFetch = nextFetchAt || (lastFetchTime ? lastFetchTime + AUTO_FETCH_INTERVAL : null);
   res.json({
-    nextFetchAt,
+    nextFetchAt: computedNextFetch,
     scheduleReloadAt,
     fetchRunning: fetchJob.running,
     interval: AUTO_FETCH_INTERVAL
