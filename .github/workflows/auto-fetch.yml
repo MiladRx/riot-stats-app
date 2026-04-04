@@ -16,7 +16,7 @@ jobs:
         run: |
           curl -X POST https://riot-stat-app-milad.vercel.app/full-cycle \
             -H "Content-Type: application/json" \
-            --max-time 30 \
+            --max-time 55 \
             --retry 2
 
       - name: Log success

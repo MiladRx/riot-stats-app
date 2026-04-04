@@ -406,11 +406,11 @@ async function runFullCycle() {
   }
 }
 
-// GitHub Actions calls this every 5 min — runs full cycle and waits for completion
+// GitHub Actions calls this every 5 min — awaits full cycle so Vercel doesn't kill it
 app.post("/full-cycle", async (req, res) => {
   if (cycleRunning) return res.json({ status: "already_running" });
-  runFullCycle(); // don't await — respond immediately so GH Actions doesn't timeout
-  res.json({ status: "started" });
+  await runFullCycle();
+  res.json({ status: "done" });
 });
 
 // Auto full cycle on schedule (every AUTO_FETCH_INTERVAL)
