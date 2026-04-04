@@ -142,6 +142,22 @@ header {
 .t-grandmaster { color: var(--tier-grandmaster); } .t-challenger { color: var(--tier-challenger); }
 .wr-good { color: var(--green); } .wr-ok { color: var(--orange); } .wr-bad { color: var(--red); }
 
+/* ── Update Timer ── */
+.update-timer {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.4px;
+  color: var(--text3); margin-top: 5px;
+  opacity: 0; transition: opacity 0.3s;
+}
+.update-timer.visible { opacity: 1; }
+.update-timer-dot {
+  width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+  background: var(--text3);
+}
+.update-timer.state-fetching .update-timer-dot { background: #ffd700; animation: pulse 1.2s infinite; }
+.update-timer.state-reload .update-timer-dot   { background: #3ecf68; animation: pulse 1.2s infinite; }
+.update-timer.state-idle .update-timer-dot     { background: var(--text3); }
+
 /* ── Dev Auth Modal ── */
 .dev-auth-overlay {
   position: fixed; inset: 0; z-index: 9999;

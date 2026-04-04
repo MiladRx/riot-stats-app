@@ -80,13 +80,12 @@ async function refreshSquadCache() {
     console.log(`📸 Power ranking snapshot created for ${weekKey}`);
   }
 
-  // Tell frontend to reload 3 min from now
-  scheduleReloadAt = Date.now() + 3 * 60 * 1000;
 }
 
 function invalidateSquadCache() {
-  // Don't wipe the cache — keep serving old data while background refresh runs
-  console.log("🔄 Fetch complete — refreshing squad cache in background...");
+  // Set reload timer immediately when fetch completes — rank refresh runs in background within this window
+  scheduleReloadAt = Date.now() + 2 * 60 * 1000;
+  console.log("🔄 Fetch complete — reload in 2 min, refreshing rank cache in background...");
   refreshSquadCache().catch(e => console.log("❌ Squad refresh failed:", e.message));
 }
 
@@ -453,7 +452,7 @@ app.get("/schedule", (req, res) => {
 });
 
 // --- Rank Refresh Timer (every 10 min, independent of deep fetch) ---
-const RANK_REFRESH_INTERVAL = 10 * 60 * 1000;
+const RANK_REFRESH_INTERVAL = 5 * 60 * 1000;
 function startRankRefresh() {
   setInterval(() => {
     if (fetchJob.running) {
