@@ -217,7 +217,7 @@ function cardHTML(p, i, rankPos) {
       totalGames + ' games deep this season. League is their full-time job.');
   } else if (totalGames <= 12 && totalGames > 0) {
     seasonBadge = _badge('fresh', '🌱', 'Fresh Start',
-      'Only ' + totalGames + ' games in. The split has barely begun for them.');
+      'Only ' + totalGames + ' games in. The season has barely begun for them.');
   }
 
   // ── Combine: perf first, then season. Max 2 ──
