@@ -1,6 +1,0 @@
-{
-  "functions": {
-    "api/squad.js": { "maxDuration": 45 },
-    "api/stats.js": { "maxDuration": 20 }
-  }
-}

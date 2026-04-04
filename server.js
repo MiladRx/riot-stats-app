@@ -183,7 +183,7 @@ app.get("/schedule", (req, res) => {
   res.json({
     nextFetchAt,
     scheduleReloadAt,
-    fetchRunning: fetchJob.running,
+    fetchRunning: fetchJob.running || cycleRunning,
     interval: AUTO_FETCH_INTERVAL,
   });
 });
@@ -406,10 +406,12 @@ async function runFullCycle() {
   }
 }
 
-// GitHub Actions calls this every 5 min — awaits full cycle so Vercel doesn't kill it
+// Browser calls this when timer hits 0 — awaits full cycle so Vercel doesn't kill it
+// After responding, clear scheduleReloadAt — browser reloads itself immediately
 app.post("/full-cycle", async (req, res) => {
   if (cycleRunning) return res.json({ status: "already_running" });
   await runFullCycle();
+  scheduleReloadAt = null;  // browser triggers its own reload, no need to reschedule
   res.json({ status: "done" });
 });
 

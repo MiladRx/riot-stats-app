@@ -31,7 +31,11 @@
       "Bash(git commit -m \"Trigger workflow on push + every 5 min cron:*)",
       "Bash(git push:*)",
       "Bash(git commit -m \"Fix: await full cycle on Vercel so it isn''t killed mid-fetch:*)",
-      "Bash(git commit -m \"Replace GitHub Actions with browser-triggered fetch cycle:*)"
+      "Bash(git commit -m \"Replace GitHub Actions with browser-triggered fetch cycle:*)",
+      "Bash(git commit -m \"Fix cache writes on Vercel: use /tmp when VERCEL env is set:*)",
+      "Bash(del \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\vercel.json\")",
+      "Bash(rm vercel.json)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }

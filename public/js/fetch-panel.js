@@ -1,6 +1,10 @@
 // Per-Player Panel Fetch
 function startPlayerFetch(gameName, tagLine) {
-  fetch("/fetch-history/" + encodeURIComponent(gameName) + "/" + encodeURIComponent(tagLine), { method: "POST" })
+  fetch("/fetch", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ players: [gameName] }),
+  })
     .then(function (r) { return r.json(); })
     .then(function () { pollFetchStatus(); });
 }
@@ -21,13 +25,13 @@ function closeFetchPanel() {
 }
 
 function startFetch() {
-  fetch("/fetch-history", { method: "POST" })
+  fetch("/fetch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) })
     .then(function (r) { return r.json(); })
     .then(function () { pollFetchStatus(); });
 }
 
 function stopFetch() {
-  fetch("/fetch-history", { method: "DELETE" })
+  fetch("/fetch", { method: "DELETE" })
     .then(function () { pollFetchStatus(); });
 }
 

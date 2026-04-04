@@ -3,10 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// Vercel /var/task is read-only — use /tmp when running on Vercel
-const DATA_DIR = process.env.VERCEL
-  ? "/tmp/riot-cache"
-  : path.join(__dirname, "..", "data");
+const DATA_DIR = path.join(__dirname, "..", "data");
 
 // In-memory cache — avoids repeated disk reads for the same season/mode
 const _memCache = {};
