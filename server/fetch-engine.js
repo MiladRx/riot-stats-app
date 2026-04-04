@@ -81,7 +81,7 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
       start += PAGE;
     }
 
-    const toFetch = allIds.slice(0, 3); // Fetch only last 3 new games
+    const toFetch = allIds.slice(0, 2); // Fetch only last 2 new games
     const totalToFetch = toFetch.length;
     jobLog(`📋 ${gameName}: ${totalToFetch} new matches to fetch`);
 

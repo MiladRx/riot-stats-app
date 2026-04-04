@@ -3,13 +3,19 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, "..", "data");
+let DATA_DIR = path.join(__dirname, "..", "data");
 
 // In-memory cache — avoids repeated disk reads for the same season/mode
 const _memCache = {};
 
 function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch (e) {
+    // Vercel /var/task is read-only, fall back to /tmp
+    DATA_DIR = "/tmp/riot-stats-cache";
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
 }
 
 function cachePath(season, mode) {
