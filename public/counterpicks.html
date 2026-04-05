@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CounterPicks — Smart Draft Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/counterpicks.css" />
+</head>
+<body>
+
+  <!-- Champion Picker Overlay -->
+  <div class="cp-picker-overlay hidden" id="cp-picker-overlay">
+    <div class="cp-picker-panel">
+      <div class="cp-picker-header">
+        <div class="cp-picker-title" id="cp-picker-title">Select Champion</div>
+        <button class="cp-picker-close" onclick="closePicker()">✕</button>
+      </div>
+      <input class="cp-picker-search" id="cp-picker-search" placeholder="Search champion…" autocomplete="off" spellcheck="false" />
+      <div class="cp-picker-grid" id="cp-picker-grid"></div>
+    </div>
+  </div>
+
+  <div class="cp-wrap">
+
+    <!-- Header -->
+    <header>
+      <div class="header-left">
+        <h1>CounterPicks</h1>
+        <p>Smart Draft &amp; Build Assistant</p>
+      </div>
+      <div class="header-right">
+        <a href="/" class="cp-back-btn">← Home</a>
+      </div>
+    </header>
+
+    <!-- Loading -->
+    <div class="cp-loading" id="cp-loading">
+      <div class="cp-loading-spinner"></div>
+      <div class="cp-loading-text">Loading champion data…</div>
+    </div>
+
+    <!-- Main tool -->
+    <div class="cp-builder hidden" id="cp-builder">
+
+      <!-- STEP 1: Enemy Team -->
+      <div class="cp-card">
+        <div class="cp-step-label"><span class="cp-step-num">1</span> Fill in the enemy team</div>
+        <div class="cp-lane-grid" id="enemy-lane-grid"></div>
+      </div>
+
+      <!-- STEP 2: Your Lane -->
+      <div class="cp-card">
+        <div class="cp-step-label"><span class="cp-step-num">2</span> Select your lane</div>
+        <div class="cp-lane-pills-big" id="my-lane-pills-big"></div>
+      </div>
+
+      <!-- Find Counters button -->
+      <div class="cp-error-msg hidden" id="cp-error-msg"></div>
+      <button class="cp-analyze-btn" id="cp-counter-btn" onclick="findCounters()">
+        🎯 Find Counter Picks
+      </button>
+
+      <!-- STEP 3: Counter suggestions -->
+      <div class="cp-counter-results hidden" id="cp-counter-results">
+        <div class="cp-card">
+          <div class="cp-step-label"><span class="cp-step-num">3</span> Suggested counter picks</div>
+          <div class="cp-counter-meta" id="cp-counter-meta"></div>
+          <div class="cp-counter-grid" id="cp-counter-grid"></div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Your pick + build -->
+      <div class="cp-picked-section hidden" id="cp-picked-section">
+
+        <!-- Selected champion -->
+        <div class="cp-card cp-picked-card">
+          <div class="cp-step-label"><span class="cp-step-num">4</span> Your pick</div>
+          <div class="cp-my-champ-slot" id="my-champ-slot"></div>
+          <div class="cp-lane-selector" id="my-lane-selector">
+            <div class="cp-lane-selector-label">Lane</div>
+            <div class="cp-lane-pills" id="my-lane-pills"></div>
+          </div>
+        </div>
+
+        <!-- Your team (optional) -->
+        <div class="cp-card">
+          <div class="cp-card-label-row">
+            <div class="cp-card-label">YOUR TEAM</div>
+            <span class="cp-optional-tag">optional</span>
+          </div>
+          <div class="cp-lane-grid" id="ally-lane-grid"></div>
+        </div>
+
+        <!-- Playstyle -->
+        <div class="cp-card">
+          <div class="cp-card-label">PLAYSTYLE FOCUS</div>
+          <div class="cp-playstyle-row">
+            <button class="cp-ps-btn active" onclick="setPlaystyle('carry',this)">⚡ Carry</button>
+            <button class="cp-ps-btn" onclick="setPlaystyle('safe',this)">🛡 Safe</button>
+            <button class="cp-ps-btn" onclick="setPlaystyle('aggressive',this)">🔥 Aggressive</button>
+            <button class="cp-ps-btn" onclick="setPlaystyle('scaling',this)">📈 Scaling</button>
+            <button class="cp-ps-btn" onclick="setPlaystyle('antitank',this)">💥 Anti-Tank</button>
+            <button class="cp-ps-btn" onclick="setPlaystyle('antiheal',this)">🩸 Anti-Heal</button>
+          </div>
+        </div>
+
+        <button class="cp-analyze-btn cp-build-btn" onclick="getBuild()">🛠 Get Build &amp; Insights</button>
+
+        <!-- Build results -->
+        <div class="cp-results hidden" id="cp-results">
+
+          <div class="cp-result-card">
+            <div class="cp-result-title">⚔️ Enemy Composition</div>
+            <div id="res-damage-bar"></div>
+            <div id="res-threats"></div>
+            <div id="res-champ-icons"></div>
+          </div>
+
+          <div class="cp-result-card">
+            <div class="cp-result-title">🛠️ Recommended Build</div>
+            <div class="cp-build-note" id="res-build-note"></div>
+            <div class="cp-items-grid" id="res-items"></div>
+            <div class="cp-boots-row" id="res-boots"></div>
+          </div>
+
+          <div class="cp-result-card">
+            <div class="cp-result-title">⚖️ Situational Items</div>
+            <div id="res-situational-content"></div>
+          </div>
+
+          <div class="cp-result-card">
+            <div class="cp-result-title">💡 Key Insights</div>
+            <div id="res-insights-content"></div>
+          </div>
+
+        </div>
+      </div><!-- /cp-picked-section -->
+
+    </div><!-- /cp-builder -->
+  </div><!-- /cp-wrap -->
+
+  <script src="js/background.js"></script>
+  <script src="js/counterpicks.js"></script>
+</body>
+</html>

@@ -37,7 +37,14 @@
       "Bash(rm vercel.json)",
       "Bash(npm uninstall:*)",
       "Bash(mv \"power-snapshot-2026-F14.json\" \"power-snapshot-2026-W01.json\")",
-      "Bash(ls power-snapshot*)"
+      "Bash(ls power-snapshot*)",
+      "WebFetch(domain:lolalytics.com)",
+      "WebFetch(domain:cdn.communitydragon.org)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.op.gg)",
+      "WebFetch(domain:api.opgg.com)",
+      "WebFetch(domain:lolstatic-a.akamaihd.net)"
     ]
   }
 }

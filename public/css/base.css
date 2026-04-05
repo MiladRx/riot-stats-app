@@ -115,6 +115,15 @@ header {
 }
 .clash-btn:hover { background: linear-gradient(135deg, rgba(191,90,242,0.22) 0%, rgba(191,90,242,0.12) 100%); border-color: rgba(191,90,242,0.5); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(191,90,242,0.12); }
 
+.cp-nav-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, rgba(50,215,195,0.14) 0%, rgba(50,215,195,0.07) 100%);
+  border: 1px solid rgba(50,215,195,0.3); border-radius: 10px;
+  padding: 8px 14px; color: #32d7c3; font-size: 0.78rem; font-weight: 700;
+  font-family: "DM Sans", sans-serif; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+}
+.cp-nav-btn:hover { background: linear-gradient(135deg, rgba(50,215,195,0.22) 0%, rgba(50,215,195,0.12) 100%); border-color: rgba(50,215,195,0.5); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(50,215,195,0.12); }
+
 /* ── Leaderboard column header ── */
 .lb-header {
   display: grid; grid-template-columns: 40px 1.5fr 180px 130px 100px 80px 40px; gap: 16px;

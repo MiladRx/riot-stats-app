@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Solo / Duo Ranked</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/board.css" />
   <link rel="stylesheet" href="css/detail.css" />
@@ -17,6 +20,7 @@
   <link rel="stylesheet" href="css/fetch-dashboard.css" />
   <link rel="stylesheet" href="css/power-rankings.css" />
 </head>
+
 <body>
   <div class="bg-glow"></div>
   <div class="wrap">
@@ -30,7 +34,9 @@
         <button class="pr-btn" onclick="openPowerRankings()"><span class="pr-btn-icon">👑</span> Power Rankings</button>
         <button id="fd-header-btn" class="fetch-dash-btn" onclick="openFetchDashboard()">📊 <span>Fetch</span></button>
         <button class="clash-btn" onclick="openClashModal()">⚔️ <span>Clash Builder</span></button>
-        <button class="force-refresh-btn" onclick="forceRefresh()" title="Force refresh rank data">↺</button>
+        <button class="cp-nav-btn" style="display: none;" onclick="window.location.href='counterpicks.html'">🎯
+          <span>CounterPicks</span></button> <button class="force-refresh-btn" onclick="forceRefresh()"
+          title="Force refresh rank data">↺</button>
       </div>
     </header>
 
@@ -84,7 +90,8 @@
           <div class="fd-players" id="fd-players"></div>
         </div>
         <div class="fd-actions">
-          <button class="fd-start-btn" id="fd-start-btn" onclick="_fdStart()" disabled>▶ Select Players to Fetch</button>
+          <button class="fd-start-btn" id="fd-start-btn" onclick="_fdStart()" disabled>▶ Select Players to
+            Fetch</button>
           <button class="fd-stop-btn" id="fd-stop-btn" onclick="_fdStop()" style="display:none">⏹ Stop</button>
           <span class="fd-status-txt" id="fd-status-txt"></span>
         </div>
@@ -129,11 +136,20 @@
         <button class="pr-close" onclick="closePowerRankings()">✕</button>
       </div>
       <div class="pr-infobar">
-        <div class="pr-infobar-item"><div class="pr-infobar-dot" style="background:#ffd700"></div><span class="pr-infobar-label">LP Change</span> rank progress</div>
+        <div class="pr-infobar-item">
+          <div class="pr-infobar-dot" style="background:#ffd700"></div><span class="pr-infobar-label">LP Change</span>
+          rank progress
+        </div>
         <div class="pr-infobar-sep"></div>
-        <div class="pr-infobar-item"><div class="pr-infobar-dot" style="background:#7eb8ff"></div><span class="pr-infobar-label">W/L</span> weekly record</div>
+        <div class="pr-infobar-item">
+          <div class="pr-infobar-dot" style="background:#7eb8ff"></div><span class="pr-infobar-label">W/L</span> weekly
+          record
+        </div>
         <div class="pr-infobar-sep"></div>
-        <div class="pr-infobar-item"><div class="pr-infobar-dot" style="background:#4ade80"></div><span class="pr-infobar-label">Weekly WR</span> performance</div>
+        <div class="pr-infobar-item">
+          <div class="pr-infobar-dot" style="background:#4ade80"></div><span class="pr-infobar-label">Weekly WR</span>
+          performance
+        </div>
         <div class="pr-infobar-formula">LP + games×5 + wins×3</div>
       </div>
       <div id="pr-body"></div>
@@ -176,32 +192,33 @@
     </div>
   </div>
 
-<link rel="stylesheet" href="css/champ-history.css" />
+  <link rel="stylesheet" href="css/champ-history.css" />
 
-<!-- Dev Auth Modal -->
-<div id="dev-auth-modal" class="dev-auth-overlay hidden">
-  <div class="dev-auth-box">
-    <div class="dev-auth-title">🔒 Dev Access</div>
-    <input class="dev-auth-input" id="dev-auth-input" type="password" placeholder="Password" autocomplete="off" />
-    <div class="dev-auth-error hidden" id="dev-auth-error">Incorrect password</div>
-    <div class="dev-auth-btns">
-      <button class="dev-auth-cancel" onclick="_devAuthCancel()">Cancel</button>
-      <button class="dev-auth-submit" onclick="_devAuthSubmit()">Unlock</button>
+  <!-- Dev Auth Modal -->
+  <div id="dev-auth-modal" class="dev-auth-overlay hidden">
+    <div class="dev-auth-box">
+      <div class="dev-auth-title">🔒 Dev Access</div>
+      <input class="dev-auth-input" id="dev-auth-input" type="password" placeholder="Password" autocomplete="off" />
+      <div class="dev-auth-error hidden" id="dev-auth-error">Incorrect password</div>
+      <div class="dev-auth-btns">
+        <button class="dev-auth-cancel" onclick="_devAuthCancel()">Cancel</button>
+        <button class="dev-auth-submit" onclick="_devAuthSubmit()">Unlock</button>
+      </div>
     </div>
   </div>
-</div>
 
-<script src="js/dev-auth.js"></script>
-<script src="js/background.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/detail.js"></script>
-<script src="js/board.js"></script>
-<script src="js/fetch-dashboard.js"></script>
-<script src="js/compare.js"></script>
-<script src="js/tooltips.js"></script>
-<script src="js/clash.js"></script>
-<script src="js/champ-history.js"></script>
-<script src="js/power-rankings.js"></script>
-<script src="js/schedule.js"></script>
+  <script src="js/dev-auth.js"></script>
+  <script src="js/background.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/detail.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/fetch-dashboard.js"></script>
+  <script src="js/compare.js"></script>
+  <script src="js/tooltips.js"></script>
+  <script src="js/clash.js"></script>
+  <script src="js/champ-history.js"></script>
+  <script src="js/power-rankings.js"></script>
+  <script src="js/schedule.js"></script>
 </body>
+
 </html>
