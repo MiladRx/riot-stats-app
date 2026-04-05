@@ -177,7 +177,7 @@ function cardHTML(p, i, rankPos) {
       kdaVal.toFixed(2) + ' KDA, ' + deathsVal.toFixed(1) + ' avg deaths. Playing the game generously.');
   } else if (perfectKda || kdaVal >= 4.5) {
     var kdaStr = perfectKda ? 'Perfect (0 deaths)' : kdaVal.toFixed(2);
-    perfBadge = _badge('godlike', '✦', 'Godlike',
+    perfBadge = _badge('godlike', '✦', 'Flawless',
       kdaStr + ' KDA — ' + killsVal.toFixed(1) + '/' + deathsVal.toFixed(1) + '/' + assistsVal.toFixed(1) + '. Untouchable.');
   } else if (deathsVal <= 2.5 && totalGames >= 15) {
     perfBadge = _badge('ironwall', '🛡', 'Iron Wall',
