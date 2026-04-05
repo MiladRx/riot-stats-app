@@ -119,8 +119,8 @@ function _startResetCountdown(nextResetAt) {
 
 function _renderPr(d) {
   var r = d.rankings;
-  // Parse week number from key like "2026-F14"
-  var weekNum = d.weekKey ? d.weekKey.split("-F")[1] : "—";
+  // Parse week number from key like "2026-W01"
+  var weekNum = d.weekKey ? d.weekKey.split("-W")[1] : "—";
   var weekEl = document.getElementById("pr-week-badge");
   var resetEl = document.getElementById("pr-reset-badge");
   if (weekEl) weekEl.textContent = "Week " + weekNum;

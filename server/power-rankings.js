@@ -5,19 +5,18 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, "..", "data");
 
-// Week key anchored to Friday resets — "2026-F14"
-// Each "week" runs Fri 00:00 UTC → Thu 23:59 UTC
+// Week key — auto-increments each Saturday 23:59
+// April 5, 2026 = Week 1
 export function getWeekKey() {
   const now = new Date();
-  // UTC day: 0=Sun,1=Mon,...,5=Fri,6=Sat
-  const dow = now.getUTCDay(); // 0-6
-  // Days since last Friday (0 if today is Friday)
-  const daysSinceFri = (dow + 2) % 7; // Fri=0, Sat=1, Sun=2, Mon=3, Tue=4, Wed=5, Thu=6
-  const thisFriday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysSinceFri));
-  // Week number from Jan 1
-  const startOfYear = new Date(Date.UTC(thisFriday.getUTCFullYear(), 0, 1));
-  const weekNum = Math.ceil(((thisFriday - startOfYear) / 86400000 + 1) / 7);
-  return `${thisFriday.getUTCFullYear()}-F${String(weekNum).padStart(2, "0")}`;
+  const seasonStart = new Date(Date.UTC(2026, 3, 5, 23, 59, 0)); // April 5, 2026 23:59 UTC
+
+  // Days since season start
+  const daysSince = (now - seasonStart) / (24 * 60 * 60 * 1000);
+  // Week number (7 days per week)
+  const weekNum = Math.floor(daysSince / 7) + 1;
+
+  return `2026-W${String(Math.max(1, weekNum)).padStart(2, "0")}`;
 }
 
 // Next Saturday 23:59 UTC in ms
