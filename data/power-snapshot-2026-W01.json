@@ -1,20 +1,20 @@
 {
-  "week": "2026-F14",
-  "createdAt": 1775335642241,
+  "week": "2026-W01",
+  "createdAt": 1775241446149,
   "players": {
     "adam1276#eune": {
       "tier": "DIAMOND",
       "rank": "II",
-      "lp": 42,
-      "wins": 181,
-      "losses": 164
+      "lp": 83,
+      "wins": 176,
+      "losses": 156
     },
     "la cabra#iii": {
       "tier": "DIAMOND",
       "rank": "IV",
-      "lp": 0,
+      "lp": 13,
       "wins": 190,
-      "losses": 183
+      "losses": 181
     },
     "littlestjeff1#goyem": {
       "tier": "DIAMOND",
@@ -23,47 +23,33 @@
       "wins": 105,
       "losses": 99
     },
-    "darwizzy#høes": {
-      "tier": "EMERALD",
-      "rank": "III",
-      "lp": 95,
-      "wins": 52,
-      "losses": 40
-    },
     "spirifan3#faker": {
       "tier": "EMERALD",
       "rank": "III",
-      "lp": 71,
-      "wins": 94,
+      "lp": 51,
+      "wins": 93,
       "losses": 73
     },
-    "la cabra ii#qlawi": {
+    "fåce#tap": {
       "tier": "EMERALD",
       "rank": "IV",
-      "lp": 88,
-      "wins": 40,
-      "losses": 35
+      "lp": 2,
+      "wins": 188,
+      "losses": 182
     },
     "mohsh#eune": {
       "tier": "PLATINUM",
       "rank": "I",
-      "lp": 88,
-      "wins": 258,
-      "losses": 255
-    },
-    "fåce#tap": {
-      "tier": "PLATINUM",
-      "rank": "I",
-      "lp": 64,
-      "wins": 190,
-      "losses": 186
+      "lp": 81,
+      "wins": 256,
+      "losses": 252
     },
     "moroccan dealer#pimp": {
       "tier": "PLATINUM",
       "rank": "I",
-      "lp": 19,
-      "wins": 70,
-      "losses": 69
+      "lp": 25,
+      "wins": 67,
+      "losses": 66
     },
     "pas på#00007": {
       "tier": "PLATINUM",
@@ -72,19 +58,33 @@
       "wins": 69,
       "losses": 67
     },
-    "dårk#abo": {
-      "tier": "GOLD",
-      "rank": "IV",
-      "lp": 28,
-      "wins": 9,
-      "losses": 3
-    },
     "milad#exe": {
       "tier": "BRONZE",
-      "rank": "II",
-      "lp": 15,
-      "wins": 5,
+      "rank": "III",
+      "lp": 55,
+      "wins": 3,
       "losses": 2
+    },
+    "dårk#abo": {
+      "tier": "SILVER",
+      "rank": "I",
+      "lp": 62,
+      "wins": 7,
+      "losses": 3
+    },
+    "darwizzy#høes": {
+      "tier": "EMERALD",
+      "rank": "III",
+      "lp": 95,
+      "wins": 52,
+      "losses": 40
+    },
+    "la cabra ii#qlawi": {
+      "tier": "EMERALD",
+      "rank": "III",
+      "lp": 6,
+      "wins": 40,
+      "losses": 34
     }
   }
 }

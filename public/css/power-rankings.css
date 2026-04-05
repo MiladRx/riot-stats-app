@@ -126,7 +126,7 @@
 .pr-pod-2 .pr-pod-icon { border-color: rgba(180,190,210,0.3); }
 .pr-pod-3 .pr-pod-icon { border-color: rgba(205,127,50,0.3); }
 
-.pr-pod-crown { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font-size: 1.3rem; filter: drop-shadow(0 2px 8px rgba(255,215,0,0.7)); }
+.pr-pod-crown { position: absolute; top: -5px; left: 50%; transform: translateX(-50%); font-size: 1.2rem; filter: drop-shadow(0 2px 8px rgba(255,215,0,0.7)); }
 
 .pr-pod-name { font-size: 0.88rem; font-weight: 700; color: var(--text); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; line-height: 1.2; }
 .pr-pod-1 .pr-pod-name { font-size: 1rem; }
@@ -195,6 +195,20 @@
   border-radius: 16px; color: var(--text3); font-size: 0.8rem; line-height: 1.6;
 }
 .pr-empty strong { color: var(--text2); display: block; margin-bottom: 4px; font-size: 0.9rem; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .pr-header { padding: 18px 16px 0; }
+  .pr-title { font-size: 1.9rem; }
+  .pr-infobar { margin: 12px 16px 0; padding: 10px 12px; gap: 10px; }
+  .pr-infobar-sep, .pr-infobar-formula { display: none; }
+  .pr-podium { padding: 18px 10px 6px; gap: 5px; }
+  .pr-pod { padding: 14px 6px 14px; border-radius: 14px; }
+  .pr-pod-name { font-size: 0.76rem; }
+  .pr-pod-score { font-size: 1.1rem; }
+  .pr-list { padding: 0 12px; }
+  .pr-row { padding: 10px 12px; gap: 10px; }
+}
 
 /* ── Header button ── */
 .pr-btn {

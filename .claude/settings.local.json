@@ -35,7 +35,9 @@
       "Bash(git commit -m \"Fix cache writes on Vercel: use /tmp when VERCEL env is set:*)",
       "Bash(del \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\vercel.json\")",
       "Bash(rm vercel.json)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(mv \"power-snapshot-2026-F14.json\" \"power-snapshot-2026-W01.json\")",
+      "Bash(ls power-snapshot*)"
     ]
   }
 }

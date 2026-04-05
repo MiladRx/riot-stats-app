@@ -33,10 +33,10 @@ function _renderPrError(msg) {
     '<div style="text-align:center;padding:50px 20px;color:#f87171;font-size:0.82rem">' + msg + '</div>';
 }
 
-function _scoreClass(n) { return n > 0 ? "positive" : n < 0 ? "negative" : "neutral"; }
+function _scoreClass(n) { return n === null ? "neutral" : n > 0 ? "positive" : n < 0 ? "negative" : "neutral"; }
 
 function _scoreLabel(n, hasSnap) {
-  if (!hasSnap) return "—";
+  if (!hasSnap || n === null) return "—";
   if (n === 0) return "0 pts";
   return (n > 0 ? "+" : "") + n + " pts";
 }

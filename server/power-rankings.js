@@ -19,15 +19,16 @@ export function getWeekKey() {
   return `2026-W${String(Math.max(1, weekNum)).padStart(2, "0")}`;
 }
 
-// Next Saturday 23:59 UTC in ms
-export function getNextResetMs() {
-  const now = new Date();
-  const dow = now.getUTCDay();
-  const daysUntilSat = (6 - dow + 7) % 7 || 7; // always next Saturday, never today
-  const nextSat = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysUntilSat));
-  // Set to 23:59:00 UTC
-  nextSat.setUTCHours(23, 59, 0, 0);
-  return nextSat.getTime();
+// Increment a week key string e.g. "2026-W01" → "2026-W02"
+export function nextWeekKey(weekKey) {
+  const num = parseInt(weekKey.split("-W")[1], 10);
+  return `2026-W${String(num + 1).padStart(2, "0")}`;
+}
+
+// One week from snapshot creation timestamp
+export function getNextResetMs(snapshot) {
+  if (snapshot?.createdAt) return snapshot.createdAt + 7 * 24 * 60 * 60 * 1000;
+  return Date.now() + 7 * 24 * 60 * 60 * 1000;
 }
 
 function snapPath(weekKey) {
@@ -87,6 +88,9 @@ export function computeRankings(squadPlayers, snapshot) {
       const lossesThisWeek = Math.max(0, gamesThisWeek - winsThisWeek);
       const weekWR = gamesThisWeek > 0 ? Math.round(winsThisWeek / gamesThisWeek * 100) : null;
 
+      // Players with no activity (no games, no LP change) get null score — ranked last
+      const inactive = snap && gamesThisWeek === 0 && lpProgress === 0;
+
       // Scoring: LP gained + activity (games×5 + wins×3) + WR bonus for 5+ games
       let score = lpProgress + gamesThisWeek * 5 + winsThisWeek * 3;
       if (weekWR !== null && gamesThisWeek >= 5) {
@@ -104,7 +108,8 @@ export function computeRankings(squadPlayers, snapshot) {
         rank: p.solo.rank,
         lp: p.solo.lp,
         hasSnapshot: !!snap,
-        score: Math.round(score),
+        inactive,
+        score: inactive ? null : Math.round(score),
         lpProgress,
         gamesThisWeek,
         winsThisWeek,
@@ -113,5 +118,10 @@ export function computeRankings(squadPlayers, snapshot) {
         curWR: curGames > 0 ? Math.round(p.solo.wins / curGames * 100) : 0,
       };
     })
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => {
+      if (a.score === null && b.score === null) return 0;
+      if (a.score === null) return 1;
+      if (b.score === null) return -1;
+      return b.score - a.score;
+    });
 }

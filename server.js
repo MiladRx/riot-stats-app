@@ -24,7 +24,7 @@ import { loadSeasonCache, getSeasonCacheSummary } from "./server/season-cache.js
 import { fetchJob, runFetch } from "./server/fetch-engine.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
 import { buildLineups } from "./server/clash.js";
-import { getWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, computeRankings } from "./server/power-rankings.js";
+import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, computeRankings } from "./server/power-rankings.js";
 
 loadDDragon();
 
@@ -78,11 +78,18 @@ async function refreshSquadCache() {
   lastFetchTime   = Date.now();
   console.log("✅ Squad rank data refreshed.");
 
-  // Ensure weekly snapshot exists
+  // Ensure weekly snapshot exists; roll over if one week has passed since last snapshot
   const weekKey = getWeekKey();
-  if (!loadSnapshot(weekKey)) {
+  const snap = loadSnapshot(weekKey);
+  if (!snap) {
     saveSnapshot(weekKey, cachedSquadData);
     console.log(`📸 Snapshot created for ${weekKey}`);
+  } else if (Date.now() >= snap.createdAt + 7 * 24 * 60 * 60 * 1000) {
+    const newKey = nextWeekKey(weekKey);
+    if (!loadSnapshot(newKey)) {
+      saveSnapshot(newKey, cachedSquadData);
+      console.log(`📸 Snapshot rolled over → ${newKey} (${weekKey} preserved)`);
+    }
   }
 }
 
@@ -299,7 +306,7 @@ app.get("/power-rankings", (req, res) => {
   const snapshot = loadSnapshot(weekKey);
   if (!snapshot) return res.status(503).json({ error: "Weekly snapshot not ready yet. Check back in a moment." });
   const rankings = computeRankings(cachedSquadData, snapshot);
-  res.json({ rankings, weekKey, nextResetAt: getNextResetMs(), snapshotAt: snapshot.createdAt, ddragonVersion });
+  res.json({ rankings, weekKey, nextResetAt: getNextResetMs(snapshot), snapshotAt: snapshot.createdAt, ddragonVersion });
 });
 
 app.post("/power-rankings/reset", (req, res) => {
