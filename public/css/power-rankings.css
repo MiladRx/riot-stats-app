@@ -72,14 +72,14 @@
 /* ── Podium ── */
 .pr-podium {
   display: grid; grid-template-columns: 1fr 1.15fr 1fr;
-  gap: 8px; padding: 24px 20px 6px; align-items: end;
+  gap: 8px; padding: 24px 20px 6px; align-items: stretch;
 }
 
 .pr-pod {
   display: flex; flex-direction: column; align-items: center;
   border-radius: 20px; padding: 20px 10px 18px;
   border: 1px solid rgba(255,255,255,0.06);
-  position: relative; overflow: hidden;
+  position: relative; overflow: visible;
   transition: transform 0.22s, box-shadow 0.22s;
   animation: prPodIn 0.55s cubic-bezier(0.34, 1.35, 0.64, 1) both;
   cursor: default;
@@ -143,7 +143,8 @@
 .pr-pod-score.neutral { color: rgba(255,255,255,0.25); }
 .pr-pod-score-sub { font-size: 0.58rem; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; display: block; }
 
-.pr-pod-pills { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
+.pr-pod-score-wrap { flex: 1; }
+.pr-pod-pills { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; margin-top: auto; }
 
 /* ── Pills ── */
 .pr-pill {
@@ -204,6 +205,8 @@
   .pr-infobar-sep, .pr-infobar-formula { display: none; }
   .pr-podium { padding: 18px 10px 6px; gap: 5px; }
   .pr-pod { padding: 14px 6px 14px; border-radius: 14px; }
+  .pr-pod-crown { top: -2px; font-size: 1rem; }
+  .pr-pod-icon-wrap { margin-top: 10px; }
   .pr-pod-name { font-size: 0.76rem; }
   .pr-pod-score { font-size: 1.1rem; }
   .pr-list { padding: 0 12px; }

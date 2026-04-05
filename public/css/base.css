@@ -123,7 +123,7 @@ header {
 
 /* ── Leaderboard column header ── */
 .lb-header {
-  display: grid; grid-template-columns: 40px 1.5fr 150px 120px 100px 80px 40px; gap: 16px;
+  display: grid; grid-template-columns: 40px 1.5fr 180px 130px 100px 80px 40px; gap: 16px;
   padding: 0 20px 10px; font-size: 0.6rem; text-transform: uppercase;
   letter-spacing: 1.4px; color: var(--text3); font-weight: 700;
 }
@@ -145,11 +145,16 @@ header {
 .dev-locked::after { content: "🔒"; font-size: 0.6rem; margin-left: 5px; vertical-align: middle; opacity: 0.6; }
 
 /* ── Tier colors ── */
-.t-iron { color: var(--tier-iron); } .t-bronze { color: var(--tier-bronze); } .t-silver { color: var(--tier-silver); }
-.t-gold { color: var(--tier-gold); text-shadow: 0 0 10px rgba(200,155,60,0.3); }
-.t-platinum { color: var(--tier-platinum); } .t-emerald { color: var(--tier-emerald); }
-.t-diamond { color: var(--tier-diamond); } .t-master { color: var(--tier-master); }
-.t-grandmaster { color: var(--tier-grandmaster); } .t-challenger { color: var(--tier-challenger); }
+.t-iron         { color: var(--tier-iron);        text-shadow: 0 0 10px rgba(140,123,107,0.3); }
+.t-bronze       { color: var(--tier-bronze);      text-shadow: 0 0 10px rgba(205,127,50,0.3); }
+.t-silver       { color: var(--tier-silver);      text-shadow: 0 0 10px rgba(168,178,189,0.3); }
+.t-gold         { color: var(--tier-gold);        text-shadow: 0 0 10px rgba(200,155,60,0.3); }
+.t-platinum     { color: var(--tier-platinum);    text-shadow: 0 0 10px rgba(77,182,172,0.3); }
+.t-emerald      { color: var(--tier-emerald);     text-shadow: 0 0 10px rgba(48,209,88,0.3); }
+.t-diamond      { color: var(--tier-diamond);     text-shadow: 0 0 10px rgba(156,180,232,0.3); }
+.t-master       { color: var(--tier-master);      text-shadow: 0 0 10px rgba(191,90,242,0.3); }
+.t-grandmaster  { color: var(--tier-grandmaster); text-shadow: 0 0 10px rgba(255,69,58,0.3); }
+.t-challenger   { color: var(--tier-challenger);  text-shadow: 0 0 10px rgba(255,214,10,0.3); }
 .wr-good { color: var(--green); } .wr-ok { color: var(--orange); } .wr-bad { color: var(--red); }
 
 /* ── Update Timer ── */

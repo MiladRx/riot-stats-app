@@ -97,7 +97,7 @@
 
 /* ── Card header (Desktop) ── */
 .card-header {
-  display: grid; grid-template-columns: 40px 1.5fr 150px 120px 100px 80px 40px;
+  display: grid; grid-template-columns: 40px 1.5fr 180px 130px 100px 80px 40px;
   gap: 16px; align-items: center; padding: 16px 20px;
 }
 
@@ -124,11 +124,12 @@
 .player-name .tag { font-size: 0.72rem; color: var(--text3); font-weight: 500; }
 
 /* ── Tier column ── */
-.tier-col { display: flex; align-items: center; gap: 10px; }
+.tier-col { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .tier-emblem-sm {
   width: 38px; height: 38px; object-fit: contain; flex-shrink: 0;
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
 }
+.tier-info { text-align: center; }
 .tier-info .tier-name { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.4px; }
 .tier-info .tier-lp { font-size: 0.72rem; color: var(--text3); margin-top: 2px; font-weight: 600; }
 
@@ -175,56 +176,87 @@
 }
 
 /* ── Badges ── */
-.badge-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.badge-row { display: flex; gap: 4px; flex-wrap: nowrap; margin-top: 6px; min-width: 0; }
 .badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 0.6rem; font-weight: 800; padding: 3px 9px;
-  border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;
-  white-space: nowrap; line-height: 1.5; cursor: default;
-  position: relative;
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 0.55rem; font-weight: 800; padding: 2px 7px;
+  border-radius: 100px; letter-spacing: 0.5px; text-transform: uppercase;
+  white-space: nowrap; line-height: 1.6; cursor: default;
+  position: relative; transition: transform 0.15s, box-shadow 0.15s;
+  min-width: 0; flex-shrink: 1;
 }
+.badge:hover { transform: translateY(-1px); }
 
-/* Negative — red family */
-.badge-feeder      { background: rgba(255,59,48,0.2);  color: #ff6058; border: 1px solid rgba(255,59,48,0.5);  box-shadow: 0 0 10px rgba(255,59,48,0.15); }
-.badge-feeder-soft { background: rgba(255,59,48,0.11); color: #d95b53; border: 1px solid rgba(255,59,48,0.3); }
-.badge-hardstuck   { background: rgba(255,59,48,0.11); color: #c94f47; border: 1px solid rgba(255,59,48,0.28); }
+/* Negative — red */
+.badge-feeder      { background: linear-gradient(135deg, rgba(255,59,48,0.25), rgba(255,59,48,0.12)); color: #ff6058; border: 1px solid rgba(255,59,48,0.45); box-shadow: 0 2px 10px rgba(255,59,48,0.18), inset 0 1px 0 rgba(255,255,255,0.06); }
+.badge-feeder-soft { background: linear-gradient(135deg, rgba(255,80,60,0.18), rgba(255,59,48,0.08)); color: #f07068; border: 1px solid rgba(255,59,48,0.28); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+.badge-hardstuck   { background: linear-gradient(135deg, rgba(220,38,38,0.18), rgba(185,28,28,0.08)); color: #ef6060; border: 1px solid rgba(220,38,38,0.3); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+.badge-glass-cannon { background: linear-gradient(135deg, rgba(255,100,30,0.22), rgba(255,59,48,0.1)); color: #ff7a45; border: 1px solid rgba(255,100,30,0.38); box-shadow: 0 2px 8px rgba(255,100,30,0.14), inset 0 1px 0 rgba(255,255,255,0.05); }
 
-/* Elite — gold/yellow */
-.badge-godlike { background: rgba(255,214,10,0.14); color: #f5c800; border: 1px solid rgba(255,214,10,0.42); box-shadow: 0 0 10px rgba(255,214,10,0.14); }
+/* Elite — gold */
+.badge-godlike { background: linear-gradient(135deg, rgba(255,214,10,0.2), rgba(255,180,0,0.08)); color: #f5c800; border: 1px solid rgba(255,214,10,0.45); box-shadow: 0 2px 14px rgba(255,214,10,0.2), inset 0 1px 0 rgba(255,255,255,0.08); }
 
-/* Positive performance — blue */
-.badge-carry   { background: rgba(10,132,255,0.15); color: #5aabff; border: 1px solid rgba(10,132,255,0.4); }
+/* Performance — blue */
+.badge-carry   { background: linear-gradient(135deg, rgba(10,132,255,0.2), rgba(10,132,255,0.08)); color: #60b3ff; border: 1px solid rgba(10,132,255,0.38); box-shadow: 0 2px 10px rgba(10,132,255,0.14), inset 0 1px 0 rgba(255,255,255,0.06); }
 
-/* Aggression — orange/red */
-.badge-slayer  { background: rgba(255,80,50,0.15);  color: #ff7055; border: 1px solid rgba(255,80,50,0.38); }
+/* Aggression — orange */
+.badge-slayer  { background: linear-gradient(135deg, rgba(255,80,50,0.2), rgba(255,60,30,0.08)); color: #ff7055; border: 1px solid rgba(255,80,50,0.38); box-shadow: 0 2px 8px rgba(255,80,50,0.14), inset 0 1px 0 rgba(255,255,255,0.05); }
 
-/* Support/utility — green */
-.badge-support { background: rgba(48,209,88,0.13);  color: #44d468; border: 1px solid rgba(48,209,88,0.38); }
+/* Support — teal/green */
+.badge-support { background: linear-gradient(135deg, rgba(6,182,212,0.18), rgba(48,209,88,0.08)); color: #34d0cc; border: 1px solid rgba(6,182,212,0.35); box-shadow: 0 2px 8px rgba(6,182,212,0.12), inset 0 1px 0 rgba(255,255,255,0.05); }
 
-/* Season momentum — blue teal */
-.badge-climbing   { background: rgba(10,132,255,0.13); color: #4da0ff; border: 1px solid rgba(10,132,255,0.35); }
-.badge-consistent { background: rgba(48,209,88,0.10);  color: #52cc6e; border: 1px solid rgba(48,209,88,0.30); }
+/* Iron Wall — ice blue */
+.badge-ironwall { background: linear-gradient(135deg, rgba(147,210,255,0.18), rgba(100,180,255,0.07)); color: #90caf9; border: 1px solid rgba(147,210,255,0.35); box-shadow: 0 2px 10px rgba(147,210,255,0.12), inset 0 1px 0 rgba(255,255,255,0.06); }
 
-/* Negative season — muted orange */
-.badge-trenches { background: rgba(255,159,10,0.12); color: #e8930a; border: 1px solid rgba(255,159,10,0.32); }
+/* Momentum — blue */
+.badge-climbing   { background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(10,132,255,0.08)); color: #34d399; border: 1px solid rgba(16,185,129,0.35); box-shadow: 0 2px 8px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.05); }
+.badge-consistent { background: linear-gradient(135deg, rgba(48,209,88,0.15), rgba(34,197,94,0.06)); color: #4ade80; border: 1px solid rgba(48,209,88,0.3); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
 
-/* Purple — outlier/smurf */
-.badge-smurf { background: rgba(191,90,242,0.16); color: #cc7ff5; border: 1px solid rgba(191,90,242,0.44); box-shadow: 0 0 10px rgba(191,90,242,0.14); }
+/* Struggling */
+.badge-trenches { background: linear-gradient(135deg, rgba(255,159,10,0.16), rgba(234,88,12,0.07)); color: #fb923c; border: 1px solid rgba(255,159,10,0.3); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
 
-/* Volume — iron/brown */
-.badge-grinder { background: rgba(130,115,100,0.15); color: #a89a88; border: 1px solid rgba(130,115,100,0.35); }
+/* Smurf — purple */
+.badge-smurf { background: linear-gradient(135deg, rgba(191,90,242,0.22), rgba(139,92,246,0.08)); color: #d08ef5; border: 1px solid rgba(191,90,242,0.42); box-shadow: 0 2px 12px rgba(191,90,242,0.18), inset 0 1px 0 rgba(255,255,255,0.06); }
 
-/* Fresh — soft green */
-.badge-fresh { background: rgba(48,209,88,0.10); color: #5dde84; border: 1px solid rgba(48,209,88,0.28); }
+/* Grinder — muted */
+.badge-grinder { background: linear-gradient(135deg, rgba(120,110,100,0.2), rgba(100,90,80,0.08)); color: #b8a898; border: 1px solid rgba(130,115,100,0.32); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
 
-/* Hot streak — orange glow */
-.badge-streak { background: rgba(255,149,0,0.16); color: #ff9900; border: 1px solid rgba(255,149,0,0.42); box-shadow: 0 0 8px rgba(255,149,0,0.14); }
+/* Veteran — deep bronze */
+.badge-veteran { background: linear-gradient(135deg, rgba(205,127,50,0.2), rgba(180,100,30,0.08)); color: #d4956a; border: 1px solid rgba(205,127,50,0.38); box-shadow: 0 2px 8px rgba(205,127,50,0.12), inset 0 1px 0 rgba(255,255,255,0.05); }
 
-/* Live — red pulse */
-.badge-live { background: rgba(255,59,48,0.2); color: #ff6058; border: 1px solid rgba(255,59,48,0.5); box-shadow: 0 0 10px rgba(255,59,48,0.3); }
+/* Fresh */
+.badge-fresh { background: linear-gradient(135deg, rgba(52,211,153,0.16), rgba(48,209,88,0.06)); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.3); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+
+/* Hot streak */
+.badge-streak { background: linear-gradient(135deg, rgba(255,149,0,0.22), rgba(255,100,0,0.08)); color: #ffa726; border: 1px solid rgba(255,149,0,0.4); box-shadow: 0 2px 12px rgba(255,149,0,0.18), inset 0 1px 0 rgba(255,255,255,0.06); }
+
+/* Live */
+.badge-live { background: linear-gradient(135deg, rgba(255,59,48,0.25), rgba(200,30,20,0.1)); color: #ff6058; border: 1px solid rgba(255,59,48,0.48); box-shadow: 0 2px 12px rgba(255,59,48,0.22), inset 0 1px 0 rgba(255,255,255,0.06); animation: livePulse 2s ease-in-out infinite; }
+@keyframes livePulse { 0%,100% { box-shadow: 0 2px 12px rgba(255,59,48,0.22), inset 0 1px 0 rgba(255,255,255,0.06); } 50% { box-shadow: 0 2px 18px rgba(255,59,48,0.4), inset 0 1px 0 rgba(255,255,255,0.06); } }
+
+/* Phantom — silver ghost */
+.badge-phantom { background: linear-gradient(135deg, rgba(200,200,230,0.15), rgba(160,160,200,0.06)); color: #c0c8e8; border: 1px solid rgba(200,200,230,0.28); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); }
+
+/* Assassin — crimson */
+.badge-assassin { background: linear-gradient(135deg, rgba(180,0,50,0.22), rgba(220,20,60,0.08)); color: #f06080; border: 1px solid rgba(220,20,60,0.38); box-shadow: 0 2px 10px rgba(180,0,50,0.16), inset 0 1px 0 rgba(255,255,255,0.05); }
+
+/* Snowballer — cyan */
+.badge-snowball { background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(14,165,233,0.07)); color: #67d5f8; border: 1px solid rgba(56,189,248,0.35); box-shadow: 0 2px 10px rgba(56,189,248,0.14), inset 0 1px 0 rgba(255,255,255,0.06); }
+
+/* Underdog — warm red-orange */
+.badge-underdog { background: linear-gradient(135deg, rgba(234,88,12,0.2), rgba(194,65,12,0.07)); color: #fb923c; border: 1px solid rgba(234,88,12,0.35); box-shadow: 0 2px 8px rgba(234,88,12,0.12), inset 0 1px 0 rgba(255,255,255,0.05); }
+
+/* Committed — cool indigo */
+.badge-committed { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(79,70,229,0.07)); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.32); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+
+/* Tilted — deep red */
+.badge-tilted { background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(185,28,28,0.08)); color: #fc8181; border: 1px solid rgba(239,68,68,0.35); box-shadow: 0 2px 8px rgba(239,68,68,0.14), inset 0 1px 0 rgba(255,255,255,0.05); }
+
+/* Ice Cold — teal */
+.badge-icecold { background: linear-gradient(135deg, rgba(20,184,166,0.2), rgba(13,148,136,0.07)); color: #2dd4bf; border: 1px solid rgba(20,184,166,0.35); box-shadow: 0 2px 10px rgba(20,184,166,0.14), inset 0 1px 0 rgba(255,255,255,0.06); }
 
 /* Neutral */
-.badge-neutral { background: rgba(255,255,255,0.05); color: var(--text3); border: 1px solid rgba(255,255,255,0.1); }
+.badge-neutral { background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03)); color: var(--text3); border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
 
 /* ── Skeletons ── */
 .skeleton { background: var(--bg2); border: 1px solid var(--sep); border-radius: var(--radius); margin-bottom: 10px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; }
@@ -241,7 +273,7 @@
   .rank-num { grid-column: 1; grid-row: 1; text-align: left; font-size: 1.2rem; }
   .player-id { grid-column: 2; grid-row: 1; }
   .tier-col { grid-column: 3; grid-row: 1; justify-self: end; text-align: right; }
-  .tier-info { display: flex; flex-direction: column; align-items: flex-end; }
+  .tier-info { display: flex; flex-direction: column; align-items: center; }
   .wl-col { grid-column: 2; grid-row: 2; text-align: left; max-width: 220px; }
   .wl-numbers { justify-content: flex-start; }
   .wr-col { grid-column: 3; grid-row: 2; justify-self: end; }

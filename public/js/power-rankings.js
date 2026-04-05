@@ -3,18 +3,21 @@ var _prData = null;
 var _prResetTimer = null;
 
 function openPowerRankings() {
-  document.getElementById("pr-modal").classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-  _renderPrLoading();
   fetch("/power-rankings")
     .then(function(r) { return r.json(); })
     .then(function(d) {
+      document.getElementById("pr-modal").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
       if (d.error) { _renderPrError(d.error); return; }
       _prData = d;
       if (d.ddragonVersion) ICON_BASE = "https://ddragon.leagueoflegends.com/cdn/" + d.ddragonVersion + "/img/profileicon/";
       _renderPr(d);
     })
-    .catch(function(e) { _renderPrError(e.message); });
+    .catch(function(e) {
+      document.getElementById("pr-modal").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+      _renderPrError(e.message);
+    });
 }
 
 function closePowerRankings() {
@@ -33,10 +36,10 @@ function _renderPrError(msg) {
     '<div style="text-align:center;padding:50px 20px;color:#f87171;font-size:0.82rem">' + msg + '</div>';
 }
 
-function _scoreClass(n) { return n === null ? "neutral" : n > 0 ? "positive" : n < 0 ? "negative" : "neutral"; }
+function _scoreClass(n) { return n == null ? "neutral" : n > 0 ? "positive" : n < 0 ? "negative" : "neutral"; }
 
 function _scoreLabel(n, hasSnap) {
-  if (!hasSnap || n === null) return "—";
+  if (!hasSnap || n == null) return "—";
   if (n === 0) return "0 pts";
   return (n > 0 ? "+" : "") + n + " pts";
 }

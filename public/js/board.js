@@ -168,57 +168,90 @@ function cardHTML(p, i, rankPos) {
   var perfBadge = '';
   if (deathsVal >= 7.5) {
     perfBadge = _badge('feeder', '☠', 'Inting',
-      deathsVal.toFixed(1) + ' deaths per game. The enemy jungler sends their regards.');
+      deathsVal.toFixed(1) + ' deaths/game. The enemy jungler sends their regards.');
+  } else if (killsVal >= 8.0 && deathsVal >= 7.0) {
+    perfBadge = _badge('glass-cannon', '💥', 'Glass Cannon',
+      killsVal.toFixed(1) + ' kills but ' + deathsVal.toFixed(1) + ' deaths/game. High risk, high reward.');
   } else if (deathsVal >= 6.0 && kdaVal <= 2.0) {
     perfBadge = _badge('feeder-soft', '💀', 'Feeding',
-      kdaVal.toFixed(2) + ' KDA with ' + deathsVal.toFixed(1) + ' avg deaths. Playing the game generously.');
+      kdaVal.toFixed(2) + ' KDA, ' + deathsVal.toFixed(1) + ' avg deaths. Playing the game generously.');
   } else if (perfectKda || kdaVal >= 4.5) {
     var kdaStr = perfectKda ? 'Perfect (0 deaths)' : kdaVal.toFixed(2);
     perfBadge = _badge('godlike', '✦', 'Godlike',
-      kdaStr + ' KDA — ' + killsVal.toFixed(1) + '/' + deathsVal.toFixed(1) + '/' + assistsVal.toFixed(1) + '. Cannot be touched.');
+      kdaStr + ' KDA — ' + killsVal.toFixed(1) + '/' + deathsVal.toFixed(1) + '/' + assistsVal.toFixed(1) + '. Untouchable.');
+  } else if (deathsVal <= 2.5 && totalGames >= 15) {
+    perfBadge = _badge('ironwall', '🛡', 'Iron Wall',
+      deathsVal.toFixed(1) + ' deaths/game. Refuses to feed the enemy.');
   } else if (kdaVal >= 3.0 && killsVal >= 6.0 && deathsVal < 5.5) {
     perfBadge = _badge('carry', '⚡', 'Carrying',
       kdaVal.toFixed(2) + ' KDA, ' + killsVal.toFixed(1) + ' kills/game. The team eats because of them.');
   } else if (killsVal >= 9.0 && deathsVal < 6.5) {
     perfBadge = _badge('slayer', '🩸', 'Slayer',
-      killsVal.toFixed(1) + ' kills per game. Their damage profile is mostly faces.');
+      killsVal.toFixed(1) + ' kills/game. Their damage profile is mostly faces.');
   } else if (assistsVal >= 13.0 && killsVal <= 5.0) {
-    perfBadge = _badge('support', '🛡', 'Playmaker',
+    perfBadge = _badge('support', '🎯', 'Playmaker',
       assistsVal.toFixed(1) + ' assists, ' + killsVal.toFixed(1) + ' kills. Does the work, skips the glory.');
   } else if (assistsVal >= 9.0 && kdaVal >= 2.5 && killsVal <= 7.0) {
     perfBadge = _badge('support', '🤝', 'Team Player',
-      assistsVal.toFixed(1) + ' avg assists at ' + kdaVal.toFixed(2) + ' KDA. Wins as a unit, not an individual.');
+      assistsVal.toFixed(1) + ' assists at ' + kdaVal.toFixed(2) + ' KDA. Wins as a unit, not alone.');
+  } else if (killsVal >= 8.0 && assistsVal <= 3.5) {
+    perfBadge = _badge('assassin', '🗡', 'Assassin',
+      killsVal.toFixed(1) + ' kills, ' + assistsVal.toFixed(1) + ' assists. Doesn\'t share.');
+  } else if (killsVal >= 6.5 && kdaVal >= 3.2 && assistsVal <= 6.0) {
+    perfBadge = _badge('snowball', '❄', 'Snowballer',
+      killsVal.toFixed(1) + ' kills at ' + kdaVal.toFixed(2) + ' KDA. Gets ahead and stays ahead.');
+  } else if (deathsVal <= 2.2 && assistsVal >= 5.0 && killsVal <= 5.0) {
+    perfBadge = _badge('phantom', '👻', 'Phantom',
+      deathsVal.toFixed(1) + ' deaths/game. Impossible to catch, impossible to kill.');
   }
 
   // ── 2. SEASON BADGE (based on full record) ── pick ONE
   var seasonBadge = '';
   if (s.hotStreak) {
     seasonBadge = _badge('streak', '🔥', 'Hot Streak',
-      'On a winning streak right now. Best to avoid them in queue.');
+      'On a winning streak right now. Don\'t queue into them.');
+  } else if (totalGames >= 800) {
+    seasonBadge = _badge('veteran', '🏆', 'Veteran',
+      totalGames + ' games this split. This game is their life.');
   } else if (totalGames >= 500) {
     seasonBadge = _badge('grinder', '💿', 'No-Lifer',
       totalGames + ' games this split. Grass is a myth to this person.');
+  } else if (wrVal >= 65 && totalGames >= 20) {
+    seasonBadge = _badge('smurf', '👾', 'Smurf?',
+      wrVal + '% WR over ' + totalGames + ' games. Either boosted or hiding MMR.');
   } else if (wrVal >= 62 && totalGames >= 25) {
     seasonBadge = _badge('smurf', '👾', 'Smurf?',
       wrVal + '% WR over ' + totalGames + ' games. Either boosted or hiding their MMR.');
   } else if (wrVal >= 56 && totalGames >= 15) {
     seasonBadge = _badge('climbing', '📈', 'Climbing',
-      wrVal + '% WR — ' + s.wins + 'W / ' + s.losses + 'L. LP is going up this split.');
+      wrVal + '% WR — ' + s.wins + 'W / ' + s.losses + 'L. Going up.');
   } else if (wrVal >= 52 && totalGames >= 40) {
     seasonBadge = _badge('consistent', '✔', 'Consistent',
-      'Holding ' + wrVal + '% over ' + totalGames + ' games. Slow and steady wins the split.');
+      wrVal + '% over ' + totalGames + ' games. Slow and steady.');
+  } else if (wrVal <= 38 && totalGames >= 30) {
+    seasonBadge = _badge('hardstuck', '📉', 'Hardstuck',
+      wrVal + '% after ' + totalGames + ' games. The matchmaking has spoken.');
   } else if (wrVal <= 44 && totalGames >= 35) {
     seasonBadge = _badge('hardstuck', '📉', 'Hardstuck',
       wrVal + '% after ' + totalGames + ' games. The matchmaking has spoken.');
   } else if (wrVal <= 48 && totalGames >= 20) {
     seasonBadge = _badge('trenches', '⛏', 'Struggling',
-      wrVal + '% WR across ' + totalGames + ' games. More losses than wins, but still queuing up.');
+      wrVal + '% WR across ' + totalGames + ' games. More losses than wins.');
   } else if (totalGames >= 250) {
     seasonBadge = _badge('grinder', '⚔', 'Grinder',
-      totalGames + ' games deep this season. League is their full-time job.');
+      totalGames + ' games deep. League is their full-time job.');
+  } else if (wrVal >= 57 && totalGames >= 60) {
+    seasonBadge = _badge('icecold', '🧊', 'Ice Cold',
+      wrVal + '% WR over ' + totalGames + ' games. Consistently dominant.');
+  } else if (wrVal <= 42 && totalGames >= 20) {
+    seasonBadge = _badge('underdog', '🥊', 'Underdog',
+      wrVal + '% WR over ' + totalGames + ' games. Losing more than winning, still queuing.');
+  } else if (totalGames >= 120 && totalGames < 400) {
+    seasonBadge = _badge('committed', '📌', 'Committed',
+      totalGames + ' games this split. Still showing up.');
   } else if (totalGames <= 12 && totalGames > 0) {
     seasonBadge = _badge('fresh', '🌱', 'Fresh Start',
-      'Only ' + totalGames + ' games in. The season has barely begun for them.');
+      'Only ' + totalGames + ' games in. The season has barely begun.');
   }
 
   // ── Combine: perf first, then season. Max 2 ──
