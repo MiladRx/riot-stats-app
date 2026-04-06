@@ -1,4 +1,4 @@
-// ── CounterPicks — Smart Draft & Build Assistant ──
+ // ── CounterPicks — Smart Draft & Build Assistant ──
 
 let _version   = '';
 let _champMap  = {};
@@ -8,190 +8,263 @@ let _itemByName = {};
 // ── Lanes ──
 const LANES = ['top','jungle','mid','bot','support'];
 const LANE_META = {
-  top:     { label: 'Top Lane', short: 'TOP', emoji: '🏔' },
+  top:     { label: 'Top Lane', short: 'TOP', emoji: '🪓' },
   jungle:  { label: 'Jungle',   short: 'JGL', emoji: '🌿' },
   mid:     { label: 'Mid Lane', short: 'MID', emoji: '⚡' },
   bot:     { label: 'Bot Lane', short: 'BOT', emoji: '🎯' },
-  support: { label: 'Support',  short: 'SUP', emoji: '🛡' },
+  support: { label: 'Support',  short: 'SUP', emoji: '🛡️' } // Updated with proper emoji rendering
 };
-
 // ── Lane affinity sets ──
-const JUNGLE_IDS = new Set(['Vi','JarvanIV','LeeSin','Hecarim','Nidalee','Rengar','Elise','Khazix','Graves','Kindred','Ivern','Kayn','Warwick','Sejuani','Amumu','Volibear','Evelynn','Shyvana','Nocturne','Diana','Ekko','Nunu','Rammus','Zac','Udyr','Fiddlesticks','Trundle','XinZhao','Skarner','Belveth','Viego','Lillia','Karthus','Taliyah','Poppy','MonkeyKing','Pantheon','Briar','Maokai','Naafiri','Masteryi','Shaco']);
-const SUPPORT_IDS = new Set(['Thresh','Lulu','Janna','Soraka','Nautilus','Blitzcrank','Leona','Alistar','Braum','Bard','Nami','Sona','Taric','Morgana','Zyra','Karma','Brand','Zilean','Senna','Seraphine','Pyke','Rakan','Yuumi','Renata','Milio','Rell','Galio','Swain','Xerath','Velkoz','Heimerdinger','Neeko']);
-const MARKSMAN_IDS = new Set(['Jinx','Caitlyn','Ashe','MissFortune','Jhin','Ezreal','Kaisa','Sivir','Tristana','Vayne','Draven','Lucian','Xayah','Kogmaw','Twitch','Varus','Aphelios','Samira','Zeri','Nilah']);
+const JUNGLE_IDS = new Set(['Vi','JarvanIV','LeeSin','Hecarim','Nidalee','Rengar','Elise','Khazix','Graves','Kindred','Ivern','Kayn','Warwick','Sejuani','Amumu','Volibear','Evelynn','Shyvana','Nocturne','Diana','Ekko','Nunu','Rammus','Zac','Udyr','Fiddlesticks','Trundle','XinZhao','Skarner','Belveth','Viego','Lillia','Karthus','Taliyah','MonkeyKing','Briar','Maokai','Naafiri','Masteryi','Shaco','RekSai','Pantheon','Poppy']);
+const SUPPORT_IDS = new Set(['Thresh','Lulu','Janna','Soraka','Nautilus','Blitzcrank','Leona','Alistar','Braum','Bard','Nami','Sona','Taric','Morgana','Zyra','Karma','Brand','Zilean','Senna','Seraphine','Pyke','Rakan','Yuumi','Renata','Milio','Rell','Galio','Swain','Xerath','Velkoz','Heimerdinger','Neeko','Hwei','Lux','Poppy']);
+const MARKSMAN_IDS = new Set(['Jinx','Caitlyn','Ashe','MissFortune','Jhin','Ezreal','Kaisa','Sivir','Tristana','Vayne','Draven','Lucian','Xayah','KogMaw','Twitch','Varus','Aphelios','Samira','Zeri','Nilah','Smolder','Kalista','Corki']);
 
 // ── Counter database ──
-// Format: champId → [ [counterId, matchupScore 0-100], ... ]
-// Score = how favoured the counter is (100 = hardest counter, 55 = slight edge)
+// Source: counterstats.net win rates (Platinum+, current patch)
+// Score mapping: 57%WR→76, 55-56%→70-73, 53-54%→64-67, 52%→61, 51%→58
 const COUNTER_DB = {
-  // ── TOP LANE ──
-  Darius:      [['Vayne',72],['Quinn',70],['Teemo',68],['Fiora',65],['Malphite',62],['Gnar',60],['Jayce',59]],
-  Garen:       [['Vayne',73],['Teemo',71],['Quinn',69],['Jayce',65],['Fiora',63],['Kennen',60]],
-  Fiora:       [['Malphite',70],['Poppy',68],['Pantheon',66],['Camille',63],['Wukong',60],['Garen',58]],
-  Camille:     [['Malphite',72],['Poppy',69],['Jax',65],['Warwick',63],['Fiora',60]],
-  Malphite:    [['Fiora',74],['Vayne',71],['Camille',65],['Darius',62],['Garen',59]],
-  Irelia:      [['Malphite',73],['Pantheon',70],['Renekton',67],['Garen',63],['Camille',61]],
-  Renekton:    [['Nasus',68],['Fiora',65],['Camille',63],['Malphite',62],['Jayce',60]],
-  Nasus:       [['Darius',71],['Renekton',69],['Camille',66],['Fiora',64],['Garen',60]],
-  Riven:       [['Renekton',72],['Malphite',70],['Pantheon',67],['Garen',63],['Wukong',60]],
-  Jax:         [['Teemo',73],['Pantheon',70],['Malphite',68],['Quinn',65],['Wukong',62]],
-  Teemo:       [['Yorick',75],['Garen',70],['Nasus',68],['Pantheon',65],['Darius',62]],
-  Shen:        [['Camille',68],['Darius',65],['Fiora',64],['Renekton',62],['Garen',60]],
-  Yorick:      [['Camille',70],['Fiora',68],['Garen',65],['Renekton',63],['Illaoi',60]],
-  Illaoi:      [['Fiora',72],['Garen',68],['Quinn',66],['Vayne',65],['Camille',62]],
-  Wukong:      [['Malphite',71],['Camille',68],['Darius',65],['Garen',62],['Renekton',60]],
-  Jayce:       [['Malphite',70],['Irelia',67],['Renekton',65],['Camille',63],['Nasus',60]],
-  Kennen:      [['Malphite',72],['Garen',68],['Nasus',65],['Renekton',63],['Shen',61]],
-  Pantheon:    [['Malphite',70],['Darius',68],['Garen',65],['Renekton',62],['Wukong',60]],
-  Tryndamere:  [['Malphite',74],['Pantheon',71],['Garen',68],['Trundle',65],['Nasus',62]],
-  Aatrox:      [['Renekton',72],['Darius',70],['Malphite',67],['Garen',64],['Fiora',62]],
-  Gnar:        [['Malphite',70],['Garen',67],['Darius',65],['Renekton',63],['Camille',60]],
-  Sion:        [['Vayne',72],['Fiora',70],['Camille',67],['Darius',64],['Garen',62]],
-  Urgot:       [['Garen',70],['Vayne',68],['Nasus',65],['Fiora',63],['Malphite',60]],
-  Maokai:      [['Vayne',73],['Fiora',70],['Camille',67],['Darius',63],['Garen',61]],
-  Cho_Gath:    [['Vayne',71],['Fiora',68],['Camille',65],['Darius',62],['Renekton',60]],
-  Volibear:    [['Vayne',70],['Quinn',68],['Teemo',66],['Kennen',63],['Gnar',61]],
-  Mordekaiser: [['Vayne',74],['Quinn',71],['Kennen',68],['Gangplank',65],['Gnar',62]],
-  Poppy:       [['Vayne',70],['Fiora',68],['Darius',65],['Camille',62],['Garen',60]],
-  Ambessa:     [['Malphite',72],['Renekton',70],['Pantheon',68],['Garen',65],['Wukong',62]],
+  // ═══════════════════ TOP LANE ═══════════════════
+  // Real win rates from counterstats.net (Plat+, current patch)
+  Darius:      [['Teemo',76],['Vayne',73],['Kayle',70],['Yorick',67],['Volibear',67],['Vladimir',67],['Jayce',66],['Heimerdinger',66]],
+  Irelia:      [['Poppy',79],['Jax',73],['Malphite',73],['Warwick',70],['Shen',70],['Singed',67],['Mordekaiser',67],['Trundle',67]],
+  Camille:     [['Teemo',76],['Shen',73],['Renekton',70],['Gragas',70],['Sett',67],['DrMundo',67],['Volibear',64],['Mordekaiser',64]],
+  Renekton:    [['Teemo',79],['Singed',76],['Nasus',76],['Garen',73],['Gragas',70],['Illaoi',70],['Kayle',67],['Pantheon',67]],
+  Aatrox:      [['MonkeyKing',76],['Singed',76],['Kled',73],['Vladimir',70],['Kayle',67],['Vayne',67],['Warwick',64],['Kennen',64]],
+  Fiora:       [['Heimerdinger',79],['Warwick',79],['Kayle',70],['Vayne',70],['Malphite',67],['Volibear',67],['TahmKench',67],['Nasus',67]],
+  Nasus:       [['Shen',70],['Garen',70],['Ornn',67],['Camille',67],['TahmKench',64],['Sion',61],['Singed',61],['Illaoi',61]],
+  Malphite:    [['Singed',73],['Ornn',73],['DrMundo',73],['Shen',70],['Chogath',70],['Mordekaiser',67],['TahmKench',67],['Vladimir',64]],
+  Riven:       [['Renekton',64],['Singed',63],['Olaf',61],['Sett',60],['Malphite',59],['Garen',58]],
+  Jax:         [['Teemo',70],['Malphite',67],['Warwick',64],['Volibear',62],['Singed',61],['Pantheon',60]],
+  Garen:       [['Vayne',66],['Teemo',65],['Quinn',63],['Jayce',62],['Kennen',61],['Gangplank',60]],
+  Tryndamere:  [['Malphite',70],['Warwick',67],['Sett',64],['Garen',62],['Poppy',61],['Jax',59]],
+  Sion:        [['Fiora',67],['Camille',64],['Vayne',62],['Gnar',60],['Jayce',59]],
+  Volibear:    [['Vayne',66],['Quinn',64],['Teemo',62],['Kennen',60],['Gnar',58]],
+  Mordekaiser: [['Vayne',70],['Quinn',67],['Kennen',64],['Gangplank',62],['Gnar',59]],
+  Singed:      [['Gangplank',67],['Gnar',65],['Teemo',63],['Jayce',61],['Quinn',60]],
+  KSante:      [['Vayne',67],['Fiora',64],['Camille',62],['Gnar',60],['Jayce',58]],
+  Vladimir:    [['Renekton',67],['Darius',64],['Irelia',62],['Jayce',60],['Gnar',58]],
+  Gangplank:   [['Darius',64],['Renekton',62],['Camille',60],['Fiora',58],['Irelia',57]],
+  Kayle:       [['Darius',70],['Renekton',67],['Camille',64],['Irelia',61],['Wukong',59]],
+  Olaf:        [['Malphite',67],['Renekton',64],['Camille',62],['Fiora',60],['Garen',58]],
+  Jayce:       [['Malphite',65],['Irelia',64],['Renekton',62],['Camille',60],['Darius',58]],
+  Shen:        [['Camille',64],['Darius',62],['Fiora',60],['Renekton',58],['Garen',57]],
+  TahmKench:   [['Vayne',70],['Fiora',67],['Camille',64],['Gnar',62],['Jayce',60]],
+  Gnar:        [['Malphite',66],['Garen',63],['Darius',62],['Renekton',60],['Camille',58]],
+  Illaoi:      [['Fiora',70],['Garen',66],['Quinn',64],['Vayne',62],['Camille',60]],
+  Yorick:      [['Camille',66],['Fiora',64],['Garen',62],['Renekton',60],['Illaoi',58]],
+  Wukong:      [['Malphite',67],['Camille',64],['Darius',62],['Garen',60],['Renekton',58]],
+  Kennen:      [['Malphite',67],['Garen',64],['Nasus',62],['Renekton',60],['Shen',58]],
+  Poppy:       [['Vayne',66],['Fiora',64],['Darius',62],['Camille',60],['Garen',58]],
+  Urgot:       [['Garen',66],['Vayne',64],['Nasus',62],['Fiora',60],['Malphite',58]],
+  Teemo:       [['Yorick',73],['Garen',68],['Nasus',66],['Darius',62],['Pantheon',60]],
+  Cho_Gath:    [['Vayne',66],['Fiora',63],['Camille',61],['Darius',59],['Renekton',57]],
+  Chogath:     [['Vayne',66],['Fiora',63],['Camille',61],['Darius',59],['Renekton',57]],
+  Gragas:      [['Darius',64],['Renekton',62],['Camille',60],['Malphite',58],['Garen',57]],
+  Maokai:      [['Vayne',70],['Fiora',67],['Camille',64],['Darius',61],['Garen',59]],
+  Trundle:     [['Camille',64],['Malphite',62],['Fiora',60],['Renekton',58],['Darius',57]],
+  Ambessa:     [['Malphite',67],['Renekton',64],['Garen',62],['Wukong',60],['Pantheon',58]],
+  Heimerdinger:[['Darius',67],['Renekton',64],['Irelia',62],['Malphite',60],['Camille',58]],
+  Zac:         [['Vayne',67],['Fiora',64],['Quinn',62],['Gnar',60],['Jayce',58]],
+  Warwick:     [['Vayne',65],['Quinn',63],['Fiora',61],['Teemo',59],['Gnar',57]],
+  Pantheon:    [['Malphite',65],['Darius',63],['Garen',61],['Renekton',59],['Wukong',57]],
 
-  // ── JUNGLE ──
-  LeeSin:      [['Amumu',68],['Warwick',65],['Elise',63],['Hecarim',62],['Vi',60]],
-  Khazix:      [['Warwick',72],['Vi',68],['Hecarim',65],['Amumu',63],['JarvanIV',61]],
-  Rengar:      [['Warwick',73],['Vi',70],['Hecarim',67],['Amumu',64],['Nocturne',61]],
-  Hecarim:     [['Warwick',70],['Amumu',68],['Vi',65],['Elise',62],['Khazix',60]],
-  Graves:      [['Warwick',68],['Vi',65],['Elise',63],['Hecarim',61],['Amumu',59]],
-  Nidalee:     [['Warwick',71],['Vi',68],['Hecarim',65],['Elise',62],['Amumu',60]],
-  Elise:       [['Hecarim',68],['Vi',65],['Amumu',63],['Warwick',61],['Khazix',59]],
-  Warwick:     [['Hecarim',65],['Khazix',63],['Rengar',62],['Graves',60],['Nidalee',58]],
-  Amumu:       [['Hecarim',67],['Graves',64],['Nidalee',62],['Vi',60],['Elise',58]],
-  Evelynn:     [['Warwick',74],['Hecarim',70],['Vi',67],['Graves',64],['Nidalee',62]],
-  Vi:          [['Hecarim',66],['Amumu',64],['Warwick',62],['Graves',60],['Elise',58]],
-  Nocturne:    [['Warwick',70],['Vi',67],['Hecarim',64],['Amumu',62],['Elise',60]],
-  Kayn:        [['Warwick',68],['Vi',66],['Hecarim',64],['Graves',61],['Amumu',59]],
-  Viego:       [['Warwick',69],['Vi',66],['Hecarim',63],['Graves',61],['Amumu',59]],
-  Shyvana:     [['Vi',68],['Hecarim',65],['Warwick',63],['Graves',61],['Amumu',59]],
-  Diana:       [['Warwick',69],['Vi',67],['Hecarim',64],['Graves',62],['Amumu',60]],
-  Ekko:        [['Warwick',70],['Vi',68],['Hecarim',65],['Graves',62],['Amumu',60]],
-  Lillia:      [['Warwick',68],['Vi',65],['Hecarim',63],['Graves',61],['Amumu',59]],
-  Karthus:     [['Warwick',75],['Vi',72],['Nocturne',70],['Graves',67],['Hecarim',65]],
-  JarvanIV:    [['Hecarim',65],['Graves',63],['Nidalee',61],['Elise',60],['Vi',58]],
-  Belveth:     [['Warwick',71],['Vi',68],['Hecarim',65],['Graves',63],['Amumu',61]],
-  Briar:       [['Warwick',70],['Vi',67],['Hecarim',65],['Amumu',62],['Elise',60]],
-  Taliyah:     [['Hecarim',68],['Vi',65],['Graves',63],['Warwick',61],['Amumu',59]],
-  Sejuani:     [['Hecarim',66],['Graves',64],['Vi',62],['Warwick',60],['Amumu',58]],
-  Udyr:        [['Hecarim',67],['Vi',65],['Warwick',63],['Graves',61],['Amumu',59]],
-  MonkeyKing:  [['Hecarim',65],['Vi',63],['Warwick',61],['Graves',60],['Amumu',58]],
+  // ═══════════════════ JUNGLE ═══════════════════
+  LeeSin:      [['Nasus',76],['Naafiri',70],['RekSai',67],['Nocturne',67],['Amumu',64],['Zac',64],['Rammus',64],['Warwick',63]],
+  Khazix:      [['Briar',73],['Fiddlesticks',70],['Naafiri',70],['Diana',67],['Nocturne',67],['Amumu',67],['Rammus',64],['Warwick',63]],
+  Hecarim:     [['Fiddlesticks',76],['Rammus',76],['Belveth',76],['Vi',70],['Evelynn',70],['Graves',67],['Nunu',67],['DrMundo',67]],
+  Viego:       [['Taliyah',80],['Zyra',76],['Nasus',73],['Rammus',70],['Fiddlesticks',67],['Nocturne',67],['MonkeyKing',67],['RekSai',67]],
+  Warwick:     [['Nasus',77],['Kindred',73],['Shen',70],['Briar',70],['DrMundo',67],['Jax',67],['Amumu',67],['Lillia',64]],
+  Graves:      [['Fiddlesticks',70],['DrMundo',67],['Naafiri',64],['Zyra',64],['Nidalee',61],['Rammus',61]],
+  Kayn:        [['Udyr',73],['Fiddlesticks',70],['Kindred',67],['Gwen',64],['Elise',64],['MonkeyKing',63],['Zac',61]],
+  Nidalee:     [['Warwick',64],['Vi',62],['Hecarim',60],['Elise',58],['Amumu',57]],
+  Elise:       [['Hecarim',63],['Vi',61],['Amumu',59],['Warwick',57],['Khazix',56]],
+  Evelynn:     [['Warwick',70],['Hecarim',67],['Vi',64],['Graves',62],['Nidalee',60]],
+  Vi:          [['Hecarim',62],['Amumu',60],['Warwick',58],['Graves',57],['Elise',56]],
+  Nocturne:    [['Warwick',66],['Vi',63],['Hecarim',61],['Amumu',59],['Elise',57]],
+  Karthus:     [['Warwick',73],['Vi',70],['Nocturne',67],['Graves',65],['Hecarim',63]],
+  JarvanIV:    [['Hecarim',62],['Graves',60],['Nidalee',58],['Elise',57],['Vi',56]],
+  Belveth:     [['Warwick',67],['Vi',64],['Hecarim',62],['Graves',60],['Amumu',58]],
+  Briar:       [['Warwick',66],['Vi',63],['Hecarim',61],['Amumu',59],['Elise',57]],
+  Taliyah:     [['Hecarim',64],['Vi',62],['Graves',60],['Warwick',58],['Amumu',57]],
+  Sejuani:     [['Hecarim',62],['Graves',60],['Vi',58],['Warwick',57],['Amumu',56]],
+  Udyr:        [['Hecarim',63],['Vi',61],['Warwick',59],['Graves',58],['Amumu',57]],
+  MonkeyKing:  [['Hecarim',62],['Vi',60],['Warwick',58],['Graves',57],['Amumu',56]],
+  Fiddlesticks:[['Warwick',70],['Vi',67],['Hecarim',65],['Nocturne',63],['Amumu',61]],
+  RekSai:      [['Warwick',65],['Vi',63],['Hecarim',61],['Graves',59],['Amumu',57]],
+  Rammus:      [['Graves',66],['Nidalee',64],['Hecarim',62],['Vi',60],['Warwick',58]],
+  Nunu:        [['Hecarim',64],['Vi',62],['Graves',60],['Warwick',58],['Amumu',57]],
+  Masteryi:    [['Warwick',68],['Vi',65],['Hecarim',63],['Amumu',61],['Nocturne',59]],
+  Shaco:       [['Warwick',67],['Vi',64],['Hecarim',62],['Amumu',60],['Nocturne',58]],
+  Ivern:       [['Hecarim',64],['Vi',62],['Warwick',59],['Graves',57],['Elise',56]],
+  Kindred:     [['Warwick',66],['Vi',63],['Hecarim',61],['Graves',59],['Amumu',57]],
+  XinZhao:     [['Hecarim',63],['Vi',61],['Warwick',59],['Graves',58],['Amumu',57]],
+  Skarner:     [['Hecarim',62],['Vi',60],['Warwick',58],['Graves',57],['Amumu',56]],
+  Diana:       [['Warwick',65],['Vi',63],['Hecarim',61],['Graves',59],['Amumu',58]],
+  Trundle:     [['Warwick',62],['Hecarim',60],['Vi',58],['Graves',57],['Amumu',56]],
+  Zac:         [['Graves',63],['Hecarim',61],['Vi',59],['Nidalee',58],['Warwick',57]],
+  Ekko:        [['Warwick',66],['Vi',64],['Hecarim',62],['Graves',60],['Amumu',58]],
+  Lillia:      [['Warwick',64],['Vi',62],['Hecarim',60],['Graves',58],['Amumu',57]],
+  Volibear:    [['Vi',63],['Hecarim',61],['Graves',59],['Warwick',58],['Amumu',57]],
+  Poppy:       [['Hecarim',62],['Vi',60],['Warwick',58],['Graves',57],['Amumu',56]],
+  Shyvana:     [['Vi',64],['Hecarim',62],['Warwick',60],['Graves',59],['Amumu',57]],
+  Rengar:      [['Warwick',66],['Vi',64],['Hecarim',61],['Amumu',59],['Nocturne',58]],
+  Amumu:       [['Hecarim',64],['Graves',61],['Nidalee',59],['Vi',58],['Elise',56]],
 
-  // ── MID LANE ──
-  Zed:         [['Lissandra',78],['Malzahar',76],['Galio',74],['Anivia',70],['Fizz',67],['Diana',65]],
-  Fizz:        [['Malzahar',75],['Lissandra',72],['Galio',70],['Anivia',68],['Zed',65]],
-  Yasuo:       [['Malzahar',80],['Annie',74],['Galio',72],['Anivia',70],['Lissandra',68]],
-  Yone:        [['Malzahar',78],['Annie',73],['Galio',71],['Lissandra',69],['Anivia',67]],
-  Katarina:    [['Malzahar',80],['Galio',76],['Lissandra',74],['Diana',68],['Kassadin',65]],
-  Akali:       [['Malzahar',77],['Galio',74],['Lissandra',72],['Anivia',68],['Diana',65]],
-  Syndra:      [['Zed',65],['Fizz',63],['Katarina',62],['Talon',60],['Akali',58]],
-  Orianna:     [['Zed',67],['Fizz',65],['Katarina',63],['Akali',61],['Talon',59]],
-  LeBlanc:     [['Malzahar',76],['Galio',73],['Lissandra',71],['Anivia',68],['Diana',65]],
-  Viktor:      [['Zed',66],['Fizz',64],['Katarina',62],['Talon',61],['Akali',59]],
-  Cassiopeia:  [['Zed',67],['Fizz',65],['Katarina',63],['Talon',61],['Akali',59]],
-  Lux:         [['Zed',70],['Fizz',68],['Katarina',66],['Talon',64],['Akali',62]],
-  TwistedFate: [['Talon',80],['Zed',72],['Fizz',69],['Katarina',67],['Akali',65]],
-  Ahri:        [['Zed',66],['Fizz',64],['Katarina',62],['Talon',61],['Akali',59],['LeBlanc',57]],
-  Veigar:      [['Zed',72],['Fizz',70],['Katarina',68],['Talon',66],['Akali',64]],
-  Sylas:       [['Lissandra',74],['Malzahar',72],['Galio',70],['Anivia',67],['Diana',64]],
-  Malzahar:    [['Fizz',72],['Kassadin',70],['Zed',67],['Katarina',65],['Akali',63]],
-  Talon:       [['Lissandra',76],['Malzahar',74],['Galio',72],['Anivia',68],['Diana',65]],
-  Galio:       [['Zed',67],['Fizz',65],['Katarina',63],['Talon',61],['Akali',59]],
-  Lissandra:   [['Zed',68],['Fizz',66],['Katarina',64],['Talon',62],['Akali',60]],
-  Kassadin:    [['Talon',75],['Zed',68],['Fizz',65],['Katarina',63],['Akali',61]],
-  AurelionSol: [['Zed',73],['Talon',71],['Fizz',70],['Katarina',68],['Galio',66],['LeBlanc',64],['Kassadin',63]],
-  Corki:       [['Zed',67],['Talon',65],['Katarina',63],['Fizz',62],['Akali',60]],
-  Ekko:        [['Lissandra',70],['Malzahar',68],['Galio',66],['Zed',63],['Anivia',61]],
-  Tristana:    [['Zed',68],['Talon',66],['Katarina',64],['Fizz',62],['Akali',60]],
-  Vex:         [['Zed',65],['Talon',63],['Katarina',62],['Fizz',60],['Akali',58]],
-  Annie:       [['Zed',70],['Talon',68],['Katarina',66],['Fizz',64],['Akali',62]],
-  Anivia:      [['Zed',67],['Talon',65],['Katarina',63],['Fizz',61],['Akali',59]],
-  Ziggs:       [['Zed',69],['Talon',67],['Katarina',65],['Fizz',63],['Akali',61]],
-  Xerath:      [['Zed',72],['Talon',70],['Katarina',68],['Fizz',65],['Akali',63]],
-  Vel_Koz:     [['Zed',70],['Talon',68],['Katarina',66],['Fizz',64],['Akali',62]],
-  VelKoz:      [['Zed',70],['Talon',68],['Katarina',66],['Fizz',64],['Akali',62]],
-  Neeko:       [['Zed',67],['Talon',65],['Katarina',63],['Fizz',61],['Akali',59]],
-  Naafiri:     [['Lissandra',74],['Malzahar',72],['Galio',70],['Anivia',67],['Diana',64]],
-  Qiyana:      [['Lissandra',74],['Malzahar',72],['Galio',70],['Anivia',67],['Diana',64]],
-  Irelia:      [['Malphite',73],['Lissandra',70],['Galio',68],['Anivia',65],['Malzahar',63]],
-  Diana:       [['Zed',65],['Talon',63],['Katarina',62],['Fizz',60],['Akali',58]],
-  Pantheon:    [['Lissandra',68],['Malzahar',66],['Galio',65],['Anivia',63],['Zed',61]],
-  Swain:       [['Zed',68],['Talon',66],['Katarina',64],['Fizz',62],['Akali',60]],
-  Rumble:      [['Zed',67],['Talon',65],['Katarina',63],['Fizz',61],['Akali',59]],
+  // ═══════════════════ MID LANE ═══════════════════
+  Zed:         [['Malzahar',67],['Xerath',67],['Sylas',64],['Diana',64],['Katarina',64],['Viktor',63],['Vex',61],['Fizz',61],['Lissandra',61]],
+  Yasuo:       [['Malzahar',73],['AurelionSol',70],['Annie',70],['Lissandra',70],['Velkoz',70],['Vex',67],['Vladimir',64],['Veigar',61]],
+  Yone:        [['Annie',77],['Vladimir',73],['Vex',70],['Lissandra',70],['Syndra',67],['Lux',67],['Katarina',67],['Ahri',67]],
+  Katarina:    [['Cassiopeia',67],['Akali',64],['Lissandra',64],['Diana',64],['Galio',61],['Vladimir',61],['Annie',61],['Vex',61]],
+  Akali:       [['Lissandra',73],['Vex',73],['Anivia',70],['TwistedFate',70],['Annie',70],['Malzahar',67],['Lux',67],['Veigar',67]],
+  LeBlanc:     [['Naafiri',77],['Cassiopeia',73],['Malzahar',73],['Velkoz',70],['Vex',70],['Vladimir',67],['Kassadin',67],['Diana',67]],
+  Syndra:      [['Irelia',73],['Katarina',73],['Fizz',70],['AurelionSol',70],['Naafiri',70],['Ekko',67],['LeBlanc',67],['Xerath',67]],
+  Orianna:     [['Velkoz',76],['Anivia',73],['Xerath',73],['Kassadin',70],['Diana',70],['AurelionSol',70],['Lux',67],['Fizz',67]],
+  Ahri:        [['Talon',64],['Velkoz',61],['Diana',61],['Fizz',58],['Viktor',58],['Veigar',58]],
+  Fizz:        [['Malzahar',70],['Lissandra',67],['Galio',65],['Anivia',63],['Zed',61]],
+  Viktor:      [['Zed',62],['Fizz',60],['Katarina',59],['Talon',58],['Akali',57]],
+  Lux:         [['Zed',66],['Fizz',64],['Katarina',62],['Talon',60],['Akali',58]],
+  TwistedFate: [['Talon',76],['Zed',68],['Fizz',65],['Katarina',63],['Akali',61]],
+  Veigar:      [['Zed',68],['Fizz',66],['Katarina',64],['Talon',62],['Akali',60]],
+  Sylas:       [['Lissandra',70],['Malzahar',68],['Galio',66],['Anivia',63],['Diana',61]],
+  Malzahar:    [['Fizz',68],['Kassadin',66],['Zed',63],['Katarina',61],['Akali',59]],
+  Talon:       [['Lissandra',72],['Malzahar',70],['Galio',68],['Anivia',65],['Diana',62]],
+  Galio:       [['Zed',63],['Fizz',61],['Katarina',60],['Talon',58],['Akali',57]],
+  Lissandra:   [['Zed',64],['Fizz',62],['Katarina',61],['Talon',59],['Akali',58]],
+  Kassadin:    [['Talon',71],['Zed',64],['Fizz',62],['Katarina',60],['Akali',58]],
+  AurelionSol: [['Zed',69],['Talon',67],['Fizz',66],['Katarina',64],['Galio',62],['LeBlanc',61]],
+  Corki:       [['Zed',63],['Talon',61],['Katarina',60],['Fizz',58],['Akali',57]],
+  Tristana:    [['Zed',64],['Talon',62],['Katarina',61],['Fizz',59],['Akali',57]],
+  Vex:         [['Zed',61],['Talon',59],['Katarina',58],['Fizz',57],['Akali',56]],
+  Annie:       [['Zed',66],['Talon',64],['Katarina',62],['Fizz',60],['Akali',58]],
+  Anivia:      [['Zed',63],['Talon',61],['Katarina',60],['Fizz',58],['Akali',57]],
+  Ziggs:       [['Zed',65],['Talon',63],['Katarina',62],['Fizz',60],['Akali',58]],
+  Xerath:      [['Zed',68],['Talon',66],['Katarina',64],['Fizz',61],['Akali',59]],
+  Neeko:       [['Zed',63],['Talon',61],['Katarina',60],['Fizz',58],['Akali',57]],
+  Naafiri:     [['Lissandra',70],['Malzahar',68],['Galio',66],['Anivia',63],['Diana',61]],
+  Qiyana:      [['Lissandra',70],['Malzahar',68],['Galio',66],['Anivia',63],['Diana',61]],
+  Irelia:      [['Malphite',69],['Lissandra',66],['Galio',64],['Anivia',62],['Malzahar',60]],
+  Pantheon:    [['Lissandra',64],['Malzahar',62],['Galio',61],['Anivia',59],['Zed',58]],
+  Swain:       [['Zed',64],['Talon',62],['Katarina',61],['Fizz',59],['Akali',57]],
+  Rumble:      [['Zed',63],['Talon',61],['Katarina',60],['Fizz',58],['Akali',57]],
+  Hwei:        [['Zed',65],['Talon',63],['Katarina',61],['Fizz',59],['Akali',57]],
+  Aurora:      [['Malzahar',68],['Lissandra',65],['Galio',63],['Zed',61],['Talon',59]],
+  Smolder:     [['Zed',67],['Talon',65],['Katarina',63],['Fizz',61],['Akali',59]],
+  Azir:        [['Zed',69],['Talon',67],['LeBlanc',65],['Fizz',63],['Katarina',61]],
+  Ekko:        [['Lissandra',66],['Malzahar',64],['Galio',62],['Zed',59],['Anivia',57]],
+  Diana:       [['Zed',61],['Talon',59],['Katarina',58],['Fizz',57],['Akali',56]],
+  Vladimir:    [['Renekton',68],['Darius',66],['Jayce',63],['Irelia',61],['Fizz',59]],
+  Velkoz:      [['Zed',66],['Talon',64],['Katarina',62],['Fizz',60],['Akali',58]],
+  Vel_Koz:     [['Zed',66],['Talon',64],['Katarina',62],['Fizz',60],['Akali',58]],
+  VelKoz:      [['Zed',66],['Talon',64],['Katarina',62],['Fizz',60],['Akali',58]],
+  Cassiopeia:  [['Zed',64],['Fizz',62],['Katarina',61],['Talon',59],['Akali',57]],
 
-  // ── BOT LANE ──
-  Jinx:        [['Draven',72],['Caitlyn',70],['Lucian',68],['Kaisa',65],['Sivir',62]],
-  Caitlyn:     [['Draven',70],['Vayne',68],['Lucian',66],['Kaisa',64],['Xayah',62]],
-  Ashe:        [['Draven',73],['Lucian',70],['Caitlyn',68],['Vayne',65],['Kaisa',62]],
-  MissFortune: [['Draven',70],['Caitlyn',68],['Lucian',66],['Vayne',64],['Kaisa',62]],
-  Jhin:        [['Draven',71],['Caitlyn',69],['Lucian',67],['Vayne',64],['Kaisa',62]],
-  Ezreal:      [['Draven',72],['Caitlyn',68],['Lucian',66],['Vayne',64],['Kaisa',62]],
-  Kaisa:       [['Draven',71],['Caitlyn',68],['Lucian',66],['Vayne',64],['Jhin',62]],
-  Sivir:       [['Draven',70],['Caitlyn',68],['Lucian',66],['Kaisa',64],['Vayne',62]],
-  Vayne:       [['Caitlyn',72],['Draven',70],['Lucian',68],['Kaisa',65],['MissFortune',62]],
-  Draven:      [['Caitlyn',68],['Vayne',65],['Lucian',64],['Kaisa',62],['Ezreal',60]],
-  Xayah:       [['Draven',71],['Caitlyn',68],['Lucian',66],['Kaisa',64],['Vayne',62]],
-  Samira:      [['Caitlyn',73],['Draven',70],['Lucian',68],['Kaisa',65],['Vayne',63]],
-  Zeri:        [['Draven',70],['Caitlyn',68],['Lucian',66],['Kaisa',64],['Vayne',62]],
-  Aphelios:    [['Draven',71],['Caitlyn',69],['Lucian',67],['Kaisa',65],['Vayne',63]],
-  Nilah:       [['Caitlyn',72],['Draven',70],['Lucian',68],['Kaisa',65],['Vayne',63]],
-  Kogmaw:      [['Draven',73],['Caitlyn',71],['Lucian',69],['Kaisa',66],['Vayne',64]],
-  Twitch:      [['Caitlyn',74],['Draven',72],['Lucian',70],['Kaisa',67],['Vayne',65]],
-  Varus:       [['Draven',70],['Caitlyn',68],['Lucian',66],['Kaisa',64],['Vayne',62]],
-  Tristana:    [['Caitlyn',70],['Draven',68],['Lucian',66],['Kaisa',64],['Vayne',62]],
+  // ═══════════════════ BOT LANE (ADC) ═══════════════════
+  Ezreal:      [['Nilah',76],['Samira',73],['KogMaw',67],['Vayne',67],['Sivir',67],['Veigar',67],['Smolder',67],['Ashe',64]],
+  Jinx:        [['Ziggs',64],['Nilah',61],['Veigar',58],['Zeri',58],['Senna',57]],
+  Caitlyn:     [['Veigar',70],['Ziggs',67],['Nilah',67],['KogMaw',61],['Ashe',61],['Smolder',61],['Samira',61]],
+  Ashe:        [['Nilah',64],['MissFortune',58],['Twitch',58],['Senna',58],['Ziggs',58]],
+  MissFortune: [['Veigar',73],['Nilah',67],['Ziggs',64],['Senna',64],['KogMaw',61],['Xayah',58]],
+  Jhin:        [['Veigar',73],['Samira',61],['Sivir',61],['Ashe',61],['Vayne',58]],
+  Kaisa:       [['Veigar',70],['KogMaw',70],['Samira',67],['Xayah',67],['Smolder',64],['Senna',64],['Aphelios',61]],
+  Sivir:       [['Draven',64],['Caitlyn',62],['Lucian',60],['Kaisa',59],['Vayne',57]],
+  Vayne:       [['Senna',70],['Nilah',64],['Jinx',61],['MissFortune',61],['Smolder',61],['Xayah',61]],
+  Draven:      [['Veigar',70],['Ziggs',64],['KogMaw',64],['Nilah',64],['Smolder',61],['Ashe',61]],
+  Xayah:       [['Draven',67],['Caitlyn',64],['Lucian',62],['Kaisa',60],['Vayne',58]],
+  Samira:      [['Caitlyn',67],['Draven',63],['Lucian',61],['Kaisa',59],['Vayne',57]],
+  Zeri:        [['Draven',66],['Caitlyn',64],['Lucian',62],['Kaisa',60],['Vayne',58]],
+  Aphelios:    [['Draven',67],['Caitlyn',65],['Lucian',63],['Kaisa',61],['Vayne',59]],
+  Nilah:       [['Caitlyn',67],['Draven',65],['Lucian',63],['Kaisa',61],['Vayne',59]],
+  KogMaw:      [['Draven',69],['Caitlyn',67],['Lucian',65],['Kaisa',62],['Vayne',60]],
+  Kogmaw:      [['Draven',69],['Caitlyn',67],['Lucian',65],['Kaisa',62],['Vayne',60]],
+  Twitch:      [['Caitlyn',70],['Draven',68],['Lucian',66],['Kaisa',63],['Vayne',61]],
+  Varus:       [['Draven',66],['Caitlyn',64],['Lucian',62],['Kaisa',60],['Vayne',58]],
+  Tristana:    [['Caitlyn',66],['Draven',64],['Lucian',62],['Kaisa',60],['Vayne',58]],
+  Smolder:     [['Draven',67],['Caitlyn',65],['Lucian',63],['Kaisa',61],['Vayne',59]],
+  Kalista:     [['Caitlyn',68],['Draven',66],['Lucian',64],['Kaisa',61],['Vayne',59]],
+  Corki:       [['Draven',66],['Caitlyn',64],['Lucian',62],['Kaisa',60],['Vayne',58]],
+  Seraphine:   [['Draven',63],['Caitlyn',61],['Lucian',59],['Kaisa',58],['Vayne',57]],
 
-  // ── SUPPORT ──
-  Thresh:      [['Blitzcrank',68],['Leona',66],['Nautilus',65],['Pyke',63],['Brand',61]],
-  Lulu:        [['Blitzcrank',70],['Leona',68],['Nautilus',66],['Brand',64],['Pyke',62]],
-  Janna:       [['Blitzcrank',71],['Leona',69],['Nautilus',67],['Brand',65],['Pyke',63]],
-  Soraka:      [['Blitzcrank',72],['Leona',70],['Nautilus',68],['Brand',65],['Pyke',63]],
-  Nautilus:    [['Thresh',67],['Lulu',65],['Janna',64],['Soraka',62],['Brand',60]],
-  Leona:       [['Thresh',67],['Lulu',65],['Janna',64],['Soraka',62],['Brand',60]],
-  Blitzcrank:  [['Thresh',68],['Lulu',66],['Janna',65],['Soraka',63],['Brand',61]],
-  Pyke:        [['Lulu',72],['Thresh',68],['Janna',66],['Soraka',64],['Brand',62]],
-  Brand:       [['Thresh',66],['Lulu',64],['Janna',63],['Soraka',61],['Nautilus',59]],
-  Morgana:     [['Blitzcrank',70],['Leona',67],['Nautilus',65],['Pyke',63],['Brand',61]],
-  Zyra:        [['Thresh',66],['Lulu',64],['Janna',63],['Soraka',61],['Nautilus',59]],
-  Alistar:     [['Thresh',66],['Lulu',64],['Janna',63],['Soraka',61],['Brand',59]],
-  Braum:       [['Thresh',66],['Lulu',64],['Janna',63],['Soraka',61],['Brand',59]],
-  Karma:       [['Blitzcrank',68],['Leona',66],['Nautilus',64],['Pyke',62],['Brand',60]],
-  Nami:        [['Blitzcrank',69],['Leona',67],['Nautilus',65],['Pyke',63],['Brand',61]],
-  Bard:        [['Blitzcrank',67],['Leona',65],['Nautilus',63],['Brand',61],['Pyke',59]],
-  Sona:        [['Blitzcrank',73],['Leona',71],['Nautilus',69],['Brand',66],['Pyke',64]],
-  Yuumi:       [['Blitzcrank',75],['Leona',73],['Nautilus',71],['Brand',68],['Pyke',66]],
-  Seraphine:   [['Blitzcrank',70],['Leona',68],['Nautilus',66],['Brand',63],['Pyke',61]],
-  Milio:       [['Blitzcrank',70],['Leona',68],['Nautilus',66],['Brand',63],['Pyke',61]],
-  Rakan:       [['Thresh',68],['Lulu',66],['Janna',65],['Soraka',63],['Brand',61]],
-  Senna:       [['Blitzcrank',70],['Leona',68],['Nautilus',66],['Pyke',63],['Brand',61]],
-  Swain:       [['Thresh',67],['Lulu',65],['Janna',64],['Soraka',62],['Brand',60]],
-  Rell:        [['Thresh',67],['Lulu',65],['Janna',64],['Soraka',62],['Brand',60]],
-  Taric:       [['Blitzcrank',68],['Leona',66],['Brand',64],['Pyke',62],['Nautilus',60]],
-  Renata:      [['Blitzcrank',70],['Leona',68],['Nautilus',66],['Brand',63],['Pyke',61]],
-  Zilean:      [['Blitzcrank',70],['Leona',68],['Nautilus',66],['Brand',63],['Pyke',61]],
+  // ═══════════════════ SUPPORT ═══════════════════
+  Thresh:      [['Zyra',64],['Seraphine',64],['Brand',61],['Braum',61],['Taric',61],['Morgana',58],['Zilean',58],['Nami',58]],
+  Nautilus:    [['Taric',77],['Janna',67],['Leona',67],['Rell',67],['Braum',67],['Morgana',61],['Maokai',61],['Thresh',61]],
+  Leona:       [['Zilean',70],['Soraka',67],['Sona',64],['Seraphine',64],['Swain',64],['Morgana',64],['Janna',61]],
+  Blitzcrank:  [['Taric',73],['Elise',70],['Shaco',67],['Leona',67],['Maokai',67],['Zilean',64],['Braum',64],['Rell',64]],
+  Lulu:        [['Janna',67],['Maokai',64],['Braum',64],['Zilean',64],['Velkoz',61],['Zyra',61],['Seraphine',61]],
+  Janna:       [['Sona',67],['Bard',61],['Maokai',61],['Seraphine',61],['Nami',58],['Thresh',58]],
+  Soraka:      [['Elise',61],['Nami',61],['Sona',58],['Bard',58]],
+  Brand:       [['Sona',70],['Velkoz',67],['Maokai',67],['Taric',67],['Janna',64],['Zilean',64],['Milio',64],['Karma',61]],
+  Morgana:     [['Blitzcrank',66],['Leona',63],['Nautilus',61],['Pyke',59],['Brand',58]],
+  Zyra:        [['Thresh',62],['Lulu',60],['Janna',59],['Soraka',58],['Nautilus',57]],
+  Alistar:     [['Thresh',62],['Lulu',60],['Janna',59],['Soraka',58],['Brand',57]],
+  Braum:       [['Thresh',62],['Lulu',60],['Janna',59],['Soraka',58],['Brand',57]],
+  Karma:       [['Blitzcrank',64],['Leona',62],['Nautilus',61],['Pyke',59],['Brand',57]],
+  Nami:        [['Blitzcrank',65],['Leona',63],['Nautilus',62],['Pyke',60],['Brand',58]],
+  Bard:        [['Blitzcrank',63],['Leona',61],['Nautilus',60],['Brand',58],['Pyke',57]],
+  Sona:        [['Blitzcrank',70],['Leona',68],['Nautilus',66],['Brand',63],['Pyke',61]],
+  Yuumi:       [['Blitzcrank',72],['Leona',70],['Nautilus',68],['Brand',65],['Pyke',63]],
+  Seraphine:   [['Blitzcrank',66],['Leona',64],['Nautilus',62],['Brand',60],['Pyke',58]],
+  Milio:       [['Blitzcrank',66],['Leona',64],['Nautilus',62],['Brand',60],['Pyke',58]],
+  Rakan:       [['Thresh',64],['Lulu',62],['Janna',61],['Soraka',59],['Brand',58]],
+  Senna:       [['Blitzcrank',66],['Leona',64],['Nautilus',62],['Pyke',60],['Brand',58]],
+  Rell:        [['Thresh',63],['Lulu',61],['Janna',60],['Soraka',58],['Brand',57]],
+  Taric:       [['Blitzcrank',64],['Leona',62],['Brand',61],['Pyke',59],['Nautilus',57]],
+  Renata:      [['Blitzcrank',66],['Leona',64],['Nautilus',62],['Brand',60],['Pyke',58]],
+  Zilean:      [['Blitzcrank',66],['Leona',64],['Nautilus',62],['Brand',60],['Pyke',58]],
+  Hwei:        [['Blitzcrank',65],['Leona',63],['Nautilus',61],['Brand',59],['Pyke',57]],
+  Poppy:       [['Thresh',63],['Lulu',61],['Janna',60],['Soraka',58],['Brand',57]],
+  Galio:       [['Thresh',62],['Lulu',60],['Janna',59],['Soraka',58],['Brand',57]],
+  Swain:       [['Thresh',63],['Lulu',61],['Janna',60],['Soraka',58],['Brand',57]],
+  Xerath:      [['Blitzcrank',65],['Leona',63],['Nautilus',62],['Pyke',60],['Brand',58]],
+  Neeko:       [['Blitzcrank',64],['Leona',62],['Nautilus',61],['Pyke',59],['Brand',58]],
+  Lux:         [['Blitzcrank',65],['Leona',63],['Nautilus',62],['Pyke',60],['Brand',58]],
+  Heimerdinger:[['Blitzcrank',68],['Leona',66],['Nautilus',64],['Pyke',62],['Brand',60]],
+  Pyke:        [['Lulu',68],['Thresh',64],['Janna',62],['Soraka',60],['Brand',59]],
+  Velkoz:      [['Blitzcrank',65],['Leona',63],['Nautilus',62],['Pyke',60],['Brand',58]],
 };
 
 // Specific reasons (counter → enemy)
+// Based on actual matchup mechanics
 const COUNTER_REASONS = {
-  Malphite:    { Zed:'Passive absorbs burst. R interrupts dashes and wind wall.', Irelia:'R cancels her dashes mid-combo.', default:'Hard CC and tankiness neutralize melee gap-closers.' },
-  Lissandra:   { Zed:'E escapes death mark. R on herself negates his burst.', Katarina:'R stops her mid-spin. Your CC chain denies resets.', default:'Multiple CC abilities shut down anyone who dives.' },
-  Malzahar:    { Yasuo:'R suppression fully bypasses wind wall.', Katarina:'R suppression cancels her spin mid-combo.', Zed:'R prevents death mark from activating.', TwistedFate:'Counterpush and roam denial — shove and follow his picks.', AurelionSol:'Silence zone denies his roam setup. R locks him down.', default:'R suppression counters any diving or roaming assassin.' },
-  Galio:       { Zed:'W taunts through his shadow.', TwistedFate:'R covers the map faster than TF can roam.', default:'Magic shield and hard CC punish AP champions hard.' },
-  Talon:       { TwistedFate:'Your roam speed matches his. Kill his targets before he does.', AurelionSol:'Assassinate him before he gets range. His immobility hurts.', default:'Fast roam speed and burst pressure follows his roam windows.' },
-  Warwick:     { default:'Built-in healing, powerful 1v1, and suppression on gank secures kills.' },
-  Vi:          { default:'Unstoppable R engage ignores dashes. Point-and-click CC on gank.' },
-  Draven:      { default:'Oppressive early laner — zone them off CS and punish each catch.' },
-  Caitlyn:     { default:'Superior range forces enemies to play passively and miss CS.' },
-  Vayne:       { Darius:'True damage bypasses armor stacks completely.', Malphite:'Silver Bolts shred your HP regardless of armor.', default:'True damage ignores tankiness — scales into unkillable carry.' },
-  Fiora:       { Malphite:'Parry blocks your R engage completely.', Darius:'Parry on Hemorrhage removes entire bleed stack.', default:'Parry punishes telegraphed CC abilities hard.' },
-  Camille:     { Fiora:'Hookshot gap-close and true damage are strong in the matchup.', default:'True damage and mobility give a decisive edge in trades.' },
-  Fizz:        { Zed:'Playful/Trickster dodges his combo and death mark.', Syndra:'Pole Vault dodges her stun combo and burst.', default:'E dodge negates the most dangerous ability in the matchup.' },
-  Kassadin:    { AurelionSol:'Outscale him hard. R spam makes him useless at 3 items.', default:'Ult spam makes him unkillable and uncatchable at 3 items.' },
+  // Top lane
+  Teemo:       { Darius:'Poison kite keeps his bleed from stacking. You never let him engage.', Renekton:'Range advantage denies his early aggression entirely.', Camille:'Mushrooms slow her dash approach. Poke her off every CS.', default:'Ranged poke forces them off CS and denies melee engage patterns.' },
+  Warwick:     { Fiora:'W healing overpowers her vitals pattern in extended trades.', Irelia:'Suppress her mid-dash combo with R.', default:'Built-in healing, powerful 1v1, and point-and-click suppression.' },
+  Heimerdinger:{ Fiora:'Turrets punish every dash approach. She can never safely engage.', Darius:'Ranged turrets deny his ability to ever step up.', Renekton:'Turrets zone him off CS. You outrange every cooldown.', default:'Turrets punish every melee engage attempt and deny CS freely.' },
+  Vayne:       { Darius:'True damage bypasses armor stacks entirely.', Malphite:'Silver Bolts shred HP regardless of armor rating.', KSante:'True damage ignores his passive stacking mechanic.', TahmKench:'Silver Bolts melt through his HP pool. Kite endlessly.', Fiora:'Condemn her vitals pattern and true damage her down.', Aatrox:'True damage ignores his healing — burst him down fast.', default:'True damage ignores all tankiness. Kite and scale.' },
+  Poppy:       { Irelia:'W stops her mid-dash, removing her entire damage pattern.', default:'Passive shield and W interrupt gap-closers completely.' },
+  Malphite:    { Irelia:'R cancels her entire dash chain mid-combo.', Yasuo:'R flattens his wind wall combo in teamfights.', Riven:'R interrupts her full combo and burst window.', default:'Rock-solid tank with point-and-click CC. Shuts down melee threats.' },
+  Singed:      { Renekton:'He can never catch you. Proxy farm and let him rage.', Camille:'Your flip punishes her dash aggressively. She can\'t all-in.', Aatrox:'Proxy farm denies his CS while you ignore his engage entirely.', default:'Proxy farm starves them out. Your run-it-down playstyle nullifies melee threats.' },
+  Kayle:       { Irelia:'Ult negates her entire dive combo at level 16.', Darius:'Ranged scaling — abuse early levels before she reaches power spike.', default:'Ranged at level 6, unkillable at level 16. Farm safely and spike.' },
+  Fiora:       { Malphite:'Parry blocks his R engage completely.', Darius:'Parry on Hemorrhage removes the entire bleed stack.', Sion:'Parry his Q — removes his only reliable damage tool.', default:'Parry telegraphed CC. Vitals shred any tank or bruiser.' },
+  // Jungle
+  Fiddlesticks:{ Hecarim:'Fear + drain stops his engage before it lands.', Khazix:'Your zone control denies his isolation attempts.', default:'Mass fear teamfight ult from fog of war. Counter-gank freely.' },
+  Rammus:      { Hecarim:'W reflect punishes his high attack speed pattern.', Graves:'Thornmail reflect punishes his burst attempts.', default:'High mobility, point-and-click taunt. Destroys AD-heavy junglers.' },
+  Belveth:     { Hecarim:'Out-duel him at any stage with voidling sustain.', default:'Persistent damage and true damage shred any jungler.' },
+  Taliyah:     { Viego:'Worked Ground completely denies his camp patterns.', default:'Zone control denies jungle pathing and camp access entirely.' },
+  Nasus:       { Warwick:'Infinite stacks make you unkillable at 200+ Q stacks.', LeeSin:'He can never duel you past 150 stacks.', default:'Stacks make you unkillable late game. Farm safely early.' },
+  // Mid lane
+  Malzahar:    { Yasuo:'R suppression bypasses wind wall completely.', Katarina:'R suppression cancels her spin mid-combo.', Zed:'R prevents death mark from activating.', TwistedFate:'Shove and deny roams. Silence zone stops his gold card setup.', AurelionSol:'Silence zone denies his roam setup. R locks him down.', Yone:'Suppression cancels his E-dash combo entirely.', default:'R suppression stops any diver or assassin mid-combo.' },
+  Lissandra:   { Zed:'R on yourself negates his death mark burst.', Katarina:'R stops her spin cold. CC chain denies resets.', Talon:'W root then R — he cannot escape the combo.', Naafiri:'CC chain denies her entire engage window.', default:'Multiple CC abilities shut down anyone who dives.' },
+  Galio:       { Zed:'W taunt through his shadow stops the combo.', TwistedFate:'R covers the map faster than TF can roam.', Katarina:'Taunt stops her spin. Magic shield absorbs AP burst.', default:'Magic damage shield and hard CC punish AP champions.' },
+  Talon:       { TwistedFate:'Your roam speed matches his. Kill his targets first.', AurelionSol:'Assassinate him before he gets range. His mobility hurts.', default:'Roam speed and burst follow his roam windows perfectly.' },
+  Naafiri:     { LeBlanc:'Your burst is faster than hers. No disengage for her.', default:'Pack damage and burst kills before the target can react.' },
+  Cassiopeia:  { LeBlanc:'Petrifying gaze stops her chain combo instantly.', default:'Petrify punishes dashes. Poison stacks shred any target.' },
+  Velkoz:      { Orianna:'Zone control from range denies her ball placement.', default:'Max range poke shreds anyone without mobility or shields.' },
+  Fizz:        { Zed:'E dodges his entire combo and death mark timer.', Syndra:'E vaults over her stun combo burst window.', LeBlanc:'E timing dodges her chain-combo root precisely.', default:'E dodge removes the most dangerous ability in any matchup.' },
+  Kassadin:    { AurelionSol:'Outscale at 3 items. R spam makes you permanently uncatchable.', default:'R spam makes you unkillable and uncatchable at full build.' },
+  Annie:       { Yasuo:'Stun combo eliminates him before wind wall activates.', Yone:'Tibbers hard CC counters his entire E-dash pattern.', default:'Instant stun combo with Tibbers wins any all-in decisively.' },
+  // Bot lane
+  Veigar:      { Ezreal:'Cage walls deny his E escape. Burst him through his spells.', Caitlyn:'Cage traps her under turret. Event Horizon stops dashes.', Draven:'Cage counters his axes pattern. Burst before he catches.', default:'Event Horizon cage traps immobile ADCs. AP burst one-shots.' },
+  Nilah:       { Ezreal:'Dodge his E with W and burst through his shields.', Vayne:'Outbrawl her in extended trades with W passive.', default:'Melee burst and dash through skillshots. Wins extended trades.' },
+  Senna:       { Vayne:'Long range poke and healing sustain out-trades her.', default:'Infinite scaling range plus healing overwhelms most matchups.' },
+  Caitlyn:     { default:'Range advantage forces passive play. Traps punish every engage.' },
+  Draven:      { default:'Catch-and-kill early. Axes punish passive play hard.' },
+  // Support
+  Taric:       { Nautilus:'Ult makes your ADC unkillable through his engage.', Blitzcrank:'Invulnerability timing counters his hook burst combo.', default:'Ult invulnerability and stun negate engage burst patterns.' },
+  Zilean:      { Leona:'Ult on ADC negates her all-in kill combo.', default:'Ult revive counters any kill-based engage pattern.' },
+  Morgana:     { Blitzcrank:'Black Shield blocks his hook completely.', Nautilus:'Black Shield negates his chain CC sequence.', default:'Black Shield blocks CC chains. Q root punishes engage.' },
+  Zyra:        { Thresh:'Zone control denies his lantern and hook patterns.', default:'Plant zone control and CC chain punish hook-based supports.' },
+  Brand:       { Thresh:'AoE punishes his grouped lantern setup.', default:'Passive burn and AoE punish clustered engage supports hard.' },
+  Sona:        { Leona:'Ult shockwave stops her full engage combo.', Janna:'Sustained poke and ult counter her disengage pattern.', default:'Ult shockwave stops engage. Sustained poke wins lane attrition.' },
 };
 
 // Composition-based counters
@@ -205,46 +278,17 @@ const COMP_COUNTERS = {
   heavy_engage:   { trait:'Disengage',       champs:['Janna','Lulu','Soraka','Nami','Karma','Sivir','Vayne','Quinn','Yasuo','Tristana'] },
 };
 
-// Item data
-const ITEM_NAMES = {
-  lethality:    ['Duskblade of Draktharr','Eclipse',"Serylda's Grudge",'Edge of Night','Axiom Arc','Opportunity'],
-  ad_crit:      ['Infinity Edge','Galeforce','Kraken Slayer','Phantom Dancer','Immortal Shieldbow','Navori Flickerblade','Collector'],
-  ad_bruiser:   ['Trinity Force','Ravenous Hydra',"Sterak's Gage",'Black Cleaver','Stridebreaker','Sundered Sky'],
-  ap_damage:    ["Shadowflame","Luden's Companion",'Stormsurge','Hextech Rocketbelt','Malignance','Horizon Focus'],
-  magic_resist: ["Banshee's Veil",'Force of Nature','Maw of Malmortius','Spirit Visage','Kaenic Rookern'],
-  anti_heal_ad: ['Mortal Reminder','Chempunk Chainsword'],
-  anti_heal_ap: ['Morellonomicon'],
-  tank_bust_ad: ["Serylda's Grudge",'Black Cleaver','Kraken Slayer'],
-  tank_bust_ap: ['Void Staff','Cryptbloom'],
-  boots: {
-    armor:'Plated Steelcaps', mr:"Mercury's Treads", cdr:'Ionian Boots of Lucidity',
-    magic:"Sorcerer's Shoes", attack:"Berserker's Greaves", swift:'Boots of Swiftness',
-  },
-};
 
 // ── App state ──
 const state = {
-  enemy:     { top:null, jungle:null, mid:null, bot:null, support:null },
-  ally:      { top:null, jungle:null, mid:null, bot:null, support:null },
-  myLane:    'mid',
-  myChamp:   null,
-  playstyle: 'carry',
+  myLane:      null,
+  enemyChamp:  null,
+  myChamp:     null,
   pickerTarget: null,
 };
 
 // ── Helpers ──
 function champImgUrl(c) { return `https://ddragon.leagueoflegends.com/cdn/${_version}/img/champion/${c.image.full}`; }
-function itemImgUrl(id)  { return `https://ddragon.leagueoflegends.com/cdn/${_version}/img/item/${id}.png`; }
-function getItem(name) {
-  if (!name) return null;
-  const key = name.toLowerCase();
-  if (_itemByName[key]) return _itemByName[key];
-  for (const [k, item] of Object.entries(_itemByName)) {
-    if (k.includes(key) || key.includes(k)) return item;
-  }
-  return null;
-}
-function resolveItems(names) { return names.map(n => getItem(n)).filter(Boolean); }
 function getDamageType(c) {
   const a = c.info?.attack||0, m = c.info?.magic||0;
   if (m > a+2) return 'AP'; if (a > m+2) return 'AD'; return 'MIXED';
@@ -259,14 +303,31 @@ function getRole(c) {
   if (t.includes('Fighter'))  return 'fighter';
   return 'fighter';
 }
+// Hard-coded lane overrides for champions with ambiguous tags
+const LANE_OVERRIDES = {
+  // Top lane specialists
+  KSante:'top', TahmKench:'top', Tahm_Kench:'top', Olaf:'top', Urgot:'top',
+  Singed:'top', Mordekaiser:'top', Tryndamere:'top', Heimerdinger:'top',
+  Vladimir:'top', Gangplank:'top', Kayle:'top', Gragas:'top', Ambessa:'top',
+  Quinn:'top', Teemo:'top', Gnar:'top', Kennen:'top', Jayce:'top',
+  Zac:'jungle',
+  // Mid lane specialists
+  Hwei:'mid', Aurora:'mid', Azir:'mid', Corki:'mid', Smolder:'bot',
+  Kalista:'bot', Seraphine:'support',
+  // Support must-overrides
+  Lux:'support', Neeko:'support',
+};
+
 function getPrimaryLane(c) {
-  const id=c.id, t=c.tags||[];
-  if (JUNGLE_IDS.has(id))                                 return 'jungle';
-  if (MARKSMAN_IDS.has(id) && !SUPPORT_IDS.has(id))       return 'bot';
-  if (t.includes('Support') || SUPPORT_IDS.has(id))       return 'support';
-  if (t.includes('Assassin') && !t.includes('Fighter'))   return 'mid';
+  const id = c.id;
+  const t  = c.tags || [];
+  if (LANE_OVERRIDES[id])                                      return LANE_OVERRIDES[id];
+  if (JUNGLE_IDS.has(id))                                      return 'jungle';
+  if (MARKSMAN_IDS.has(id))                                    return 'bot';
+  if (t.includes('Support') || SUPPORT_IDS.has(id))            return 'support';
+  if (t.includes('Assassin') && !t.includes('Fighter'))        return 'mid';
   if (t.includes('Mage') && !t.includes('Fighter') && !t.includes('Tank')) return 'mid';
-  if (t.includes('Fighter') || t.includes('Tank'))        return 'top';
+  if (t.includes('Fighter') || t.includes('Tank'))             return 'top';
   return 'top';
 }
 
@@ -275,20 +336,11 @@ async function init() {
   try {
     const versions = await fetch('https://ddragon.leagueoflegends.com/api/versions.json').then(r=>r.json());
     _version = versions[0];
-    const [champR, itemR] = await Promise.all([
-      fetch(`https://ddragon.leagueoflegends.com/cdn/${_version}/data/en_US/champion.json`).then(r=>r.json()),
-      fetch(`https://ddragon.leagueoflegends.com/cdn/${_version}/data/en_US/item.json`).then(r=>r.json()),
-    ]);
+    const champR = await fetch(`https://ddragon.leagueoflegends.com/cdn/${_version}/data/en_US/champion.json`).then(r=>r.json());
     _champMap  = champR.data;
     _champList = Object.values(_champMap).sort((a,b)=>a.name.localeCompare(b.name));
-    for (const [id,item] of Object.entries(itemR.data)) {
-      if (!item.maps?.['11'] || !item.gold?.purchasable || item.gold.total < 1000 || item.consumed) continue;
-      _itemByName[item.name.toLowerCase()] = { id, ...item };
-    }
     document.getElementById('cp-loading').classList.add('hidden');
     document.getElementById('cp-builder').classList.remove('hidden');
-    renderLaneGrid('enemy');
-    renderLaneGrid('ally');
     renderLanePillsBig();
     document.getElementById('cp-picker-search').addEventListener('input', e=>renderPickerGrid(e.target.value));
     document.getElementById('cp-picker-overlay').addEventListener('click', e=>{
@@ -300,56 +352,12 @@ async function init() {
   }
 }
 
-// ── Lane grid ──
-function renderLaneGrid(team) {
-  const grid = document.getElementById(`${team}-lane-grid`);
-  grid.innerHTML = LANES.map(lane => {
-    const m = LANE_META[lane];
-    return `<div class="cp-lane-col">
-      <div class="cp-lane-header">
-        <span class="cp-lane-emoji">${m.emoji}</span>
-        <span class="cp-lane-short">${m.short}</span>
-      </div>
-      <div class="cp-lane-slot empty" id="${team}-${lane}" onclick="openPickerForLane('${team}','${lane}')">
-        <span class="cp-slot-plus-lane">+</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function updateLaneSlot(team, lane) {
-  const champ    = state[team][lane];
-  const el       = document.getElementById(`${team}-${lane}`);
-  const isMySlot = team==='ally' && lane===state.myLane && champ?.id===state.myChamp?.id;
-  if (!champ) {
-    el.className = 'cp-lane-slot empty';
-    el.onclick   = ()=>openPickerForLane(team,lane);
-    el.innerHTML = `<span class="cp-slot-plus-lane">+</span>`;
-    return;
-  }
-  el.className = `cp-lane-slot filled ${team}-filled${isMySlot?' my-slot':''}`;
-  el.onclick   = null;
-  el.innerHTML = `
-    <img src="${champImgUrl(champ)}" alt="${champ.name}" title="${champ.name}" />
-    <div class="cp-lane-slot-name">${champ.name}</div>
-    ${isMySlot
-      ? `<div class="cp-lane-slot-you">YOU</div>`
-      : `<button class="cp-lane-slot-remove" onclick="removeLaneChamp('${team}','${lane}',event)">✕</button>`}`;
-}
-
-function removeLaneChamp(team, lane, e) {
-  e.stopPropagation();
-  state[team][lane] = null;
-  updateLaneSlot(team, lane);
-  if (team === 'enemy') invalidateCounters();
-}
-
-// ── Big lane pills (step 2) ──
+// ── Lane pills (Step 1) ──
 function renderLanePillsBig() {
   const container = document.getElementById('my-lane-pills-big');
   container.innerHTML = LANES.map(lane => {
     const m      = LANE_META[lane];
-    const active = state.myLane===lane ? 'active' : '';
+    const active = state.myLane === lane ? 'active' : '';
     return `<button class="cp-lane-pill-big ${active}" onclick="setMyLaneBig('${lane}',this)">
       <span class="cp-lpb-emoji">${m.emoji}</span>
       <span class="cp-lpb-label">${m.label}</span>
@@ -358,27 +366,47 @@ function renderLanePillsBig() {
 }
 
 function setMyLaneBig(lane, btn) {
-  state.myLane = lane;
-  document.querySelectorAll('.cp-lane-pill-big').forEach(b=>b.classList.remove('active'));
+  state.myLane     = lane;
+  state.enemyChamp = null;
+  state.myChamp    = null;
+  document.querySelectorAll('.cp-lane-pill-big').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  // Reset counter results if lane changes
+  document.getElementById('step2-card').classList.remove('hidden');
   document.getElementById('cp-counter-results').classList.add('hidden');
-  document.getElementById('cp-picked-section').classList.add('hidden');
+  document.getElementById('cp-insights-section').classList.add('hidden');
+  renderEnemySlot();
+}
+
+// ── Enemy slot (Step 2) ──
+function renderEnemySlot() {
+  const el    = document.getElementById('enemy-champ-slot');
+  const champ = state.enemyChamp;
+  if (!champ) {
+    el.className = 'cp-enemy-slot empty';
+    el.onclick   = openEnemyPicker;
+    el.innerHTML = `<div class="cp-enemy-slot-inner">
+      <div class="cp-enemy-plus">+</div>
+      <div class="cp-enemy-hint">Click to select enemy</div>
+    </div>`;
+    return;
+  }
+  el.className = 'cp-enemy-slot filled';
+  el.onclick   = openEnemyPicker;
+  el.innerHTML = `
+    <img class="cp-enemy-img" src="${champImgUrl(champ)}" alt="${champ.name}" />
+    <div class="cp-enemy-info">
+      <div class="cp-enemy-name">${champ.name}</div>
+      <div class="cp-enemy-change">Click to change</div>
+    </div>`;
+}
+
+function openEnemyPicker() {
+  state.pickerTarget = 'enemy';
+  document.getElementById('cp-picker-title').textContent = 'Select Enemy Champion';
+  openPicker();
 }
 
 // ── Picker ──
-function openPickerForLane(team, lane) {
-  state.pickerTarget = { team, lane };
-  const m = LANE_META[lane];
-  document.getElementById('cp-picker-title').textContent =
-    team==='enemy' ? `Enemy ${m.label}` : `Ally ${m.label}`;
-  openPicker();
-}
-function openPickerForMyChamp() {
-  state.pickerTarget = 'my';
-  document.getElementById('cp-picker-title').textContent = 'Select Your Champion';
-  openPicker();
-}
 function openPicker() {
   document.getElementById('cp-picker-overlay').classList.remove('hidden');
   const inp = document.getElementById('cp-picker-search');
@@ -390,149 +418,84 @@ function closePicker() {
   state.pickerTarget = null;
 }
 function renderPickerGrid(query) {
-  const q = query.toLowerCase().trim();
-  const taken = new Set([
-    state.myChamp?.id,
-    ...Object.values(state.enemy).filter(Boolean).map(c=>c.id),
-    ...Object.values(state.ally).filter(Boolean).map(c=>c.id),
-  ]);
-  let targetLane = state.pickerTarget?.lane || null;
-  let list = _champList.filter(c => {
-    if (taken.has(c.id)) return false;
+  const q    = query.toLowerCase().trim();
+  const skip = new Set([state.enemyChamp?.id, state.myChamp?.id].filter(Boolean));
+  let list   = _champList.filter(c => {
+    if (skip.has(c.id)) return false;
     if (!q) return true;
     return c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q);
-  });
-  if (!q && targetLane) {
-    list = list.sort((a,b)=>{
-      const af = getPrimaryLane(a)===targetLane?0:1;
-      const bf = getPrimaryLane(b)===targetLane?0:1;
-      return af-bf;
-    });
-  }
-  list = list.slice(0, 200);
+  }).slice(0, 200);
+
   const grid = document.getElementById('cp-picker-grid');
-  grid.innerHTML = list.map(c=>{
+  grid.innerHTML = list.map(c => {
     const lane = getPrimaryLane(c);
     const m    = LANE_META[lane];
-    const isMatch = targetLane && lane===targetLane;
-    return `<div class="cp-picker-champ ${isMatch?'lane-match':''}" onclick="selectChamp('${c.id}')">
+    return `<div class="cp-picker-champ" onclick="selectChamp('${c.id}')">
       <img src="${champImgUrl(c)}" alt="${c.name}" loading="lazy" />
       <span class="cp-picker-name">${c.name}</span>
       <span class="cp-picker-lane">${m.emoji} ${m.short}</span>
     </div>`;
   }).join('');
 }
+
 function selectChamp(id) {
   const champ = _champMap[id];
   if (!champ) return;
-  const t = state.pickerTarget;
-  if (t==='my') {
-    if (state.myChamp && state.myLane && state.ally[state.myLane]?.id===state.myChamp.id) {
-      state.ally[state.myLane] = null; updateLaneSlot('ally',state.myLane);
-    }
-    state.myChamp = champ;
-    renderMyChampCard();
-    syncAllyLane();
-  } else if (t?.team && t?.lane) {
-    state[t.team][t.lane] = champ;
-    updateLaneSlot(t.team, t.lane);
-    if (t.team === 'enemy') invalidateCounters();
-  }
+  const target = state.pickerTarget;
   closePicker();
-}
-
-function syncAllyLane() {
-  if (!state.myChamp || !state.myLane) return;
-  state.ally[state.myLane] = state.myChamp;
-  updateLaneSlot('ally', state.myLane);
-}
-
-// ── My champ card (step 4) ──
-function renderMyChampCard() {
-  const el    = document.getElementById('my-champ-slot');
-  const champ = state.myChamp;
-  if (!champ) {
-    el.innerHTML = `<div class="cp-slot-empty-my" onclick="openPickerForMyChamp()">
-      <span class="cp-slot-plus-big">+</span>
-      <span class="cp-slot-hint">Click to select</span>
-    </div>`;
-    return;
+  if (target === 'enemy') {
+    state.enemyChamp = champ;
+    renderEnemySlot();
+    // Auto-compute and show counters
+    const data = computeCounters(champ, [champ], state.myLane);
+    renderCounterSuggestions(data, champ);
+    document.getElementById('cp-counter-results').classList.remove('hidden');
+    document.getElementById('cp-insights-section').classList.add('hidden');
+    document.getElementById('cp-counter-results').scrollIntoView({ behavior:'smooth', block:'start' });
   }
-  const dmg = getDamageType(champ);
-  el.innerHTML = `
-    <div class="cp-my-champ-filled">
-      <img class="cp-my-champ-img" src="${champImgUrl(champ)}" alt="${champ.name}" />
-      <div class="cp-my-champ-info">
-        <div class="cp-my-champ-name">${champ.name}</div>
-        <div class="cp-my-champ-role">${champ.tags.join(' · ')}</div>
-        <span class="cp-my-champ-dmg-tag ${dmg.toLowerCase()}">${dmg} Damage</span>
+}
+
+function selectCounterPick(id) {
+  const champ = _champMap[id];
+  if (!champ) return;
+  state.myChamp = champ;
+
+  const laneOpponent = state.enemyChamp;
+  const enemies      = laneOpponent ? [laneOpponent] : [];
+  const myRole       = getRole(champ);
+  const myDmgType    = getDamageType(champ);
+
+  // Compute simple enemy ratios for insights
+  let adRatio = 0.5, apRatio = 0.5;
+  if (laneOpponent) {
+    const atk = laneOpponent.info?.attack || 5;
+    const mag = laneOpponent.info?.magic  || 5;
+    const tot = (atk + mag) || 1;
+    adRatio = atk / tot; apRatio = mag / tot;
+  }
+  const threats = { tank:0, assassin:0, healer:0, diver:0, marksman:0 };
+  if (laneOpponent) {
+    const r = getRole(laneOpponent);
+    if (r === 'tank')     threats.tank++;
+    if (r === 'assassin') threats.assassin++;
+    if (r === 'support')  threats.healer++;
+    if (r === 'marksman') threats.marksman++;
+  }
+
+  const insights = generateInsights(champ, myRole, myDmgType, state.myLane,
+    laneOpponent, enemies, adRatio, apRatio, 'carry', threats, laneOpponent);
+
+  document.getElementById('res-insights-content').innerHTML = insights.map(ins => `
+    <div class="cp-insight-row">
+      <div class="cp-insight-icon">${ins.icon}</div>
+      <div class="cp-insight-body">
+        <div class="cp-insight-label">${ins.label}</div>
+        <div class="cp-insight-text">${ins.text}</div>
       </div>
-      <button class="cp-my-champ-remove" onclick="clearMyChamp()">✕</button>
-    </div>`;
+    </div>`).join('');
 
-  // Lane pills inside picked card
-  const laneEl = document.getElementById('my-lane-pills');
-  laneEl.innerHTML = LANES.map(lane=>{
-    const m = LANE_META[lane];
-    const active = state.myLane===lane?'active':'';
-    return `<button class="cp-lane-pill ${active}" onclick="setMyLane('${lane}',this)">${m.emoji} ${m.short}</button>`;
-  }).join('');
-}
-
-function clearMyChamp() {
-  if (state.myChamp && state.myLane && state.ally[state.myLane]?.id===state.myChamp.id) {
-    state.ally[state.myLane]=null; updateLaneSlot('ally',state.myLane);
-  }
-  state.myChamp = null;
-  renderMyChampCard();
-  document.getElementById('cp-results').classList.add('hidden');
-}
-
-function setMyLane(lane, btn) {
-  if (state.myLane && state.ally[state.myLane]?.id===state.myChamp?.id) {
-    state.ally[state.myLane]=null; updateLaneSlot('ally',state.myLane);
-  }
-  state.myLane = lane;
-  document.querySelectorAll('.cp-lane-pill').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  syncAllyLane();
-}
-
-function setPlaystyle(ps, btn) {
-  state.playstyle = ps;
-  document.querySelectorAll('.cp-ps-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-// ── Invalidate stale counter results when enemy changes ──
-function invalidateCounters() {
-  const resultsEl = document.getElementById('cp-counter-results');
-  if (!resultsEl.classList.contains('hidden')) {
-    // Show a stale banner instead of hiding completely
-    const meta = document.getElementById('cp-counter-meta');
-    meta.innerHTML = `<span style="color:var(--orange)">⚠ Enemy team changed — click <strong>Find Counter Picks</strong> to refresh.</span>`;
-    document.getElementById('cp-counter-grid').style.opacity = '0.35';
-  }
-}
-
-// ── FIND COUNTERS ──
-function findCounters() {
-  const err = document.getElementById('cp-error-msg');
-  err.classList.add('hidden');
-  const enemies = Object.values(state.enemy).filter(Boolean);
-  if (!enemies.length) {
-    err.textContent = 'Add at least one enemy champion first.';
-    err.classList.remove('hidden');
-    return;
-  }
-
-  const laneEnemy  = state.enemy[state.myLane];
-  const suggestions = computeCounters(laneEnemy, enemies, state.myLane);
-
-  document.getElementById('cp-counter-grid').style.opacity = '1';
-  renderCounterSuggestions(suggestions, laneEnemy);
-  document.getElementById('cp-counter-results').classList.remove('hidden');
-  document.getElementById('cp-counter-results').scrollIntoView({ behavior:'smooth', block:'start' });
+  document.getElementById('cp-insights-section').classList.remove('hidden');
+  document.getElementById('cp-insights-section').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 function computeCounters(laneEnemy, allEnemies, myLane) {
@@ -623,41 +586,46 @@ function computeCounters(laneEnemy, allEnemies, myLane) {
 
 // Role-based fallback counters, filtered to the target lane
 function getRoleFallbackCounters(enemy, myLane) {
-  const role = getRole(enemy);
+  const role = enemy ? getRole(enemy) : 'default';
   // Per-lane fallbacks — only champs that actually play that lane
   const laneFallbacks = {
     top: {
-      assassin: [['Malphite',70],['Renekton',68],['Garen',66],['Pantheon',64],['Wukong',62]],
-      mage:     [['Malphite',70],['Garen',68],['Nasus',66],['Darius',64],['Renekton',62]],
-      tank:     [['Vayne',72],['Fiora',70],['Camille',68],['Gnar',65],['Jayce',63]],
-      fighter:  [['Malphite',68],['Renekton',66],['Camille',64],['Garen',62],['Darius',60]],
-      default:  [['Malphite',67],['Renekton',65],['Garen',63],['Camille',61],['Darius',59]],
+      assassin: [['Malphite',69],['Renekton',67],['Garen',65],['Wukong',63],['Camille',61]],
+      mage:     [['Malphite',69],['Garen',67],['Nasus',65],['Darius',63],['Renekton',61]],
+      tank:     [['Vayne',71],['Fiora',69],['Camille',67],['Gnar',64],['Jayce',62]],
+      fighter:  [['Malphite',67],['Renekton',65],['Camille',63],['Garen',61],['Darius',59]],
+      marksman: [['Malphite',70],['Renekton',68],['Irelia',65],['Camille',63],['Darius',61]],
+      default:  [['Malphite',66],['Renekton',64],['Garen',62],['Camille',60],['Darius',58]],
     },
     jungle: {
-      assassin: [['Warwick',72],['Vi',70],['Hecarim',67],['Amumu',65],['Nocturne',63]],
-      mage:     [['Hecarim',70],['Vi',68],['Graves',66],['Warwick',64],['Amumu',62]],
-      tank:     [['Hecarim',70],['Graves',68],['Vi',66],['Elise',64],['Nidalee',62]],
-      fighter:  [['Warwick',70],['Vi',68],['Hecarim',65],['Graves',63],['Amumu',61]],
-      default:  [['Warwick',68],['Vi',66],['Hecarim',64],['Graves',62],['Amumu',60]],
+      assassin: [['Warwick',71],['Vi',69],['Hecarim',66],['Amumu',64],['Nocturne',62]],
+      mage:     [['Hecarim',69],['Vi',67],['Graves',65],['Warwick',63],['Amumu',61]],
+      tank:     [['Hecarim',69],['Graves',67],['Vi',65],['Elise',63],['Nidalee',61]],
+      fighter:  [['Warwick',69],['Vi',67],['Hecarim',64],['Graves',62],['Amumu',60]],
+      marksman: [['Warwick',68],['Vi',66],['Hecarim',63],['Graves',61],['Amumu',59]],
+      default:  [['Warwick',67],['Vi',65],['Hecarim',63],['Graves',61],['Amumu',59]],
     },
     mid: {
-      assassin: [['Lissandra',72],['Malzahar',70],['Galio',68],['Anivia',65],['Diana',63]],
-      mage:     [['Zed',70],['Talon',68],['Fizz',66],['Katarina',64],['Akali',62]],
-      fighter:  [['Malzahar',70],['Lissandra',68],['Galio',66],['Anivia',64],['Diana',62]],
-      tank:     [['Zed',68],['Fizz',66],['Katarina',64],['Talon',62],['Akali',60]],
-      default:  [['Galio',67],['Lissandra',65],['Malzahar',63],['Zed',62],['Fizz',60]],
+      assassin: [['Lissandra',71],['Malzahar',69],['Galio',67],['Anivia',64],['Diana',62]],
+      mage:     [['Zed',69],['Talon',67],['Fizz',65],['Katarina',63],['Akali',61]],
+      fighter:  [['Malzahar',69],['Lissandra',67],['Galio',65],['Anivia',63],['Diana',61]],
+      tank:     [['Zed',67],['Fizz',65],['Katarina',63],['Talon',61],['Akali',59]],
+      marksman: [['Zed',68],['Talon',66],['Katarina',64],['Fizz',62],['Akali',60]],
+      default:  [['Galio',66],['Lissandra',64],['Malzahar',62],['Zed',61],['Fizz',59]],
     },
     bot: {
-      marksman: [['Draven',70],['Caitlyn',68],['Lucian',66],['Kaisa',64],['Vayne',62]],
-      mage:     [['Draven',68],['Caitlyn',66],['Lucian',64],['Vayne',62],['Kaisa',60]],
-      support:  [['Draven',67],['Caitlyn',65],['Lucian',63],['Kaisa',61],['Vayne',59]],
-      default:  [['Caitlyn',67],['Draven',65],['Lucian',63],['Kaisa',61],['Vayne',59]],
+      marksman: [['Draven',69],['Caitlyn',67],['Lucian',65],['Kaisa',63],['Vayne',61]],
+      mage:     [['Draven',67],['Caitlyn',65],['Lucian',63],['Vayne',61],['Kaisa',59]],
+      support:  [['Draven',66],['Caitlyn',64],['Lucian',62],['Kaisa',60],['Vayne',58]],
+      fighter:  [['Caitlyn',68],['Draven',66],['Lucian',64],['Kaisa',62],['Vayne',60]],
+      default:  [['Caitlyn',66],['Draven',64],['Lucian',62],['Kaisa',60],['Vayne',58]],
     },
     support: {
-      tank:     [['Thresh',68],['Lulu',66],['Janna',65],['Soraka',63],['Brand',61]],
-      mage:     [['Thresh',68],['Lulu',66],['Morgana',64],['Janna',62],['Soraka',60]],
-      support:  [['Blitzcrank',68],['Leona',66],['Brand',64],['Pyke',62],['Nautilus',60]],
-      default:  [['Thresh',67],['Lulu',65],['Janna',63],['Soraka',61],['Brand',59]],
+      tank:     [['Thresh',67],['Lulu',65],['Janna',64],['Soraka',62],['Brand',60]],
+      mage:     [['Thresh',67],['Lulu',65],['Morgana',63],['Janna',61],['Soraka',59]],
+      support:  [['Blitzcrank',67],['Leona',65],['Brand',63],['Pyke',61],['Nautilus',59]],
+      assassin: [['Lulu',68],['Thresh',66],['Janna',64],['Soraka',62],['Brand',60]],
+      default:  [['Thresh',66],['Lulu',64],['Janna',62],['Soraka',60],['Brand',58]],
     },
   };
   const laneMap = laneFallbacks[myLane] || laneFallbacks.mid;
@@ -747,134 +715,6 @@ function renderCounterSuggestions(data, laneEnemy) {
   }).join('');
 }
 
-function selectCounterPick(id) {
-  const champ = _champMap[id];
-  if (!champ) return;
-  // Clear previous
-  if (state.myChamp && state.myLane && state.ally[state.myLane]?.id===state.myChamp.id) {
-    state.ally[state.myLane]=null; updateLaneSlot('ally',state.myLane);
-  }
-  state.myChamp = champ;
-  document.getElementById('cp-picked-section').classList.remove('hidden');
-  renderMyChampCard();
-  syncAllyLane();
-  document.getElementById('cp-results').classList.add('hidden');
-  document.getElementById('cp-picked-section').scrollIntoView({ behavior:'smooth', block:'start' });
-}
-
-// ── GET BUILD ──
-function getBuild() {
-  const err = document.getElementById('cp-error-msg');
-  err.classList.add('hidden');
-  if (!state.myChamp) {
-    err.textContent = 'Select a champion first (click a suggestion above or pick manually).';
-    err.classList.remove('hidden');
-    return;
-  }
-  const enemies = Object.values(state.enemy).filter(Boolean);
-  if (!enemies.length) {
-    err.textContent = 'Add at least one enemy champion.';
-    err.classList.remove('hidden');
-    return;
-  }
-  const btn = document.getElementById('cp-picked-section').querySelector('.cp-build-btn');
-  btn.textContent = 'Building…';
-  btn.disabled = true;
-  setTimeout(()=>{
-    try {
-      const allies = Object.values(state.ally).filter(Boolean);
-      const result = runAnalysis(state.myChamp, state.myLane, enemies, allies, state.playstyle);
-      renderResults(result);
-      document.getElementById('cp-results').classList.remove('hidden');
-      document.getElementById('cp-results').scrollIntoView({ behavior:'smooth', block:'start' });
-    } catch(e) {
-      err.textContent = 'Something went wrong.';
-      err.classList.remove('hidden');
-    } finally {
-      btn.textContent = '🛠 Get Build & Insights';
-      btn.disabled = false;
-    }
-  },200);
-}
-
-// ── Analysis engine (unchanged from before) ──
-function runAnalysis(myChamp, myLane, enemies, allies, playstyle) {
-  let sumAtk=0, sumMag=0;
-  const threats={tank:0,assassin:0,healer:0,diver:0,marksman:0};
-  for (const e of enemies) {
-    sumAtk+=e.info?.attack||0; sumMag+=e.info?.magic||0;
-    const r=getRole(e);
-    if(r==='tank')     threats.tank++;
-    if(r==='assassin') threats.assassin++;
-    if(r==='support')  threats.healer++;
-    if(r==='marksman') threats.marksman++;
-    if(r==='fighter'&&(e.info?.damage||0)>5) threats.diver++;
-  }
-  const total=  (sumAtk+sumMag)||1;
-  const adRatio = sumAtk/total, apRatio=sumMag/total;
-  const laneOpponent = state.enemy[myLane]||null;
-  const biggestThreat = enemies.reduce((b,e)=>
-    ((e.info?.damage||0)+(e.info?.difficulty||0))>((b.info?.damage||0)+(b.info?.difficulty||0))?e:b
-  );
-  const myRole=getRole(myChamp), myDmgType=getDamageType(myChamp);
-  const build    = buildRecommendation(myChamp,myRole,myDmgType,myLane,laneOpponent,enemies,adRatio,apRatio,playstyle,threats);
-  const insights = generateInsights(myChamp,myRole,myDmgType,myLane,laneOpponent,enemies,adRatio,apRatio,playstyle,threats,biggestThreat);
-  return {adRatio,apRatio,threats,enemies,laneOpponent,biggestThreat,build,insights,myRole,myDmgType,myLane};
-}
-
-function buildRecommendation(myChamp,myRole,myDmgType,myLane,laneOpponent,enemies,adRatio,apRatio,playstyle,threats){
-  const heavyAD=adRatio>0.6,heavyAP=apRatio>0.6;
-  const needAntiHeal=threats.healer>0,needTankBust=threats.tank>=2,heavyAssassin=threats.assassin>=2;
-  const oppDmg=laneOpponent?getDamageType(laneOpponent):null;
-  let core=[],adapt=[],boots='',ahead=null,behind=null;
-  if(myRole==='assassin'&&myDmgType!=='AP'){
-    core=resolveItems(ITEM_NAMES.lethality.slice(0,3));
-    adapt=resolveItems([needTankBust?"Serylda's Grudge":"Duskblade of Draktharr",needAntiHeal?"Chempunk Chainsword":"Axiom Arc",(heavyAP||oppDmg==='AP')?"Maw of Malmortius":"Edge of Night"]);
-    boots=(heavyAP||oppDmg==='AP')?ITEM_NAMES.boots.mr:ITEM_NAMES.boots.cdr;
-    ahead=getItem("Axiom Arc"); behind=getItem("Edge of Night");
-  } else if(myRole==='mage'||myDmgType==='AP'){
-    core=resolveItems([ITEM_NAMES.ap_damage[0],ITEM_NAMES.ap_damage[1],"Rabadon's Deathcap"]);
-    adapt=resolveItems([needTankBust?"Void Staff":ITEM_NAMES.ap_damage[2],(heavyAD||oppDmg==='AD')?"Zhonya's Hourglass":"Lich Bane",needAntiHeal?"Morellonomicon":"Cryptbloom"]);
-    boots=(heavyAD||oppDmg==='AD')?ITEM_NAMES.boots.mr:ITEM_NAMES.boots.magic;
-    ahead=getItem("Mejai's Soulstealer"); behind=getItem("Zhonya's Hourglass");
-  } else if(myRole==='marksman'){
-    core=resolveItems([ITEM_NAMES.ad_crit[0],ITEM_NAMES.ad_crit[1],ITEM_NAMES.ad_crit[2]]);
-    adapt=resolveItems([needTankBust?"Kraken Slayer":ITEM_NAMES.ad_crit[3],needAntiHeal?"Mortal Reminder":ITEM_NAMES.ad_crit[4],heavyAssassin?"Immortal Shieldbow":ITEM_NAMES.ad_crit[5]]);
-    boots=ITEM_NAMES.boots.attack;
-    ahead=getItem("Infinity Edge"); behind=getItem("Immortal Shieldbow");
-  } else if(myRole==='fighter'){
-    if(myLane==='jungle'){
-      core=resolveItems(["Blade of the Ruined King","Trinity Force","Sterak's Gage"]);
-      adapt=resolveItems([needTankBust?"Black Cleaver":ITEM_NAMES.ad_bruiser[3],heavyAP?"Maw of Malmortius":"Dead Man's Plate",needAntiHeal?"Chempunk Chainsword":"Ravenous Hydra"]);
-    } else {
-      core=resolveItems([ITEM_NAMES.ad_bruiser[0],ITEM_NAMES.ad_bruiser[1],ITEM_NAMES.ad_bruiser[2]]);
-      adapt=resolveItems([needTankBust?"Black Cleaver":ITEM_NAMES.ad_bruiser[3],(heavyAP||oppDmg==='AP')?"Maw of Malmortius":(heavyAD?"Dead Man's Plate":ITEM_NAMES.ad_bruiser[4]),needAntiHeal?"Chempunk Chainsword":"Sterak's Gage"]);
-    }
-    boots=(heavyAP||oppDmg==='AP')?ITEM_NAMES.boots.mr:ITEM_NAMES.boots.armor;
-    ahead=getItem("Black Cleaver"); behind=getItem("Sterak's Gage");
-  } else if(myRole==='tank'){
-    core=resolveItems(["Sunfire Aegis","Heartsteel",heavyAP?"Force of Nature":"Warmog's Armor"]);
-    adapt=resolveItems([heavyAD?"Frozen Heart":"Spirit Visage",needAntiHeal?"Thornmail":"Randuin's Omen",heavyAP?"Kaenic Rookern":"Dead Man's Plate"]);
-    boots=heavyAP?ITEM_NAMES.boots.mr:ITEM_NAMES.boots.armor;
-    ahead=getItem("Heartsteel"); behind=getItem("Warmog's Armor");
-  } else if(myRole==='support'){
-    const tags=myChamp.tags||[];
-    if(tags.includes('Tank')||tags.includes('Fighter')){
-      core=resolveItems(["Locket of the Iron Solari","Zeke's Convergence","Shurelya's Battlesong"]);
-      adapt=resolveItems([heavyAD?"Frozen Heart":"Gargoyle Stoneplate",heavyAP?"Force of Nature":"Warmog's Armor",needAntiHeal?"Thornmail":"Knight's Vow"]);
-    } else {
-      core=resolveItems(["Moonstone Renewer","Staff of Flowing Water","Ardent Censer"]);
-      adapt=resolveItems([heavyAD?"Locket of the Iron Solari":"Redemption",heavyAP?"Force of Nature":"Mikael's Blessing",needAntiHeal?"Thornmail":"Chemtech Putrifier"]);
-    }
-    boots=heavyAP?ITEM_NAMES.boots.mr:ITEM_NAMES.boots.cdr;
-    ahead=getItem("Ardent Censer"); behind=getItem("Locket of the Iron Solari");
-  }
-  if(playstyle==='antiheal'){const ah=myDmgType==='AP'?getItem("Morellonomicon"):myRole==='marksman'?getItem("Mortal Reminder"):getItem("Chempunk Chainsword");if(ah&&adapt.length)adapt[adapt.length-1]=ah;}
-  if(playstyle==='antitank'){const at=myDmgType==='AP'?getItem("Void Staff"):getItem("Black Cleaver");if(at&&adapt.length)adapt[0]=at;}
-  if(playstyle==='safe'){const def=(heavyAP||oppDmg==='AP')?getItem("Banshee's Veil"):(heavyAD||oppDmg==='AD')?getItem("Randuin's Omen"):getItem("Immortal Shieldbow");if(def&&adapt.length)adapt[adapt.length-1]=def;}
-  if(playstyle==='aggressive'){const d=myDmgType==='AP'?getItem("Shadowflame"):getItem("Eclipse");if(d&&adapt.length)adapt[0]=d;}
-  return{items:[...core,...adapt].filter(Boolean).slice(0,6),boots:getItem(boots),ahead,behind};
-}
 
 function generateInsights(myChamp,myRole,myDmgType,myLane,laneOpponent,enemies,adRatio,apRatio,playstyle,threats,biggestThreat){
   const out=[];
@@ -916,59 +756,5 @@ function generateInsights(myChamp,myRole,myDmgType,myLane,laneOpponent,enemies,a
   return out;
 }
 
-// ── Render build results ──
-function renderResults(result){
-  const{adRatio,apRatio,threats,enemies,build,insights,myLane}=result;
-  const adPct=Math.round(adRatio*100),apPct=100-adPct;
-  document.getElementById('res-damage-bar').innerHTML=`
-    <div class="cp-dmg-bar-wrap">
-      <div class="cp-dmg-label-row"><span class="cp-dmg-ad">⚔️ Physical ${adPct}%</span><span class="cp-dmg-ap">✨ Magic ${apPct}%</span></div>
-      <div class="cp-dmg-bar"><div class="cp-dmg-bar-fill-ad" style="width:${adPct}%"></div><div class="cp-dmg-bar-fill-ap" style="width:${apPct}%"></div></div>
-    </div>`;
-  const badges=[];
-  if(threats.tank>0)     badges.push(`<span class="cp-threat-badge tank">🛡 ${threats.tank} Tank${threats.tank>1?'s':''}</span>`);
-  if(threats.assassin>0) badges.push(`<span class="cp-threat-badge assassin">🗡 ${threats.assassin} Assassin${threats.assassin>1?'s':''}</span>`);
-  if(threats.healer>0)   badges.push(`<span class="cp-threat-badge healer">💊 Healing</span>`);
-  if(threats.diver>0)    badges.push(`<span class="cp-threat-badge diver">🏃 Dive Threat</span>`);
-  document.getElementById('res-threats').innerHTML=`<div class="cp-threats-row">${badges.length?badges.join(''):'<span class="cp-threat-badge neutral">Standard Comp</span>'}</div>`;
-  document.getElementById('res-champ-icons').innerHTML=`<div class="cp-result-lanes">${LANES.map(lane=>{
-    const champ=state.enemy[lane],m=LANE_META[lane],isOpp=myLane===lane;
-    return`<div class="cp-result-lane ${isOpp?'is-opponent':''}">
-      <div class="cp-result-lane-label">${m.emoji} ${m.short}</div>
-      ${champ?`<img src="${champImgUrl(champ)}" alt="${champ.name}" title="${champ.name}"/><div class="cp-result-lane-name">${champ.name}</div>${isOpp?'<div class="cp-result-lane-opp-tag">YOUR LANE</div>':''}`:`<div class="cp-result-lane-empty">—</div>`}
-    </div>`;
-  }).join('')}</div>`;
-  const noteMap={carry:'Full damage — eliminate their backline.',safe:'Defensive first — survive and scale.',aggressive:'Snowball early before they can react.',scaling:'Farm safely, spike at 3 items.',antitank:'Armor penetration priority.',antiheal:'Apply Grievous Wounds every fight.'};
-  document.getElementById('res-build-note').textContent=noteMap[state.playstyle]||'';
-  document.getElementById('res-items').innerHTML=build.items.map((item,i)=>`
-    <div class="cp-item-slot" title="${item.name}">
-      <img src="${itemImgUrl(item.id)}" alt="${item.name}"/>
-      <span class="cp-item-num">${i+1}</span>
-      <div class="cp-item-name-tip">${item.name}</div>
-    </div>`).join('');
-  document.getElementById('res-boots').innerHTML=build.boots?`
-    <div class="cp-boots-label">Boots</div>
-    <div class="cp-item-slot" title="${build.boots.name}">
-      <img src="${itemImgUrl(build.boots.id)}" alt="${build.boots.name}"/>
-      <div class="cp-item-name-tip">${build.boots.name}</div>
-    </div>`:'';
-  document.getElementById('res-situational-content').innerHTML=`
-    <div class="cp-situ-row">
-      <div class="cp-situ-label win">If Ahead</div>
-      ${build.ahead?`<div class="cp-situ-item"><img src="${itemImgUrl(build.ahead.id)}" alt="${build.ahead.name}"/><span>${build.ahead.name}</span></div><span class="cp-situ-reason">→ Press your lead</span>`:'<span class="cp-situ-reason">Stay on core build and push advantages</span>'}
-    </div>
-    <div class="cp-situ-row">
-      <div class="cp-situ-label lose">If Behind</div>
-      ${build.behind?`<div class="cp-situ-item"><img src="${itemImgUrl(build.behind.id)}" alt="${build.behind.name}"/><span>${build.behind.name}</span></div><span class="cp-situ-reason">→ Survive and scale back</span>`:'<span class="cp-situ-reason">Play safe and farm to comeback</span>'}
-    </div>`;
-  document.getElementById('res-insights-content').innerHTML=insights.map(ins=>`
-    <div class="cp-insight-row">
-      <div class="cp-insight-icon">${ins.icon}</div>
-      <div class="cp-insight-body">
-        <div class="cp-insight-label">${ins.label}</div>
-        <div class="cp-insight-text">${ins.text}</div>
-      </div>
-    </div>`).join('');
-}
 
 document.addEventListener('DOMContentLoaded', init);

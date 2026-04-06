@@ -341,10 +341,22 @@ function renderBoard() {
 }
 
 function togglePlayer(idx) {
-  if (currentOpenIdx === idx) { document.getElementById("player-card-" + idx).classList.remove("open"); currentOpenIdx = null; return; }
-  if (currentOpenIdx !== null) { var prev = document.getElementById("player-card-" + currentOpenIdx); if (prev) prev.classList.remove("open"); }
+  if (currentOpenIdx === idx) {
+    var card = document.getElementById("player-card-" + idx);
+    card.classList.remove("open");
+    currentOpenIdx = null;
+    return;
+  }
+  if (currentOpenIdx !== null) {
+    var prev = document.getElementById("player-card-" + currentOpenIdx);
+    if (prev) prev.classList.remove("open");
+  }
   var current = document.getElementById("player-card-" + idx);
-  if (current) current.classList.add("open");
+  if (current) {
+    // Mark live cards as "seen" so slideUp never re-runs on close
+    if (current.classList.contains('is-live')) current.classList.add('live-seen');
+    current.classList.add("open");
+  }
   currentOpenIdx = idx;
 }
 

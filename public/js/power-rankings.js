@@ -26,14 +26,9 @@ function closePowerRankings() {
   if (_prResetTimer) { clearInterval(_prResetTimer); _prResetTimer = null; }
 }
 
-function _renderPrLoading() {
-  document.getElementById("pr-body").innerHTML =
-    '<div style="text-align:center;padding:80px 0 40px;color:var(--text3);font-size:0.82rem;letter-spacing:0.5px">Loading rankings…</div>';
-}
-
 function _renderPrError(msg) {
   document.getElementById("pr-body").innerHTML =
-    '<div style="text-align:center;padding:50px 20px;color:#f87171;font-size:0.82rem">' + msg + '</div>';
+    '<div class="pr-body-inner"><div class="pr-empty"><strong>Something went wrong</strong>' + msg + '</div></div>';
 }
 
 function _scoreClass(n) { return n == null ? "neutral" : n > 0 ? "positive" : n < 0 ? "negative" : "neutral"; }
@@ -52,9 +47,9 @@ function _pillsHTML(r) {
   }
   if (r.gamesThisWeek > 0) {
     pills += '<span class="pr-pill pr-pill-games">'
-      + '<span style="color:#4ade80">' + r.winsThisWeek + 'W</span>'
+      + '<span style="color:var(--green)">' + r.winsThisWeek + 'W</span>'
       + '<span style="opacity:0.4;margin:0 2px">/</span>'
-      + '<span style="color:#f87171">' + r.lossesThisWeek + 'L</span>'
+      + '<span style="color:var(--red)">' + r.lossesThisWeek + 'L</span>'
       + '</span>';
     if (r.weekWR !== null) {
       var wrCls = r.weekWR >= 55 ? "up" : r.weekWR <= 45 ? "down" : "flat";
@@ -62,39 +57,6 @@ function _pillsHTML(r) {
     }
   }
   return pills;
-}
-
-function _podHTML(r, place, delay) {
-  var cls = "pr-pod-" + place;
-  var posLabel = place === 1 ? "1st Place" : place === 2 ? "2nd Place" : "3rd Place";
-  var scoreVal = _scoreLabel(r.score, r.hasSnapshot);
-
-  return '<div class="pr-pod ' + cls + '" style="animation-delay:' + delay + 's">'
-    // Crown only on 1st
-    + (place === 1 ? '<div class="pr-pod-crown">👑</div>' : '')
-    + '<div class="pr-pod-icon-wrap">'
-    + '<img class="pr-pod-icon" src="' + ICON(r.profileIconId) + '" onerror="this.src=\'' + ICON(1) + '\'" />'
-    + '</div>'
-    + '<div class="pr-pod-name">' + r.gameName + '</div>'
-    + '<div class="pr-pod-tag">#' + r.tagLine + '</div>'
-    + '<div class="pr-pod-score-wrap">'
-    + '<span class="pr-pod-score ' + _scoreClass(r.score) + '">' + scoreVal + '</span>'
-    + '<span class="pr-pod-score-sub">Weekly Score</span>'
-    + '</div>'
-    + '<div class="pr-pod-pills">' + _pillsHTML(r) + '</div>'
-    + '</div>';
-}
-
-function _rowHTML(r, pos, delay) {
-  return '<div class="pr-row" style="animation-delay:' + delay + 's">'
-    + '<div class="pr-row-num">' + pos + '</div>'
-    + '<img class="pr-row-icon" src="' + ICON(r.profileIconId) + '" onerror="this.src=\'' + ICON(1) + '\'" />'
-    + '<div class="pr-row-info">'
-    + '<div class="pr-row-name">' + r.gameName + ' <span class="pr-row-tag-inline">#' + r.tagLine + '</span></div>'
-    + '<div class="pr-row-pills">' + _pillsHTML(r) + '</div>'
-    + '</div>'
-    + '<div class="pr-row-score ' + _scoreClass(r.score) + '">' + _scoreLabel(r.score, r.hasSnapshot) + '</div>'
-    + '</div>';
 }
 
 function _formatCountdown(ms) {
@@ -120,45 +82,93 @@ function _startResetCountdown(nextResetAt) {
   _prResetTimer = setInterval(tick, 30000);
 }
 
+// ── #1 Hero card ──
+function _heroHTML(r) {
+  return '<div class="pr-hero">'
+    + '<div class="pr-hero-left">'
+    + '<div class="pr-hero-rank">1</div>'
+    + '<div class="pr-hero-icon-wrap">'
+    + '<div class="pr-hero-crown">👑</div>'
+    + '<img class="pr-hero-icon" src="' + ICON(r.profileIconId) + '" onerror="this.src=\'' + ICON(1) + '\'" />'
+    + '</div>'
+    + '<div class="pr-hero-info">'
+    + '<div class="pr-hero-name">' + r.gameName + '</div>'
+    + '<div class="pr-hero-tag">#' + r.tagLine + '</div>'
+    + '<div class="pr-hero-pills">' + _pillsHTML(r) + '</div>'
+    + '</div>'
+    + '</div>'
+    + '<div class="pr-hero-score-col">'
+    + '<span class="pr-hero-score ' + _scoreClass(r.score) + '">' + _scoreLabel(r.score, r.hasSnapshot) + '</span>'
+    + '<span class="pr-hero-score-label">Weekly Score</span>'
+    + '</div>'
+    + '</div>';
+}
+
+// ── #2 / #3 mini card ──
+function _miniHTML(r, place) {
+  var cls = place === 2 ? 'pr-mini-2' : 'pr-mini-3';
+  var delay = place === 2 ? '0.06' : '0.12';
+  return '<div class="pr-mini ' + cls + '" style="animation-delay:' + delay + 's">'
+    + '<div class="pr-mini-rank">' + place + '</div>'
+    + '<img class="pr-mini-icon" src="' + ICON(r.profileIconId) + '" onerror="this.src=\'' + ICON(1) + '\'" />'
+    + '<div class="pr-mini-info">'
+    + '<div class="pr-mini-name">' + r.gameName + '</div>'
+    + '<div class="pr-mini-tag">#' + r.tagLine + '</div>'
+    + '<div class="pr-mini-pills">' + _pillsHTML(r) + '</div>'
+    + '</div>'
+    + '<div class="pr-mini-score ' + _scoreClass(r.score) + '">' + _scoreLabel(r.score, r.hasSnapshot) + '</div>'
+    + '</div>';
+}
+
+// ── #4+ leaderboard row ──
+function _lbRowHTML(r, pos, delay) {
+  return '<div class="pr-lb-row" style="animation-delay:' + delay + 's">'
+    + '<div class="pr-lb-num">' + pos + '</div>'
+    + '<img class="pr-lb-icon" src="' + ICON(r.profileIconId) + '" onerror="this.src=\'' + ICON(1) + '\'" />'
+    + '<div class="pr-lb-info">'
+    + '<div class="pr-lb-name">' + r.gameName + ' <span class="pr-lb-tag">#' + r.tagLine + '</span></div>'
+    + '<div class="pr-lb-pills">' + _pillsHTML(r) + '</div>'
+    + '</div>'
+    + '<div class="pr-lb-score ' + _scoreClass(r.score) + '">' + _scoreLabel(r.score, r.hasSnapshot) + '</div>'
+    + '</div>';
+}
+
 function _renderPr(d) {
   var r = d.rankings;
-  // Parse week number from key like "2026-W01"
   var weekNum = d.weekKey ? d.weekKey.split("-W")[1] : "—";
   var weekEl = document.getElementById("pr-week-badge");
-  var resetEl = document.getElementById("pr-reset-badge");
   if (weekEl) weekEl.textContent = "Week " + weekNum;
   _startResetCountdown(d.nextResetAt);
 
-  var html = "";
-
   if (r.length === 0) {
-    html = '<div class="pr-empty"><strong>No data yet</strong>Squad data hasn\'t loaded. Try again in a moment.</div>';
-    document.getElementById("pr-body").innerHTML = html;
+    document.getElementById("pr-body").innerHTML =
+      '<div class="pr-body-inner"><div class="pr-empty"><strong>No data yet</strong>Squad data hasn\'t loaded. Try again in a moment.</div></div>';
     return;
   }
 
-  // Podium — 2nd | 1st | 3rd
-  html += '<div class="pr-podium">';
-  if (r.length >= 2) html += _podHTML(r[1], 2, 0.18);
-  else html += '<div></div>';
-  html += _podHTML(r[0], 1, 0.04);
-  if (r.length >= 3) html += _podHTML(r[2], 3, 0.28);
-  else html += '<div></div>';
-  html += '</div>';
+  var html = '<div class="pr-body-inner">';
 
-  // Rows #4+
+  // #1 hero
+  html += _heroHTML(r[0]);
+
+  // #2 and #3 stacked vertically
+  if (r.length >= 2) html += _miniHTML(r[1], 2);
+  if (r.length >= 3) html += _miniHTML(r[2], 3);
+
+  // #4+ list
   if (r.length > 3) {
-    html += '<div class="pr-list">';
-    html += '<div class="pr-list-header">'
-      + '<div class="pr-list-header-line"></div>'
-      + '<div class="pr-list-header-text">Rest of the squad</div>'
-      + '<div class="pr-list-header-line"></div>'
+    html += '<div class="pr-leaderboard">';
+    html += '<div class="pr-lb-divider">'
+      + '<div class="pr-lb-divider-line"></div>'
+      + '<div class="pr-lb-divider-text">Rest of the squad</div>'
+      + '<div class="pr-lb-divider-line"></div>'
       + '</div>';
     for (var i = 3; i < r.length; i++) {
-      html += _rowHTML(r[i], i + 1, (i - 3) * 0.055);
+      html += _lbRowHTML(r[i], i + 1, (i - 3) * 0.05);
     }
     html += '</div>';
   }
 
+  html += '</div>';
   document.getElementById("pr-body").innerHTML = html;
 }

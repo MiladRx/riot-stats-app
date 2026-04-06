@@ -46,25 +46,24 @@
     <!-- Main tool -->
     <div class="cp-builder hidden" id="cp-builder">
 
-      <!-- STEP 1: Enemy Team -->
+      <!-- STEP 1: Your Lane -->
       <div class="cp-card">
-        <div class="cp-step-label"><span class="cp-step-num">1</span> Fill in the enemy team</div>
-        <div class="cp-lane-grid" id="enemy-lane-grid"></div>
-      </div>
-
-      <!-- STEP 2: Your Lane -->
-      <div class="cp-card">
-        <div class="cp-step-label"><span class="cp-step-num">2</span> Select your lane</div>
+        <div class="cp-step-label"><span class="cp-step-num">1</span> Select your lane</div>
         <div class="cp-lane-pills-big" id="my-lane-pills-big"></div>
       </div>
 
-      <!-- Find Counters button -->
-      <div class="cp-error-msg hidden" id="cp-error-msg"></div>
-      <button class="cp-analyze-btn" id="cp-counter-btn" onclick="findCounters()">
-        🎯 Find Counter Picks
-      </button>
+      <!-- STEP 2: Enemy Champion -->
+      <div class="cp-card cp-step2-card hidden" id="step2-card">
+        <div class="cp-step-label"><span class="cp-step-num">2</span> Pick the enemy champion</div>
+        <div class="cp-enemy-slot empty" id="enemy-champ-slot" onclick="openEnemyPicker()">
+          <div class="cp-enemy-slot-inner">
+            <div class="cp-enemy-plus">+</div>
+            <div class="cp-enemy-hint">Click to select enemy</div>
+          </div>
+        </div>
+      </div>
 
-      <!-- STEP 3: Counter suggestions -->
+      <!-- STEP 3: Counter Picks -->
       <div class="cp-counter-results hidden" id="cp-counter-results">
         <div class="cp-card">
           <div class="cp-step-label"><span class="cp-step-num">3</span> Suggested counter picks</div>
@@ -73,72 +72,13 @@
         </div>
       </div>
 
-      <!-- STEP 4: Your pick + build -->
-      <div class="cp-picked-section hidden" id="cp-picked-section">
-
-        <!-- Selected champion -->
-        <div class="cp-card cp-picked-card">
-          <div class="cp-step-label"><span class="cp-step-num">4</span> Your pick</div>
-          <div class="cp-my-champ-slot" id="my-champ-slot"></div>
-          <div class="cp-lane-selector" id="my-lane-selector">
-            <div class="cp-lane-selector-label">Lane</div>
-            <div class="cp-lane-pills" id="my-lane-pills"></div>
-          </div>
+      <!-- Key Insights (appears after picking a counter) -->
+      <div class="cp-insights-section hidden" id="cp-insights-section">
+        <div class="cp-result-card">
+          <div class="cp-result-title">💡 Key Insights</div>
+          <div id="res-insights-content"></div>
         </div>
-
-        <!-- Your team (optional) -->
-        <div class="cp-card">
-          <div class="cp-card-label-row">
-            <div class="cp-card-label">YOUR TEAM</div>
-            <span class="cp-optional-tag">optional</span>
-          </div>
-          <div class="cp-lane-grid" id="ally-lane-grid"></div>
-        </div>
-
-        <!-- Playstyle -->
-        <div class="cp-card">
-          <div class="cp-card-label">PLAYSTYLE FOCUS</div>
-          <div class="cp-playstyle-row">
-            <button class="cp-ps-btn active" onclick="setPlaystyle('carry',this)">⚡ Carry</button>
-            <button class="cp-ps-btn" onclick="setPlaystyle('safe',this)">🛡 Safe</button>
-            <button class="cp-ps-btn" onclick="setPlaystyle('aggressive',this)">🔥 Aggressive</button>
-            <button class="cp-ps-btn" onclick="setPlaystyle('scaling',this)">📈 Scaling</button>
-            <button class="cp-ps-btn" onclick="setPlaystyle('antitank',this)">💥 Anti-Tank</button>
-            <button class="cp-ps-btn" onclick="setPlaystyle('antiheal',this)">🩸 Anti-Heal</button>
-          </div>
-        </div>
-
-        <button class="cp-analyze-btn cp-build-btn" onclick="getBuild()">🛠 Get Build &amp; Insights</button>
-
-        <!-- Build results -->
-        <div class="cp-results hidden" id="cp-results">
-
-          <div class="cp-result-card">
-            <div class="cp-result-title">⚔️ Enemy Composition</div>
-            <div id="res-damage-bar"></div>
-            <div id="res-threats"></div>
-            <div id="res-champ-icons"></div>
-          </div>
-
-          <div class="cp-result-card">
-            <div class="cp-result-title">🛠️ Recommended Build</div>
-            <div class="cp-build-note" id="res-build-note"></div>
-            <div class="cp-items-grid" id="res-items"></div>
-            <div class="cp-boots-row" id="res-boots"></div>
-          </div>
-
-          <div class="cp-result-card">
-            <div class="cp-result-title">⚖️ Situational Items</div>
-            <div id="res-situational-content"></div>
-          </div>
-
-          <div class="cp-result-card">
-            <div class="cp-result-title">💡 Key Insights</div>
-            <div id="res-insights-content"></div>
-          </div>
-
-        </div>
-      </div><!-- /cp-picked-section -->
+      </div>
 
     </div><!-- /cp-builder -->
   </div><!-- /cp-wrap -->

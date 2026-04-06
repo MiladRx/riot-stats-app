@@ -115,6 +115,10 @@
   background: linear-gradient(180deg, rgba(255,59,48,0.07) 0%, var(--bg2) 120px) !important;
   animation: liveBorderPulse 2s ease-in-out infinite;
 }
+/* Once opened, suppress slideUp re-trigger on close */
+.player-card.is-live.live-seen {
+  animation: liveBorderPulse 2s ease-in-out infinite;
+}
 
 .player-card.is-error { opacity: 0.45; cursor: default; }
 .player-card.is-error:hover { transform: none; box-shadow: none; background: var(--bg2); }

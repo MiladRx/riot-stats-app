@@ -44,7 +44,11 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:www.op.gg)",
       "WebFetch(domain:api.opgg.com)",
-      "WebFetch(domain:lolstatic-a.akamaihd.net)"
+      "WebFetch(domain:lolstatic-a.akamaihd.net)",
+      "WebFetch(domain:www.counterstats.net)",
+      "WebFetch(domain:www.metasrc.com)",
+      "WebFetch(domain:leagueofgraphs.com)",
+      "WebFetch(domain:metasrc.com)"
     ]
   }
 }
