@@ -18,6 +18,8 @@
   background: rgba(48,209,88,0.08);
 }
 
+
+
 /* ── Modal Shell ── */
 .fd-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; }
 .fd-modal.hidden { display: none; }
