@@ -56,6 +56,7 @@ export async function getPlayerStats(gameName, tagLine) {
   let avgCsMin = null, avgVision = null, avgDamage = null, avgDuration = null;
   let pentas = 0, streak = 0, bestStreak = 0, bestLStreak = 0, topCachedChamp = null;
   let totalKills = 0, totalDeaths = 0, totalAssists = 0, totalDuration = 0;
+  let maxKillsDeathless = 0;
   let totalCS = 0, totalDamage = 0, totalGold = 0;
   try {
     const cache = loadSeasonCache(CURRENT_SEASON, "solo");
@@ -78,6 +79,7 @@ export async function getPlayerStats(gameName, tagLine) {
         totalDuration += m.duration || 0;
         totalPentas  += m.pentas  || 0;
         totalGold    += m.gold    || 0;
+        if ((m.deaths || 0) === 0 && (m.kills || 0) > maxKillsDeathless) maxKillsDeathless = m.kills;
         validGames++;
         if (m.win) recentWins++;
         if (m.role) positionCounts[m.role] = (positionCounts[m.role] || 0) + 1;
@@ -156,7 +158,7 @@ export async function getPlayerStats(gameName, tagLine) {
       kills: avgKills, deaths: avgDeaths, assists: avgAssists, kda: kdaRatio,
       lpEstimate, topRole, avgCsMin, avgVision, avgDamage, avgDuration,
       totalTimeSecs: totalDuration, totalKills, totalDeaths, totalAssists,
-      totalCS, totalDamage, totalGold, pentas, streak, bestStreak, bestLStreak,
+      totalCS, totalDamage, totalGold, pentas, streak, bestStreak, bestLStreak, maxKillsDeathless,
       topCachedChamp,
     } : null,
   };

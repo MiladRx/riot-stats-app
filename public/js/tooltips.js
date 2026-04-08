@@ -34,7 +34,8 @@
     'badge-committed':    '#a5b4fc',
     'badge-tilted':       '#fc8181',
     'badge-icecold':      '#2dd4bf',
-    'badge-neutral':      '#64748b'
+    'badge-neutral':      '#64748b',
+    'dp2-penta-deathless': '#30d158'
   };
   
 

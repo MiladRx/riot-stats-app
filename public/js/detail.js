@@ -114,19 +114,30 @@ function renderDetail(p, i) {
   if (s.bestLStreak) streakHtml += '<div class="dp2-streak dp2-streak-l"><span class="dp2-streak-val">💀 ' + s.bestLStreak + 'L</span><span class="dp2-streak-sub">Worst streak</span></div>';
 
   // ── Right panel: season totals ──
-  var totalsHtml = '';
-  if (timePlayed)      totalsHtml += '<div class="dp2-total-cell"><span class="dp2-total-val">' + timePlayed + '</span><span class="dp2-total-label">Time</span></div>';
-  if (s.totalKills)    totalsHtml += '<div class="dp2-total-cell"><span class="dp2-total-val" style="color:var(--green)">' + s.totalKills + '</span><span class="dp2-total-label">Kills</span></div>';
-  if (s.totalDeaths)   totalsHtml += '<div class="dp2-total-cell"><span class="dp2-total-val" style="color:var(--red)">' + s.totalDeaths + '</span><span class="dp2-total-label">Deaths</span></div>';
-  if (s.totalAssists)  totalsHtml += '<div class="dp2-total-cell"><span class="dp2-total-val">' + s.totalAssists + '</span><span class="dp2-total-label">Assists</span></div>';
-  if (s.pentas)        totalsHtml += '<div class="dp2-total-cell"><span class="dp2-total-val" style="color:var(--yellow)">🏆 ' + s.pentas + '</span><span class="dp2-total-label">Pentas</span></div>';
+  var statsRowsHtml = '';
+  if (timePlayed)     statsRowsHtml += '<div class="dp2-total-cell"><span class="dp2-total-val">' + timePlayed + '</span><span class="dp2-total-label">Time</span></div>';
+  if (s.totalKills)   statsRowsHtml += '<div class="dp2-total-cell"><span class="dp2-total-val" style="color:var(--green)">' + s.totalKills + '</span><span class="dp2-total-label">Kills</span></div>';
+  if (s.totalDeaths)  statsRowsHtml += '<div class="dp2-total-cell"><span class="dp2-total-val" style="color:var(--red)">' + s.totalDeaths + '</span><span class="dp2-total-label">Deaths</span></div>';
+  if (s.totalAssists) statsRowsHtml += '<div class="dp2-total-cell"><span class="dp2-total-val">' + s.totalAssists + '</span><span class="dp2-total-label">Assists</span></div>';
+
+  var pentaHtml = '';
+  if (s.pentas || s.maxKillsDeathless) {
+    pentaHtml = '<div class="dp2-penta-row">';
+    if (s.pentas) pentaHtml += '<div class="dp2-penta-badge"><span>🏆</span>' + s.pentas + ' Penta' + (s.pentas > 1 ? 's' : '') + '</div>';
+    if (s.maxKillsDeathless) pentaHtml += '<div class="dp2-penta-badge dp2-penta-deathless" data-tip="Highest kills in a single game with 0 deaths">🎯 Kill Streak: ' + s.maxKillsDeathless + '</div>';
+    pentaHtml += '</div>';
+  }
+
+  var totalsBlock = (statsRowsHtml || pentaHtml)
+    ? '<div class="dp2-totals-block"><div class="dp2-totals">' + statsRowsHtml + '</div>' + pentaHtml + '</div>'
+    : '';
 
   // ── Right panel assembled ──
   var rightPanel =
     '<div class="dp2-right">'
     + '<div class="dp2-stats-block">' + statsRows + '</div>'
     + (streakHtml ? '<div class="dp2-streaks-block"><div class="dp2-streaks">' + streakHtml + '</div></div>' : '')
-    + (totalsHtml ? '<div class="dp2-totals-block"><div class="dp2-totals">' + totalsHtml + '</div></div>' : '')
+    + totalsBlock
     + '</div>';
 
   // ── Left panel: match history ──

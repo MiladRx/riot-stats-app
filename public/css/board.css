@@ -64,7 +64,7 @@
 }
 
 /* ── Expanded State ── */
-.player-card.open {
+.player-card.open:not(.is-live) {
   border-color: rgba(10, 132, 255, 0.55) !important;
   background: linear-gradient(180deg, rgba(10, 132, 255, 0.07) 0%, var(--bg2) 120px) !important;
   box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.25), 0 16px 36px rgba(0,0,0,0.5);
@@ -73,7 +73,7 @@
 }
 
 /* ── Expanded State — Top 3 keep rank colors ── */
-.player-card.rank-1.open {
+.player-card.rank-1.open:not(.is-live) {
   border-color: rgba(255, 214, 10, 0.55) !important;
   background: linear-gradient(180deg, rgba(255,214,10,0.08) 0%, var(--bg2) 120px) !important;
   box-shadow: 0 0 0 1px rgba(255, 214, 10, 0.25), 0 16px 36px rgba(0,0,0,0.5);
