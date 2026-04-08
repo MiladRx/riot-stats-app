@@ -169,7 +169,20 @@ function renderDetail(p, i) {
           var ago = _timeAgo(endTs);
           var kda = m.deaths === 0 ? '∞' : ((m.kills + m.assists) / m.deaths).toFixed(2);
           var kdaC2 = parseFloat(kda) >= 4 ? 'var(--green)' : parseFloat(kda) >= 2.5 ? 'var(--yellow)' : parseFloat(kda) < 2 ? 'var(--red)' : 'var(--orange)';
-          var champKey = m.champion.replace(/\s/g,'').replace(/'/g,'').replace(/\./g,'');
+          var _champOverrides = {
+            'Wukong':'MonkeyKing','Nunu & Willump':'Nunu','Renata Glasc':'Renata',
+            "Bel'Veth":'Belveth',"Cho'Gath":'Chogath',"Kha'Zix":'Khazix',
+            "Kog'Maw":'KogMaw',"Rek'Sai":'RekSai',"Vel'Koz":'Velkoz',
+            "Kai'Sa":'Kaisa',"LeBlanc":'Leblanc',"Jarvan IV":'JarvanIV',
+            "Dr. Mundo":'DrMundo',"Aurelion Sol":'AurelionSol',
+            "Master Yi":'MasterYi',"Miss Fortune":'MissFortune',
+            "Tahm Kench":'TahmKench',"Twisted Fate":'TwistedFate',
+            "Xin Zhao":'XinZhao',"Lee Sin":'LeeSin',"Kog'Maw":'KogMaw',
+            "K'Sante":'KSante',"Briar":'Briar',"Hwei":'Hwei',
+            "Smolder":'Smolder',"Mel":'Mel',
+            'FiddleSticks':'Fiddlesticks','Fiddlesticks':'Fiddlesticks'
+          };
+          var champKey = _champOverrides[m.champion] || m.champion.replace(/\s/g,'').replace(/['.]/g,'');
           var icon = 'https://ddragon.leagueoflegends.com/cdn/' + (window._ddragonVersion||'14.10.1') + '/img/champion/' + champKey + '.png';
 
           return '<div class="dp2-mh-row ' + (win ? 'dp2-mh-w' : 'dp2-mh-l') + '" style="animation-delay:' + (idx * 18) + 'ms">'
