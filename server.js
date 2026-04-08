@@ -177,8 +177,9 @@ app.get("/fetch-status", (req, res) => {
 
 app.get("/match-history/:gameName/:tagLine", (req, res) => {
   const key = `${req.params.gameName}#${req.params.tagLine}`.toLowerCase();
-  const cache = loadMatchCache();
-  const entry = cache[key];
+  // Read from season cache (kept live by auto-cycle) — fall back to match cache
+  const seasonCache = loadSeasonCache(CURRENT_SEASON, "solo");
+  const entry = seasonCache[key] || loadMatchCache()[key];
   if (!entry || !entry.matches) return res.json({ matches: [] });
   const matches = Object.values(entry.matches)
     .sort((a, b) => b.ts - a.ts)

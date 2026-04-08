@@ -165,7 +165,8 @@ function renderDetail(p, i) {
           var win = m.win;
           var mins = Math.floor(m.duration / 60);
           var secs = String(m.duration % 60).padStart(2, '0');
-          var ago = _timeAgo(m.ts);
+          var endTs = m.ts + (m.duration * 1000);
+          var ago = _timeAgo(endTs);
           var kda = m.deaths === 0 ? '∞' : ((m.kills + m.assists) / m.deaths).toFixed(2);
           var kdaC2 = parseFloat(kda) >= 4 ? 'var(--green)' : parseFloat(kda) >= 2.5 ? 'var(--yellow)' : parseFloat(kda) < 2 ? 'var(--red)' : 'var(--orange)';
           var champKey = m.champion.replace(/\s/g,'').replace(/'/g,'').replace(/\./g,'');
