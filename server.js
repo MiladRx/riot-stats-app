@@ -25,6 +25,7 @@ import { fetchJob, runFetch } from "./server/fetch-engine.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
 import { buildLineups } from "./server/clash.js";
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, computeRankings } from "./server/power-rankings.js";
+import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
 
 loadDDragon();
 
@@ -171,6 +172,56 @@ app.get("/fetch-status", (req, res) => {
     mode:      fetchJob.mode,
     progress:  fetchJob.progress,
     log:       fetchJob.log.slice(-80),
+  });
+});
+
+app.get("/match-history/:gameName/:tagLine", (req, res) => {
+  const key = `${req.params.gameName}#${req.params.tagLine}`.toLowerCase();
+  const cache = loadMatchCache();
+  const entry = cache[key];
+  if (!entry || !entry.matches) return res.json({ matches: [] });
+  const matches = Object.values(entry.matches)
+    .sort((a, b) => b.ts - a.ts)
+    .slice(0, 20);
+  res.json({ matches });
+});
+
+app.get("/match-history-summary", (req, res) => {
+  const cache = loadMatchCache();
+  const players = FULL_SQUAD.map(p => {
+    const key = `${p.gameName}#${p.tagLine}`.toLowerCase();
+    const entry = cache[key] || {};
+    const total = Object.keys(entry.matches || {}).length;
+    return { gameName: p.gameName, tagLine: p.tagLine, total, lastUpdated: entry.lastUpdated || null };
+  });
+  res.json({ players });
+});
+
+// Fetch full season match history for selected players (dashboard only)
+app.post("/fetch-history", (req, res) => {
+  if (matchFetchJob.running) return res.json({ status: "already_running" });
+  const { players: playerNames, season = CURRENT_SEASON } = req.body || {};
+  const targets = playerNames?.length
+    ? FULL_SQUAD.filter(p => playerNames.includes(p.gameName))
+    : FULL_SQUAD;
+  const seasonInfo = SEASONS[season];
+  const startTime = seasonInfo?.start ?? 1767866400;
+  const endTime   = seasonInfo?.end   ?? null;
+  runFetchJob(targets, null, startTime, endTime);
+  res.json({ status: "started", players: targets.map(p => p.gameName) });
+});
+
+app.delete("/fetch-history", (req, res) => {
+  matchFetchJob.running = false;
+  res.json({ status: "stopped" });
+});
+
+app.get("/fetch-history/status", (req, res) => {
+  res.json({
+    running:   matchFetchJob.running,
+    startedAt: matchFetchJob.startedAt,
+    progress:  matchFetchJob.progress,
+    log:       matchFetchJob.log.slice(-80),
   });
 });
 

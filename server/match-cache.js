@@ -36,7 +36,7 @@ function jobLog(msg) {
   if (fetchJob.log.length > 500) fetchJob.log = fetchJob.log.slice(-500);
 }
 
-async function fetchHistoryForPlayer(gameName, tagLine) {
+async function fetchHistoryForPlayer(gameName, tagLine, startTime = 1767866400, endTime = null) {
   const key = `${gameName}#${tagLine}`.toLowerCase();
   fetchJob.progress[key] = { status: "starting", fetched: 0, newThisRun: 0 };
 
@@ -45,6 +45,11 @@ async function fetchHistoryForPlayer(gameName, tagLine) {
     const account = await riotFetch(
       `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
     );
+    if (!account || !account.puuid) {
+      jobLog(`❌ ${gameName}: account lookup returned no puuid — skipping`);
+      fetchJob.progress[key] = { status: "error", error: "account not found" };
+      return;
+    }
     const { puuid } = account;
 
     const cache = loadMatchCache();
@@ -66,7 +71,7 @@ async function fetchHistoryForPlayer(gameName, tagLine) {
       let pageIds;
       try {
         pageIds = await riotFetch(
-          `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=${start}&count=${PAGE}&startTime=1767866400`
+          `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=${start}&count=${PAGE}&startTime=${startTime}` + (endTime ? `&endTime=${endTime}` : '')
         );
       } catch (e) { jobLog(`❌ ${gameName}: page ${start} failed — ${e.message}`); break; }
 
@@ -80,6 +85,7 @@ async function fetchHistoryForPlayer(gameName, tagLine) {
         await sleep(FETCH_DELAY_MS);
         try {
           const md = await riotFetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${matchId}`);
+          if (!md?.info?.participants) { knownIds.add(matchId); continue; }
           const p = md.info.participants.find(p => p.puuid === puuid);
           if (p) {
             cache[key].matches[matchId] = {
@@ -122,7 +128,7 @@ async function fetchHistoryForPlayer(gameName, tagLine) {
   }
 }
 
-export async function runFetchJob(players, onComplete) {
+export async function runFetchJob(players, onComplete, startTime = 1767866400, endTime = null) {
   if (fetchJob.running) return;
   const { FULL_SQUAD } = await import("./config.js");
   players = players || FULL_SQUAD;
@@ -134,7 +140,7 @@ export async function runFetchJob(players, onComplete) {
 
   for (const p of players) {
     if (!fetchJob.running) break;
-    await fetchHistoryForPlayer(p.gameName, p.tagLine);
+    await fetchHistoryForPlayer(p.gameName, p.tagLine, startTime, endTime);
   }
 
   fetchJob.running = false;

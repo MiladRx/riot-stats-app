@@ -63,10 +63,10 @@ function _fdStart() {
     .map(function(p) { return p.gameName; });
   if (selected.length === 0) return;
 
-  fetch("/fetch", {
+  fetch("/fetch-history", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ season: _fdSeason, mode: _fdMode, players: selected }),
+    body: JSON.stringify({ players: selected, season: _fdSeason }),
   })
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -79,7 +79,7 @@ function _fdStart() {
 }
 
 function _fdStop() {
-  fetch("/fetch", { method: "DELETE" })
+  fetch("/fetch-history", { method: "DELETE" })
     .then(function() { _fdPollStatus(); });
 }
 
@@ -97,7 +97,7 @@ function _fdStopPoll() {
 }
 
 function _fdPollStatus() {
-  fetch("/fetch-status")
+  fetch("/fetch-history/status")
     .then(function(r) { return r.json(); })
     .then(function(d) {
       _fdRenderStatus(d);
@@ -105,7 +105,6 @@ function _fdPollStatus() {
         _fdStartPoll();
       } else {
         _fdStopPoll();
-        // If a fetch just finished, refresh the summary
         if (d.startedAt) _fdRefreshSummary();
       }
     })
@@ -113,11 +112,10 @@ function _fdPollStatus() {
 }
 
 function _fdRefreshSummary() {
-  fetch("/cache-summary?season=" + _fdSeason + "&mode=" + _fdMode)
+  fetch("/match-history-summary")
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      _fdSummary = d.summary || [];
-      // Default: all selected
+      _fdSummary = d.players || [];
       _fdSummary.forEach(function(p) {
         if (_fdSel[p.gameName] === undefined) _fdSel[p.gameName] = true;
       });
@@ -233,7 +231,7 @@ function _fdUpdateActions() {
   startBtn.disabled = count === 0;
   var modeLabel = _fdMode === "clash" ? "Clash" : _fdMode === "flex" ? "Flex" : "Solo/Duo";
   startBtn.textContent = count > 0
-    ? "▶ Fetch " + count + " Player" + (count !== 1 ? "s" : "") + " — " + _fdSeason + " " + modeLabel
+    ? "▶ Fetch " + count + " Player" + (count !== 1 ? "s" : "") + " — " + _fdSeason + " All Games"
     : "▶ Select Players to Fetch";
   startBtn.className = "fd-start-btn mode-" + _fdMode;
 
