@@ -79,13 +79,14 @@ export function saveFinalResults(weekKey, rankings) {
 const TIER_VAL = { IRON: 0, BRONZE: 400, SILVER: 800, GOLD: 1200, PLATINUM: 1600, EMERALD: 2000, DIAMOND: 2400, MASTER: 2800, GRANDMASTER: 3200, CHALLENGER: 3600 };
 const RANK_VAL = { IV: 0, III: 100, II: 200, I: 300 };
 
-// Expected LP per win by tier — lower ranks get more LP so we normalize against Diamond (20 LP baseline)
+// Expected LP per win by tier (real Riot averages)
+// Higher tiers earn less LP per win, so we normalize to make effort comparable across ranks
 const EXPECTED_LP_PER_WIN = {
-  IRON: 30, BRONZE: 28, SILVER: 26, GOLD: 25,
-  PLATINUM: 23, EMERALD: 22, DIAMOND: 20,
-  MASTER: 20, GRANDMASTER: 20, CHALLENGER: 20,
+  IRON: 29, BRONZE: 27, SILVER: 25, GOLD: 24,
+  PLATINUM: 23, EMERALD: 22, DIAMOND: 21,
+  MASTER: 20, GRANDMASTER: 18, CHALLENGER: 16,
 };
-const BASELINE_LP = 20; // Diamond baseline
+const BASELINE_LP = 21; // Diamond as the reference point
 
 function fullLP(tier, rank, lp) {
   return (TIER_VAL[tier] || 0) + (RANK_VAL[rank] || 0) + (lp || 0);
