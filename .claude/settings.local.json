@@ -48,7 +48,8 @@
       "WebFetch(domain:www.counterstats.net)",
       "WebFetch(domain:www.metasrc.com)",
       "WebFetch(domain:leagueofgraphs.com)",
-      "WebFetch(domain:metasrc.com)"
+      "WebFetch(domain:metasrc.com)",
+      "Bash(node -e ':*)"
     ]
   }
 }

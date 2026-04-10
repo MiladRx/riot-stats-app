@@ -24,7 +24,7 @@ import { loadSeasonCache, getSeasonCacheSummary } from "./server/season-cache.js
 import { fetchJob, runFetch } from "./server/fetch-engine.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
 import { buildLineups } from "./server/clash.js";
-import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, computeRankings } from "./server/power-rankings.js";
+import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
 import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
 
 loadDDragon();
@@ -88,8 +88,13 @@ async function refreshSquadCache() {
   } else if (Date.now() >= snap.createdAt + 7 * 24 * 60 * 60 * 1000) {
     const newKey = nextWeekKey(weekKey);
     if (!loadSnapshot(newKey)) {
+      // Save final results for the completed week before rolling over
+      const finalRankings = computeRankings(cachedSquadData, snap);
+      saveFinalResults(weekKey, finalRankings);
+      console.log(`🏆 Final results saved for ${weekKey}`);
+      // Create baseline snapshot for new week
       saveSnapshot(newKey, cachedSquadData);
-      console.log(`📸 Snapshot rolled over → ${newKey} (${weekKey} preserved)`);
+      console.log(`📸 New week started → ${newKey}`);
     }
   }
 }
