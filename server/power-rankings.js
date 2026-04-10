@@ -79,8 +79,23 @@ export function saveFinalResults(weekKey, rankings) {
 const TIER_VAL = { IRON: 0, BRONZE: 400, SILVER: 800, GOLD: 1200, PLATINUM: 1600, EMERALD: 2000, DIAMOND: 2400, MASTER: 2800, GRANDMASTER: 3200, CHALLENGER: 3600 };
 const RANK_VAL = { IV: 0, III: 100, II: 200, I: 300 };
 
+// Expected LP per win by tier — lower ranks get more LP so we normalize against Diamond (20 LP baseline)
+const EXPECTED_LP_PER_WIN = {
+  IRON: 30, BRONZE: 28, SILVER: 26, GOLD: 25,
+  PLATINUM: 23, EMERALD: 22, DIAMOND: 20,
+  MASTER: 20, GRANDMASTER: 20, CHALLENGER: 20,
+};
+const BASELINE_LP = 20; // Diamond baseline
+
 function fullLP(tier, rank, lp) {
   return (TIER_VAL[tier] || 0) + (RANK_VAL[rank] || 0) + (lp || 0);
+}
+
+// Normalize raw LP progress to be fair across ranks
+// e.g. Gold +25 LP = Diamond +25*(20/25) = 20 normalized → same as Diamond +20
+function normalizeLp(lpProgress, tier) {
+  const expected = EXPECTED_LP_PER_WIN[tier] || BASELINE_LP;
+  return lpProgress * (BASELINE_LP / expected);
 }
 
 export function computeRankings(squadPlayers, snapshot) {
@@ -96,6 +111,10 @@ export function computeRankings(squadPlayers, snapshot) {
       const snapFull = snap ? fullLP(snap.tier, snap.rank, snap.lp) : curFull;
       const lpProgress = snap ? curFull - snapFull : 0;
 
+      // Use snapshot tier (start-of-week rank) for normalization so rank-ups don't skew it
+      const snapTier = snap?.tier || p.solo.tier;
+      const normalizedLp = normalizeLp(lpProgress, snapTier);
+
       const curGames     = p.solo.wins + p.solo.losses;
       const snapGames    = snap ? (snap.wins + snap.losses) : curGames;
       const gamesThisWeek  = Math.max(0, curGames - snapGames);
@@ -105,7 +124,7 @@ export function computeRankings(squadPlayers, snapshot) {
 
       const inactive = snap && gamesThisWeek === 0 && lpProgress === 0;
 
-      let score = lpProgress + gamesThisWeek * 5 + winsThisWeek * 3;
+      let score = normalizedLp + gamesThisWeek * 5 + winsThisWeek * 3;
       if (weekWR !== null && gamesThisWeek >= 5) {
         if (weekWR >= 60)      score += 20;
         else if (weekWR >= 55) score += 10;
@@ -119,7 +138,7 @@ export function computeRankings(squadPlayers, snapshot) {
         tier: p.solo.tier, rank: p.solo.rank, lp: p.solo.lp,
         hasSnapshot: !!snap, inactive,
         score: inactive ? null : Math.round(score),
-        lpProgress, gamesThisWeek, winsThisWeek, lossesThisWeek, weekWR,
+        lpProgress, normalizedLp: Math.round(normalizedLp), gamesThisWeek, winsThisWeek, lossesThisWeek, weekWR,
         curWR: curGames > 0 ? Math.round(p.solo.wins / curGames * 100) : 0,
       };
     })
