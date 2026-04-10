@@ -22,6 +22,7 @@ export const FULL_SQUAD = [
   { gameName: "DÅRK", tagLine: "ABO" },
   { gameName: "DARWIZZY", tagLine: "HØES" },
   { gameName: "La Cabra II", tagLine: "Qlawi" },
+  { gameName: "biigdaddy", tagLine: "EUNE" },
 ];
 
 export const CACHE_DURATION = 10 * 60 * 1000;       // 10 minutes

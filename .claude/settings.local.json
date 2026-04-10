@@ -49,7 +49,8 @@
       "WebFetch(domain:www.metasrc.com)",
       "WebFetch(domain:leagueofgraphs.com)",
       "WebFetch(domain:metasrc.com)",
-      "Bash(node -e ':*)"
+      "Bash(node -e ':*)",
+      "Bash(node --input-type=module)"
     ]
   }
 }
