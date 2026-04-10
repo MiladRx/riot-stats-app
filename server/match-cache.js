@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { FETCH_DELAY_MS } from "./config.js";
+import { FETCH_DELAY_MS, SEASONS, CURRENT_SEASON } from "./config.js";
 import { riotFetch } from "./riot-api.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -36,7 +36,7 @@ function jobLog(msg) {
   if (fetchJob.log.length > 500) fetchJob.log = fetchJob.log.slice(-500);
 }
 
-async function fetchHistoryForPlayer(gameName, tagLine, startTime = 1767866400, endTime = null) {
+async function fetchHistoryForPlayer(gameName, tagLine, startTime = SEASONS[CURRENT_SEASON].start, endTime = null) {
   const key = `${gameName}#${tagLine}`.toLowerCase();
   fetchJob.progress[key] = { status: "starting", fetched: 0, newThisRun: 0 };
 
@@ -128,7 +128,7 @@ async function fetchHistoryForPlayer(gameName, tagLine, startTime = 1767866400, 
   }
 }
 
-export async function runFetchJob(players, onComplete, startTime = 1767866400, endTime = null) {
+export async function runFetchJob(players, onComplete, startTime = SEASONS[CURRENT_SEASON].start, endTime = null) {
   if (fetchJob.running) return;
   const { FULL_SQUAD } = await import("./config.js");
   players = players || FULL_SQUAD;
