@@ -92,9 +92,10 @@ async function refreshSquadCache() {
       const finalRankings = computeRankings(cachedSquadData, snap);
       saveFinalResults(weekKey, finalRankings);
       console.log(`🏆 Final results saved for ${weekKey}`);
-      // Create baseline snapshot for new week
-      saveSnapshot(newKey, cachedSquadData);
-      console.log(`📸 New week started → ${newKey}`);
+      // Create baseline snapshot anchored to exact rollover time (not when server happened to run)
+      const anchoredAt = snap.createdAt + 7 * 24 * 60 * 60 * 1000;
+      saveSnapshot(newKey, cachedSquadData, anchoredAt);
+      console.log(`📸 New week started → ${newKey} (anchored to ${new Date(anchoredAt).toISOString()})`);
     }
   }
 }

@@ -55,8 +55,8 @@ export function loadResults(weekKey) {
   return null;
 }
 
-export function saveSnapshot(weekKey, squadPlayers) {
-  const snap = { week: weekKey, createdAt: Date.now(), players: {} };
+export function saveSnapshot(weekKey, squadPlayers, createdAt = Date.now()) {
+  const snap = { week: weekKey, createdAt, players: {} };
   for (const p of squadPlayers) {
     if (p.error || !p.solo) continue;
     const key = `${p.gameName}#${p.tagLine}`.toLowerCase();
