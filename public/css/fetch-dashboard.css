@@ -96,7 +96,6 @@
 }
 .fd-mode-tab:hover { background: rgba(255,255,255,0.08); color: var(--text2); border-color: rgba(255,255,255,0.16); }
 .fd-mode-tab.active.solo   { background: rgba(10,132,255,0.14); border-color: rgba(10,132,255,0.45); color: #7eb8ff; }
-.fd-mode-tab.active.flex   { background: rgba(48,209,88,0.12); border-color: rgba(48,209,88,0.4); color: var(--green); }
 .fd-mode-tab.active.clash  { background: rgba(191,90,242,0.14); border-color: rgba(191,90,242,0.45); color: #d090f8; }
 
 /* ── Player list ── */
@@ -131,7 +130,6 @@
 .fd-cb.checked::after { content: "✓"; color: white; font-size: 0.65rem; font-weight: 900; line-height: 1; }
 .fd-mode-tab.active.clash ~ .fd-players .fd-cb.checked,
 .fd-cb.checked.clash { background: #bf5af2; border-color: #bf5af2; }
-.fd-cb.checked.flex  { background: var(--green); border-color: var(--green); }
 
 .fd-pname { font-size: 0.77rem; font-weight: 700; flex: 1; }
 .fd-count { font-size: 0.63rem; color: var(--green); font-weight: 600; }
@@ -158,8 +156,6 @@
 .fd-start-btn:disabled { opacity: 0.3; cursor: default; }
 .fd-start-btn.mode-clash { background: linear-gradient(135deg, rgba(191,90,242,0.22), rgba(191,90,242,0.14)); border-color: rgba(191,90,242,0.4); color: #d090f8; }
 .fd-start-btn.mode-clash:hover:not(:disabled) { background: linear-gradient(135deg, rgba(191,90,242,0.32), rgba(191,90,242,0.22)); box-shadow: 0 0 20px rgba(191,90,242,0.25); }
-.fd-start-btn.mode-flex { background: linear-gradient(135deg, rgba(48,209,88,0.18), rgba(48,209,88,0.1)); border-color: rgba(48,209,88,0.38); color: var(--green); }
-.fd-start-btn.mode-flex:hover:not(:disabled) { background: linear-gradient(135deg, rgba(48,209,88,0.28), rgba(48,209,88,0.18)); box-shadow: 0 0 20px rgba(48,209,88,0.2); }
 
 .fd-stop-btn {
   height: 42px; padding: 0 20px;

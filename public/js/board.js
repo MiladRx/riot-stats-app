@@ -5,10 +5,9 @@ var _boardAvailableSeasons = ["2026"]; // always starts with current; updated af
 
 var BOARD_MODES = [
   { id: "solo",  label: "Solo/Duo" },
-  { id: "flex",  label: "Flex"     },
   { id: "clash", label: "Clash"    },
 ];
-var MODE_LABELS = { solo: "Solo/Duo", flex: "Flex", clash: "Clash" };
+var MODE_LABELS = { solo: "Solo/Duo", clash: "Clash" };
 
 function setBoardSeason(season) {
   _boardSeason = season;
@@ -33,7 +32,6 @@ function setBoardMode(mode) {
 function _updatePageHeader() {
   var titles = {
     solo:  { h1: "Solo / Duo Ranked", sub: "Solo / Duo Ranked · EUNE", rankCol: "Rank" },
-    flex:  { h1: "Flex Ranked",        sub: "Flex 5v5 Ranked · EUNE",   rankCol: "Rank" },
     clash: { h1: "Clash",              sub: "Clash Tournament · EUNE",  rankCol: "Solo Strength" },
   };
   var t = titles[_boardMode] || titles.solo;
@@ -72,17 +70,17 @@ function _renderFilterBar() {
   var seasonEl = document.getElementById("board-seasons");
   var modeEl   = document.getElementById("board-modes");
   if (seasonEl) {
-    seasonEl.innerHTML = _boardAvailableSeasons.map(function(s) {
-      return '<button class="bf-season' + (s === _boardSeason ? " active" : "") + '" onclick="setBoardSeason(\'' + s + '\')">' + s + '</button>';
-    }).join('');
+    seasonEl.innerHTML = '<div class="join">' + _boardAvailableSeasons.map(function(s) {
+      return '<button class="join-item btn btn-ghost btn-xs bf-season' + (s === _boardSeason ? " active" : "") + '" onclick="setBoardSeason(\'' + s + '\')">' + s + '</button>';
+    }).join('') + '</div>';
   }
   if (modeEl) {
-    modeEl.innerHTML = BOARD_MODES.map(function(m) {
+    modeEl.innerHTML = '<div class="join">' + BOARD_MODES.map(function(m) {
       if (m.id === 'clash') {
-        return '<button class="bf-mode dev-locked" data-tip="In development" onclick="return false">' + m.label + '</button>';
+        return '<button class="join-item btn btn-ghost btn-xs bf-mode dev-locked" disabled>' + m.label + ' 🔒</button>';
       }
-      return '<button class="bf-mode' + (m.id === _boardMode ? " active " + m.id : "") + '" onclick="setBoardMode(\'' + m.id + '\')">' + m.label + '</button>';
-    }).join('');
+      return '<button class="join-item btn btn-ghost btn-xs bf-mode' + (m.id === _boardMode ? " active " + m.id : "") + '" onclick="setBoardMode(\'' + m.id + '\')">' + m.label + '</button>';
+    }).join('') + '</div>';
   }
 }
 
@@ -315,7 +313,7 @@ function cardHTML(p, i, rankPos) {
     + '</div></div>'
     + tierCol
     + '<div class="wl-col"><div class="wl-numbers"><span class="w">' + s.wins + 'W</span> <span style="color:var(--text3)">/</span> <span class="l">' + s.losses + 'L</span></div>'
-    + '<div class="wl-bar"><div class="wl-bar-fill" style="width:' + s.winRate + '%"></div></div></div>'
+    + '<progress class="progress progress-success wl-progress" value="' + s.winRate + '" max="100"></progress></div>'
     + '<div class="wr-col">' + wrRing(s.winRate) + '</div>'
     + '<div class="games-col"><div class="g-num">' + (s.wins + s.losses) + '</div><div class="g-label">games</div></div>'
     + '<button class="vs-btn badge-carry" onclick="selectForCompare(' + i + ', event)" data-tip="Select to compare head-to-head. Pick a second player to open the matchup.">⚔</button>'

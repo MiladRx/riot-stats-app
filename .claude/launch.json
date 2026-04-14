@@ -1,17 +1,10 @@
 {
   "version": "0.0.1",
-  "autoPort": true,
   "configurations": [
     {
-      "name": "Dev Server (watch)",
-      "runtimeExecutable": "node",
+      "name": "Dev Server",
+      "runtimeExecutable": "C:\\pinokio\\bin\\miniconda\\node.exe",
       "runtimeArgs": ["--watch", "server.js"],
-      "port": 3001
-    },
-    {
-      "name": "Production Server",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["server.js"],
       "port": 3000
     }
   ]

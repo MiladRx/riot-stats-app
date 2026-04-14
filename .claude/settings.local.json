@@ -50,7 +50,18 @@
       "WebFetch(domain:leagueofgraphs.com)",
       "WebFetch(domain:metasrc.com)",
       "Bash(node -e ':*)",
-      "Bash(node --input-type=module)"
+      "Bash(node --input-type=module)",
+      "Bash(node server.js)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(where node:*)",
+      "Read(//usr/local/bin/**)",
+      "Bash(cmd.exe /c \"node --version\")",
+      "Bash(cmd.exe /c \"node --version 2>&1\")",
+      "Bash(powershell.exe -Command \"node --version\")",
+      "Bash(powershell.exe -Command \"if \\(Test-Path 'C:\\\\Program Files\\\\nodejs\\\\node.exe'\\) { Write-Host 'Found at C:\\\\Program Files\\\\nodejs\\\\node.exe' } else { Write-Host 'Not found' }\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\' -Filter 'node.exe' -Recurse -ErrorAction SilentlyContinue -Depth 4 | Select-Object FullName\")",
+      "Bash(find \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\" -type f \\\\\\( -name \"*.js\" -o -name \"*.json\" -o -name \"*.css\" -o -name \"*.html\" \\\\\\) ! -path \"*/node_modules/*\" -exec grep -l \"flex\" {} \\\\;)",
+      "Bash(del \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\season-2025-flex.json\" \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\season-2026-flex.json\")"
     ]
   }
 }

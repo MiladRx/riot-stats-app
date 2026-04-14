@@ -51,7 +51,6 @@ async function fetchPlayer(p) {
     ]);
 
     const solo = allEntries.find(e => e.queueType === "RANKED_SOLO_5x5") || null;
-    const flex = allEntries.find(e => e.queueType === "RANKED_FLEX_SR")  || null;
     const tierOrder = { IRON:0, BRONZE:1, SILVER:2, GOLD:3, PLATINUM:4, EMERALD:5, DIAMOND:6, MASTER:7, GRANDMASTER:8, CHALLENGER:9 };
     const rankOrder = { IV:0, III:1, II:2, I:3 };
 
@@ -74,11 +73,6 @@ async function fetchPlayer(p) {
         totalKills: 0, totalDeaths: 0, totalAssists: 0,
         totalCS: 0, totalDamage: 0, totalGold: 0, pentas: 0,
         streak: 0, bestStreak: 0, bestLStreak: 0, topCachedChamp: null,
-      } : null,
-      flex: flex ? {
-        tier: flex.tier, rank: flex.rank, lp: flex.leaguePoints,
-        wins: flex.wins, losses: flex.losses,
-        sortScore: (tierOrder[flex.tier] ?? -1) * 400 + (rankOrder[flex.rank] ?? 0) * 100 + flex.leaguePoints,
       } : null,
     };
   } catch (err) {

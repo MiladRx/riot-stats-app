@@ -10,7 +10,6 @@ var _fdPollTimer  = null;
 var FD_SEASONS = ["2026", "2025", "2024", "2023"];
 var FD_MODES   = [
   { id: "solo",  label: "Solo/Duo" },
-  { id: "flex",  label: "Flex"     },
   { id: "clash", label: "Clash"    },
 ];
 
@@ -161,7 +160,7 @@ function _fdRenderPlayers() {
     var agoHtml = p.lastUpdated
       ? '<span class="fd-ago">· ' + _fdTimeAgo(p.lastUpdated) + '</span>'
       : '<span class="fd-never">· never fetched</span>';
-    var cbMode = _fdMode === "clash" ? " clash" : _fdMode === "flex" ? " flex" : "";
+    var cbMode = _fdMode === "clash" ? " clash" : "";
     return '<div class="fd-player-row" data-name="' + p.gameName + '" onclick="_fdTogglePlayer(\'' + p.gameName + '\')">'
       + '<span class="fd-cb' + (sel ? " checked" + cbMode : "") + '"></span>'
       + '<span class="fd-pname">' + p.gameName + '</span>'
@@ -229,7 +228,7 @@ function _fdUpdateActions() {
   if (!startBtn) return;
   var count = _fdSummary.filter(function(p) { return _fdSel[p.gameName]; }).length;
   startBtn.disabled = count === 0;
-  var modeLabel = _fdMode === "clash" ? "Clash" : _fdMode === "flex" ? "Flex" : "Solo/Duo";
+  var modeLabel = _fdMode === "clash" ? "Clash" : "Solo/Duo";
   startBtn.textContent = count > 0
     ? "▶ Fetch " + count + " Player" + (count !== 1 ? "s" : "") + " — " + _fdSeason + " All Games"
     : "▶ Select Players to Fetch";

@@ -22,14 +22,14 @@ function _updateTimerUI() {
 
   if (_cycleTriggered || d.fetchRunning) {
     el.className = "update-timer visible state-fetching";
-    el.innerHTML = '<div class="update-timer-dot"></div>Fetching new data…';
+    el.innerHTML = '<span class="loading loading-spinner loading-xs"></span>Fetching new data…';
     return;
   }
 
   if (d.scheduleReloadAt && d.scheduleReloadAt > now) {
     var rem = d.scheduleReloadAt - now;
     el.className = "update-timer visible state-reload";
-    el.innerHTML = '<div class="update-timer-dot"></div>Refreshing in ' + _fmtCountdown(rem);
+    el.innerHTML = '<span class="loading loading-dots loading-xs"></span>Refreshing in ' + _fmtCountdown(rem);
     return;
   }
 

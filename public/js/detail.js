@@ -153,7 +153,7 @@ function renderDetail(p, i) {
   setTimeout(function() {
     var el = document.getElementById(matchHistId);
     if (!el) return;
-    fetch('/match-history/' + encodeURIComponent(p.gameName) + '/' + encodeURIComponent(p.tagLine))
+    fetch('/match-history/' + encodeURIComponent(p.gameName) + '/' + encodeURIComponent(p.tagLine) + '?season=' + (window._currentSeason || '2026') + '&mode=' + (window._currentMode || 'solo'))
       .then(function(r) { return r.json(); })
       .then(function(data) {
         var el2 = document.getElementById(matchHistId);

@@ -6,7 +6,7 @@ export const SEASONS = {
   "2023": { label: "Season 2023", start: 1673395200, end: 1704844800 },
 };
 export const CURRENT_SEASON = "2026";
-export const QUEUE_IDS = { solo: 420, flex: 440, clash: 700 };
+export const QUEUE_IDS = { solo: 420, clash: 700 };
 
 // --- Full Player Roster ---
 export const FULL_SQUAD = [

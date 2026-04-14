@@ -155,7 +155,7 @@ app.post("/fetch", (req, res) => {
 
   const { season = CURRENT_SEASON, mode = "solo", players: playerNames } = req.body || {};
   if (!SEASONS[season])                          return res.status(400).json({ error: `Unknown season: ${season}` });
-  if (!["solo","flex","clash"].includes(mode))   return res.status(400).json({ error: `Unknown mode: ${mode}` });
+  if (!["solo","clash"].includes(mode))           return res.status(400).json({ error: `Unknown mode: ${mode}` });
 
   const targets = playerNames?.length
     ? FULL_SQUAD.filter(p => playerNames.includes(p.gameName))
@@ -183,8 +183,8 @@ app.get("/fetch-status", (req, res) => {
 
 app.get("/match-history/:gameName/:tagLine", (req, res) => {
   const key = `${req.params.gameName}#${req.params.tagLine}`.toLowerCase();
-  // Read from season cache (kept live by auto-cycle) — fall back to match cache
-  const seasonCache = loadSeasonCache(CURRENT_SEASON, "solo");
+  const { season = CURRENT_SEASON, mode = "solo" } = req.query;
+  const seasonCache = loadSeasonCache(season, mode);
   const entry = seasonCache[key] || loadMatchCache()[key];
   if (!entry || !entry.matches) return res.json({ matches: [] });
   const matches = Object.values(entry.matches)
@@ -294,7 +294,7 @@ app.get("/squad-stats", (req, res) => {
   const players = squadBase.map(p => {
     const key   = `${p.gameName}#${p.tagLine}`.toLowerCase();
     const entry = cache[key];
-    const liveRankSrc = mode === "flex" ? p.flex : p.solo;
+    const liveRankSrc = p.solo;
     const liveRank    = liveRankSrc ? { tier: liveRankSrc.tier, rank: liveRankSrc.rank, lp: liveRankSrc.lp } : null;
     const base = { gameName: p.gameName, tagLine: p.tagLine, profileIconId: p.profileIconId || 1, summonerLevel: p.summonerLevel || null, cached: true, season, mode, liveRank };
 
@@ -344,7 +344,6 @@ app.get("/squad-stats", (req, res) => {
       totalKills:kills,totalDeaths:deaths,totalAssists:assists,totalCS:cs,totalDamage:damage,totalGold:gold,
       pentas,streak,bestStreak,bestLStreak,
       sortScore: season!==CURRENT_SEASON&&mode!=="clash" ? n
-        : mode==="flex" ? (liveRank?(TIER_SCORES[liveRank.tier]||0)+(RANK_SCORES[liveRank.rank]||0)+(liveRank.lp||0):wins-losses)
         : mode==="clash" ? winRate*1000+wins
         : wins-losses,
       topCachedChamp,
