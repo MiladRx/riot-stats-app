@@ -199,11 +199,19 @@ header {
   width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
   background: var(--text3);
 }
-.update-timer.state-fetching .update-timer-dot { background: #ffd700; animation: pulse 1.2s infinite; }
-.update-timer.state-fetching .loading { color: #ffd700; }
-.update-timer.state-reload .update-timer-dot   { background: #3ecf68; animation: pulse 1.2s infinite; }
-.update-timer.state-reload .loading { color: #3ecf68; }
+.update-timer.state-fetching .update-timer-dot { background: var(--green); animation: pulse 1.2s infinite; }
+.update-timer.state-fetching .loading { color: var(--green) !important; }
+.update-timer.state-reload .update-timer-dot   { background: var(--green); animation: pulse 1.2s infinite; }
+.update-timer.state-reload .loading { color: var(--green) !important; }
 .update-timer.state-idle .update-timer-dot     { background: var(--text3); }
+
+/* ── DaisyUI loading spinner global colors ── */
+/* Default spinner = green (active/fetching) */
+.loading { color: var(--green) !important; }
+/* Red variant */
+.loading-red { color: var(--red) !important; }
+/* Muted variant for subtle states */
+.loading-muted { color: var(--text3) !important; }
 
 /* ── Dev Auth Modal ── */
 .dev-auth-overlay {

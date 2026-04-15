@@ -81,7 +81,11 @@
       "Bash(\"C:/pinokio/bin/miniconda/node.exe\" -e \"require\\('better-sqlite3'\\)\")",
       "Bash(\"C:/pinokio/bin/miniconda/node.exe\" --input-type=module --eval \"import './server/db.js'; console.log\\('DB OK'\\)\")",
       "Bash(timeout 8 \"C:/pinokio/bin/miniconda/node.exe\" server.js)",
-      "Bash(timeout 5 \"C:/pinokio/bin/miniconda/node.exe\" server.js)"
+      "Bash(timeout 5 \"C:/pinokio/bin/miniconda/node.exe\" server.js)",
+      "Bash(npm remove:*)",
+      "Bash(npm install:*)",
+      "Bash(\"C:/pinokio/bin/miniconda/npm.cmd\" remove:*)",
+      "Bash(\"C:/pinokio/bin/miniconda/node.exe\" --input-type=module --eval \"import\\('./server/db.js'\\).then\\(\\(\\)=>console.log\\('✅ DB module ready'\\)\\).catch\\(e=>console.error\\(e\\)\\)\")"
     ]
   }
 }

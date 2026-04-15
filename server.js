@@ -30,8 +30,12 @@ import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-sta
 import { buildLineups } from "./server/clash.js";
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
 import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
+import { ready as dbReady } from "./server/db.js";
 
 loadDDragon();
+
+// Initialize database (must happen before any routes use it)
+await dbReady();
 
 // ─────────────────────────────────────────────
 // Squad Cache

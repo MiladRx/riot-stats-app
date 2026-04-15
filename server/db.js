@@ -1,7 +1,7 @@
-import Database from "better-sqlite3";
+import initSqlJs from "sql.js";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import fs from "fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH   = path.join(__dirname, "..", "data", "matches.db");
@@ -10,163 +10,250 @@ const DB_PATH   = path.join(__dirname, "..", "data", "matches.db");
 const dataDir = path.join(__dirname, "..", "data");
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-const db = new Database(DB_PATH);
-db.pragma("journal_mode = WAL");
-db.pragma("synchronous = NORMAL");
+let db = null;
+let SQL = null;
 
-// ── Schema ──────────────────────────────────────────────────────────────────
-db.exec(`
-  CREATE TABLE IF NOT EXISTS matches (
-    id          TEXT    NOT NULL,
-    player_key  TEXT    NOT NULL,
-    season      TEXT    NOT NULL,
-    mode        TEXT    NOT NULL,
-    ts          INTEGER,
-    duration    INTEGER,
-    win         INTEGER,
-    champion    TEXT,
-    role        TEXT,
-    kills       INTEGER,
-    deaths      INTEGER,
-    assists     INTEGER,
-    cs          INTEGER,
-    vision      INTEGER,
-    damage      INTEGER,
-    gold        INTEGER,
-    pentas      INTEGER,
-    PRIMARY KEY (id, player_key)
-  );
+// Initialize SQL.js and load or create database
+async function initDb() {
+  SQL = await initSqlJs();
 
-  CREATE TABLE IF NOT EXISTS player_state (
-    player_key  TEXT    NOT NULL,
-    season      TEXT    NOT NULL,
-    mode        TEXT    NOT NULL,
-    puuid       TEXT,
-    last_updated INTEGER,
-    PRIMARY KEY (player_key, season, mode)
-  );
+  if (fs.existsSync(DB_PATH)) {
+    const data = fs.readFileSync(DB_PATH);
+    db = new SQL.Database(data);
+    console.log("📊 Loaded existing SQLite database from disk");
+  } else {
+    db = new SQL.Database();
+    console.log("📊 Created new SQLite database in memory");
+  }
 
-  CREATE TABLE IF NOT EXISTS fetched_ids (
-    id          TEXT    NOT NULL,
-    player_key  TEXT    NOT NULL,
-    season      TEXT    NOT NULL,
-    mode        TEXT    NOT NULL,
-    PRIMARY KEY (id, player_key, season, mode)
-  );
+  // Create schema
+  db.run(`
+    CREATE TABLE IF NOT EXISTS matches (
+      id          TEXT    NOT NULL,
+      player_key  TEXT    NOT NULL,
+      season      TEXT    NOT NULL,
+      mode        TEXT    NOT NULL,
+      ts          INTEGER,
+      duration    INTEGER,
+      win         INTEGER,
+      champion    TEXT,
+      role        TEXT,
+      kills       INTEGER,
+      deaths      INTEGER,
+      assists     INTEGER,
+      cs          INTEGER,
+      vision      INTEGER,
+      damage      INTEGER,
+      gold        INTEGER,
+      pentas      INTEGER,
+      PRIMARY KEY (id, player_key)
+    );
 
-  CREATE INDEX IF NOT EXISTS idx_matches_player  ON matches (player_key, season, mode);
-  CREATE INDEX IF NOT EXISTS idx_matches_ts      ON matches (ts DESC);
-  CREATE INDEX IF NOT EXISTS idx_fetched_player  ON fetched_ids (player_key, season, mode);
-`);
+    CREATE TABLE IF NOT EXISTS player_state (
+      player_key  TEXT    NOT NULL,
+      season      TEXT    NOT NULL,
+      mode        TEXT    NOT NULL,
+      puuid       TEXT,
+      last_updated INTEGER,
+      PRIMARY KEY (player_key, season, mode)
+    );
 
-// ── Prepared statements ──────────────────────────────────────────────────────
-const stmts = {
-  upsertMatch: db.prepare(`
-    INSERT OR REPLACE INTO matches
-      (id,player_key,season,mode,ts,duration,win,champion,role,kills,deaths,assists,cs,vision,damage,gold,pentas)
-    VALUES
-      (@id,@player_key,@season,@mode,@ts,@duration,@win,@champion,@role,@kills,@deaths,@assists,@cs,@vision,@damage,@gold,@pentas)
-  `),
+    CREATE TABLE IF NOT EXISTS fetched_ids (
+      id          TEXT    NOT NULL,
+      player_key  TEXT    NOT NULL,
+      season      TEXT    NOT NULL,
+      mode        TEXT    NOT NULL,
+      PRIMARY KEY (id, player_key, season, mode)
+    );
 
-  getMatches: db.prepare(`
-    SELECT * FROM matches WHERE player_key=? AND season=? AND mode=?
-  `),
+    CREATE INDEX IF NOT EXISTS idx_matches_player  ON matches (player_key, season, mode);
+    CREATE INDEX IF NOT EXISTS idx_matches_ts      ON matches (ts DESC);
+    CREATE INDEX IF NOT EXISTS idx_fetched_player  ON fetched_ids (player_key, season, mode);
+  `);
 
-  getMatchCount: db.prepare(`
-    SELECT COUNT(*) as cnt FROM matches WHERE player_key=? AND season=? AND mode=?
-  `),
+  saveDb();
+}
 
-  upsertState: db.prepare(`
-    INSERT OR REPLACE INTO player_state (player_key,season,mode,puuid,last_updated)
-    VALUES (@player_key,@season,@mode,@puuid,@last_updated)
-  `),
-
-  getState: db.prepare(`
-    SELECT * FROM player_state WHERE player_key=? AND season=? AND mode=?
-  `),
-
-  isFetched: db.prepare(`
-    SELECT 1 FROM fetched_ids WHERE id=? AND player_key=? AND season=? AND mode=?
-  `),
-
-  addFetchedId: db.prepare(`
-    INSERT OR IGNORE INTO fetched_ids (id,player_key,season,mode) VALUES (?,?,?,?)
-  `),
-
-  getAllFetchedIds: db.prepare(`
-    SELECT id FROM fetched_ids WHERE player_key=? AND season=? AND mode=?
-  `),
-
-  getMatchIds: db.prepare(`
-    SELECT id FROM matches WHERE player_key=? AND season=? AND mode=?
-  `),
-};
+// Save database to disk
+function saveDb() {
+  if (!db) return;
+  const data = db.export();
+  fs.writeFileSync(DB_PATH, data);
+}
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
 export function saveMatch(playerKey, season, mode, matchId, data) {
-  stmts.upsertMatch.run({
-    id: matchId, player_key: playerKey, season, mode,
-    ts: data.ts || null,
-    duration: data.duration || null,
-    win: data.win ? 1 : 0,
-    champion: data.champion || null,
-    role: data.role || null,
-    kills: data.kills || 0,
-    deaths: data.deaths || 0,
-    assists: data.assists || 0,
-    cs: data.cs || 0,
-    vision: data.vision || 0,
-    damage: data.damage || 0,
-    gold: data.gold || 0,
-    pentas: data.pentas || 0,
-  });
+  if (!db) throw new Error("DB not initialized");
+
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO matches
+      (id,player_key,season,mode,ts,duration,win,champion,role,kills,deaths,assists,cs,vision,damage,gold,pentas)
+    VALUES
+      (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `);
+
+  stmt.bind([
+    matchId, playerKey, season, mode,
+    data.ts || null,
+    data.duration || null,
+    data.win ? 1 : 0,
+    data.champion || null,
+    data.role || null,
+    data.kills || 0,
+    data.deaths || 0,
+    data.assists || 0,
+    data.cs || 0,
+    data.vision || 0,
+    data.damage || 0,
+    data.gold || 0,
+    data.pentas || 0,
+  ]);
+  stmt.step();
+  stmt.free();
+  saveDb();
 }
 
 export function getMatches(playerKey, season, mode) {
-  return stmts.getMatches.all(playerKey, season, mode).map(row => ({
-    ts: row.ts, duration: row.duration, win: !!row.win,
-    champion: row.champion, role: row.role,
-    kills: row.kills, deaths: row.deaths, assists: row.assists,
-    cs: row.cs, vision: row.vision, damage: row.damage,
-    gold: row.gold, pentas: row.pentas,
-    _id: row.id,
-  }));
+  if (!db) return [];
+
+  const stmt = db.prepare(`
+    SELECT * FROM matches WHERE player_key=? AND season=? AND mode=?
+  `);
+  stmt.bind([playerKey, season, mode]);
+
+  const result = [];
+  while (stmt.step()) {
+    const row = stmt.getAsObject();
+    result.push({
+      ts: row.ts,
+      duration: row.duration,
+      win: !!row.win,
+      champion: row.champion,
+      role: row.role,
+      kills: row.kills,
+      deaths: row.deaths,
+      assists: row.assists,
+      cs: row.cs,
+      vision: row.vision,
+      damage: row.damage,
+      gold: row.gold,
+      pentas: row.pentas,
+      _id: row.id,
+    });
+  }
+  stmt.free();
+  return result;
 }
 
 export function getMatchCount(playerKey, season, mode) {
-  return stmts.getMatchCount.get(playerKey, season, mode).cnt;
+  if (!db) return 0;
+
+  const stmt = db.prepare(`
+    SELECT COUNT(*) as cnt FROM matches WHERE player_key=? AND season=? AND mode=?
+  `);
+  stmt.bind([playerKey, season, mode]);
+  stmt.step();
+  const row = stmt.getAsObject();
+  stmt.free();
+  return row.cnt || 0;
 }
 
 export function savePlayerState(playerKey, season, mode, puuid, lastUpdated) {
-  stmts.upsertState.run({ player_key: playerKey, season, mode, puuid, last_updated: lastUpdated || Date.now() });
+  if (!db) return;
+
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO player_state (player_key,season,mode,puuid,last_updated)
+    VALUES (?,?,?,?,?)
+  `);
+  stmt.bind([playerKey, season, mode, puuid || null, lastUpdated || Date.now()]);
+  stmt.step();
+  stmt.free();
+  saveDb();
 }
 
 export function getPlayerState(playerKey, season, mode) {
-  return stmts.getState.get(playerKey, season, mode) || null;
+  if (!db) return null;
+
+  const stmt = db.prepare(`
+    SELECT * FROM player_state WHERE player_key=? AND season=? AND mode=?
+  `);
+  stmt.bind([playerKey, season, mode]);
+
+  let result = null;
+  if (stmt.step()) {
+    result = stmt.getAsObject();
+  }
+  stmt.free();
+  return result;
 }
 
 export function isMatchFetched(matchId, playerKey, season, mode) {
-  return !!stmts.isFetched.get(matchId, playerKey, season, mode);
+  if (!db) return false;
+
+  const stmt = db.prepare(`
+    SELECT 1 FROM fetched_ids WHERE id=? AND player_key=? AND season=? AND mode=?
+  `);
+  stmt.bind([matchId, playerKey, season, mode]);
+  const found = stmt.step();
+  stmt.free();
+  return found;
 }
 
 export function markMatchFetched(matchId, playerKey, season, mode) {
-  stmts.addFetchedId.run(matchId, playerKey, season, mode);
+  if (!db) return;
+
+  const stmt = db.prepare(`
+    INSERT OR IGNORE INTO fetched_ids (id,player_key,season,mode) VALUES (?,?,?,?)
+  `);
+  stmt.bind([matchId, playerKey, season, mode]);
+  stmt.step();
+  stmt.free();
+  saveDb();
 }
 
 export function getKnownIds(playerKey, season, mode) {
-  const fromFetched = stmts.getAllFetchedIds.all(playerKey, season, mode).map(r => r.id);
-  const fromMatches = stmts.getMatchIds.all(playerKey, season, mode).map(r => r.id);
-  return new Set([...fromFetched, ...fromMatches]);
+  if (!db) return new Set();
+
+  const ids = new Set();
+
+  // From fetched_ids
+  let stmt = db.prepare(`
+    SELECT id FROM fetched_ids WHERE player_key=? AND season=? AND mode=?
+  `);
+  stmt.bind([playerKey, season, mode]);
+  while (stmt.step()) {
+    const row = stmt.getAsObject();
+    ids.add(row.id);
+  }
+  stmt.free();
+
+  // From matches
+  stmt = db.prepare(`
+    SELECT id FROM matches WHERE player_key=? AND season=? AND mode=?
+  `);
+  stmt.bind([playerKey, season, mode]);
+  while (stmt.step()) {
+    const row = stmt.getAsObject();
+    ids.add(row.id);
+  }
+  stmt.free();
+
+  return ids;
 }
 
-// Bulk insert for JSON migration
-export const bulkInsert = db.transaction((playerKey, season, mode, matchesObj, puuid, lastUpdated) => {
+export function bulkInsert(playerKey, season, mode, matchesObj, puuid, lastUpdated) {
+  if (!db) return;
+
   for (const [matchId, data] of Object.entries(matchesObj)) {
     saveMatch(playerKey, season, mode, matchId, data);
     markMatchFetched(matchId, playerKey, season, mode);
   }
   savePlayerState(playerKey, season, mode, puuid || null, lastUpdated || null);
-});
+}
+
+export async function ready() {
+  return initDb();
+}
 
 export default db;

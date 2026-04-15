@@ -76,7 +76,9 @@ function wrRingMountAll(container) {
       data: {
         datasets: [{
           data: [wr, 100 - wr],
-          backgroundColor: [col, 'rgba(255,255,255,0.06)'],
+          backgroundColor: wr >= 50
+            ? ['rgba(48,209,88,0.9)',  'rgba(255,69,58,0.25)']
+            : ['rgba(48,209,88,0.25)', 'rgba(255,69,58,0.9)'],
           borderWidth: 0,
           borderRadius: 3,
         }]

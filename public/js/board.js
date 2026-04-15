@@ -313,7 +313,7 @@ function cardHTML(p, i, rankPos) {
     + '</div></div>'
     + tierCol
     + '<div class="wl-col"><div class="wl-numbers"><span class="w">' + s.wins + 'W</span> <span style="color:var(--text3)">/</span> <span class="l">' + s.losses + 'L</span></div>'
-    + '<progress class="progress progress-success wl-progress" value="' + s.winRate + '" max="100"></progress></div>'
+    + '<div class="wl-bar"><div class="wl-bar-win" style="width:' + s.winRate + '%"></div><div class="wl-bar-loss" style="width:' + (100 - s.winRate) + '%"></div></div></div>'
     + '<div class="wr-col">' + wrRing(s.winRate) + '</div>'
     + '<div class="games-col"><div class="g-num">' + (s.wins + s.losses) + '</div><div class="g-label">games</div></div>'
     + '<button class="vs-btn badge-carry" onclick="selectForCompare(' + i + ', event)" data-tip="Select to compare head-to-head. Pick a second player to open the matchup.">⚔</button>'

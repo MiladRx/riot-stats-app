@@ -184,13 +184,14 @@
 .wl-numbers { font-size: 0.82rem; color: var(--text2); display: flex; justify-content: center; gap: 4px; font-weight: 500; }
 .wl-numbers .w { color: var(--green); font-weight: 700; }
 .wl-numbers .l { color: var(--red); font-weight: 700; }
-.wl-progress {
-  height: 3px !important; margin-top: 7px;
-  background-color: rgba(255,69,58,0.22) !important;
-  border-radius: 4px !important;
+.wl-bar {
+  display: flex; height: 3px; margin-top: 7px;
+  border-radius: 4px; overflow: hidden; gap: 1px;
 }
-.wl-progress::-webkit-progress-value { background: var(--green) !important; border-radius: 4px; }
-.wl-progress::-moz-progress-bar { background: var(--green) !important; border-radius: 4px; }
+.wl-bar-win  { background: var(--green); border-radius: 4px 0 0 4px; transition: width 0.4s ease; min-width: 0; }
+.wl-bar-loss { background: var(--red);   border-radius: 0 4px 4px 0; transition: width 0.4s ease; min-width: 0; }
+.wl-bar-win:only-child  { border-radius: 4px; }
+.wl-bar-loss:only-child { border-radius: 4px; }
 
 /* ── WR ring ── */
 .wr-col { display: flex; justify-content: center; align-items: center; }
