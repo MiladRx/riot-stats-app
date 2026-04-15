@@ -50,9 +50,8 @@
   border: 1px solid var(--sep);
   border-radius: var(--radius);
   margin-bottom: 10px;
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.22s cubic-bezier(0.4, 0, 0.2, 1), background 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  animation: slideUp 0.45s ease both;
   overflow: hidden;
   position: relative;
 }
@@ -121,17 +120,23 @@
 
 /* ── Live card — red border pulse ── */
 @keyframes liveBorderPulse {
-  0%, 100% { border-color: rgba(255,59,48,0.35); box-shadow: 0 0 0 1px rgba(255,59,48,0.1), 0 8px 24px rgba(0,0,0,0.4); }
-  50%       { border-color: rgba(255,59,48,0.7);  box-shadow: 0 0 0 1px rgba(255,59,48,0.35), 0 8px 28px rgba(255,59,48,0.12); }
+  0%, 100% {
+    border-color: rgba(255,59,48,0.5);
+    box-shadow: 0 0 0 2px rgba(255,59,48,0.12), 0 0 18px rgba(255,59,48,0.1), 0 8px 24px rgba(0,0,0,0.4);
+  }
+  50% {
+    border-color: rgba(255,59,48,0.95);
+    box-shadow: 0 0 0 2px rgba(255,59,48,0.3), 0 0 28px rgba(255,59,48,0.22), 0 8px 28px rgba(255,59,48,0.15);
+  }
 }
 .player-card.is-live {
-  animation: slideUp 0.45s ease both, liveBorderPulse 2s ease-in-out infinite;
+  animation: liveBorderPulse 2s ease-in-out infinite;
+  border-color: rgba(255,59,48,0.5);
 }
 .player-card.is-live.open {
-  background: linear-gradient(180deg, rgba(255,59,48,0.07) 0%, var(--bg2) 120px) !important;
+  background: linear-gradient(180deg, rgba(255,59,48,0.06) 0%, var(--bg2) 100px) !important;
   animation: liveBorderPulse 2s ease-in-out infinite;
 }
-/* Once opened, suppress slideUp re-trigger on close */
 .player-card.is-live.live-seen {
   animation: liveBorderPulse 2s ease-in-out infinite;
 }

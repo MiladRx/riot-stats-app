@@ -255,6 +255,7 @@ header {
 .dev-auth-submit:hover { background: linear-gradient(135deg, rgba(10,132,255,0.32) 0%, rgba(10,132,255,0.18) 100%); border-color: rgba(10,132,255,0.6); }
 
 /* ── Responsive ── */
+
 @media (max-width: 600px) {
   .wrap { padding: 0 14px 60px; }
   header { padding: 24px 0 20px; flex-wrap: wrap; gap: 12px; }

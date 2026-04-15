@@ -25,7 +25,9 @@ export const FULL_SQUAD = [
   { gameName: "biigdaddy", tagLine: "EUNE" },
 ];
 
-export const CACHE_DURATION = 10 * 60 * 1000;       // 10 minutes
-export const FETCH_DELAY_MS = 700;                   // ~85 req/min — safely under Riot 100/2min, optimized for Vercel 60s timeout
-export const MAX_MATCH_PAGES_PER_PLAYER = 2;         // Fetch ~40 recent games per player (2 pages × 20 games) — safe Vercel timeout, cache keeps all old games
-export const AUTO_FETCH_INTERVAL = 5 * 60 * 1000;  // 5 minutes
+export const CACHE_DURATION       = 10 * 60 * 1000;  // 10 minutes
+export const FETCH_DELAY_MS       = 1300;             // 1 req/1.3s = ~46/min — safely under Riot 50/min (100 req/2 min) personal key limit
+export const AUTO_CYCLE_MAX_PAGES = 1;               // Auto-cycle checks only the latest page (20 games) per player — fast, catches new games
+export const AUTO_FETCH_INTERVAL  = 5 * 60 * 1000;  // Auto cycle every 5 minutes
+export const RANK_CONCURRENCY     = 2;               // Fetch rank data for N players at once during refreshSquadCache
+export const FETCH_RETRY_ATTEMPTS = 2;               // Retry transient failures (rate limits, network blips) before marking a player as errored

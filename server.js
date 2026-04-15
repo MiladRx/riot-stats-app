@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // --- Imports ---
-import { FULL_SQUAD, CACHE_DURATION, AUTO_FETCH_INTERVAL, CURRENT_SEASON, SEASONS } from "./server/config.js";
+import { FULL_SQUAD, CACHE_DURATION, AUTO_FETCH_INTERVAL, CURRENT_SEASON, SEASONS, RANK_CONCURRENCY, FETCH_RETRY_ATTEMPTS } from "./server/config.js";
 import { loadSeasonCache, getSeasonCacheSummary } from "./server/season-cache.js";
 import { fetchJob, runFetch } from "./server/fetch-engine.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
@@ -57,25 +57,44 @@ try {
   }
 } catch (_) {}
 
-// Fetch fresh rank/LP/win data for all 12 players and persist to disk.
-// Does NOT touch scheduleReloadAt — caller decides when to reload.
-async function refreshSquadCache() {
-  console.log("🔄 Refreshing squad rank data...");
-  const results = [];
-  for (let i = 0; i < FULL_SQUAD.length; i++) {
-    const p = FULL_SQUAD[i];
+// Fetch rank/LP/win data with retry + concurrency
+async function fetchPlayerStatsSafe(p) {
+  for (let attempt = 0; attempt <= FETCH_RETRY_ATTEMPTS; attempt++) {
     try {
-      results.push({ ok: true, value: await getPlayerStats(p.gameName, p.tagLine) });
+      return { ok: true, value: await getPlayerStats(p.gameName, p.tagLine) };
     } catch (err) {
-      results.push({ ok: false, reason: err, player: p });
+      const retryable = err.status === 429 || err.status >= 500 || !err.status;
+      if (attempt < FETCH_RETRY_ATTEMPTS && retryable) {
+        const wait = (attempt + 1) * 3000;
+        console.log(`⚠️ ${p.gameName}: retry ${attempt + 1}/${FETCH_RETRY_ATTEMPTS} in ${wait / 1000}s (${err.message})`);
+        await sleep(wait);
+      } else {
+        console.log(`❌ ${p.gameName}: failed after ${attempt + 1} attempt(s) — ${err.message}`);
+        return { ok: false, reason: err, player: p };
+      }
     }
-    if (i < FULL_SQUAD.length - 1) await sleep(1500);
+  }
+}
+
+// Fetch fresh rank/LP/win data for all players — concurrent (RANK_CONCURRENCY at a time)
+async function refreshSquadCache() {
+  console.log(`🔄 Refreshing squad rank data (${RANK_CONCURRENCY} concurrent)…`);
+
+  const results = new Array(FULL_SQUAD.length);
+
+  // Process in batches of RANK_CONCURRENCY
+  for (let i = 0; i < FULL_SQUAD.length; i += RANK_CONCURRENCY) {
+    const batch = FULL_SQUAD.slice(i, i + RANK_CONCURRENCY);
+    const batchResults = await Promise.all(batch.map(p => fetchPlayerStatsSafe(p)));
+    batchResults.forEach((r, j) => { results[i + j] = r; });
+    // Small gap between batches to respect rate limits
+    if (i + RANK_CONCURRENCY < FULL_SQUAD.length) await sleep(1500);
   }
 
   const squad = results.map((r, i) => {
-    if (r.ok) return r.value;
-    const p = r.player || FULL_SQUAD[i];
-    return { gameName: p.gameName, tagLine: p.tagLine, error: r.reason?.message ?? "Unknown error" };
+    if (r?.ok) return r.value;
+    const p = r?.player || FULL_SQUAD[i];
+    return { gameName: p.gameName, tagLine: p.tagLine, error: r?.reason?.message ?? "Unknown error" };
   });
   squad.sort((a, b) => (b.solo?.sortScore ?? -1) - (a.solo?.sortScore ?? -1));
 
@@ -451,24 +470,36 @@ app.get("/compare/:keyA/:keyB", (req, res) => {
 });
 
 // ─────────────────────────────────────────────
-// Full Cycle: deep fetch → rank refresh → reload
-// Called on launch, every 5 min locally, and by GitHub Actions via /full-cycle
+// Cycle logic
+// boot cycle  → rank refresh only (instant, serves from existing match cache)
+// full cycle  → quick match sync (1 page/player) + rank refresh
 // ─────────────────────────────────────────────
 let cycleRunning = false;
 
+// Boot: serve cached squad data immediately, then just refresh ranks — no match fetch
+async function runBootCycle() {
+  console.log("⚡ Boot cycle — refreshing ranks only (no match fetch)…");
+  try {
+    await refreshSquadCache();
+    scheduleReloadAt = Date.now() + 30 * 1000; // short reload delay on boot
+    console.log("✅ Boot cycle complete");
+  } catch (e) {
+    console.log("❌ Boot cycle failed:", e.message);
+  }
+}
+
+// Scheduled / browser-triggered: quick match sync + rank refresh
 async function runFullCycle() {
   if (cycleRunning) { console.log("⏭ Full cycle skipped (already running)"); return; }
   cycleRunning = true;
-  console.log("🔁 Full cycle started — fetch → rank refresh → reload");
+  console.log("🔁 Full cycle — quick sync + rank refresh");
   try {
-    // Step 1: Deep fetch (match history) — early-stop means fast if no new games
-    await new Promise(resolve => {
-      if (fetchJob.running) { resolve(); return; }
-      runFetch(CURRENT_SEASON, "solo", null, resolve);
-    });
-    // Step 2: Rank refresh (LP, wins, losses) — always fresh
+    // Step 1: Quick match sync — 1 page per player, catches any new games fast
+    if (!fetchJob.running) {
+      await new Promise(resolve => runFetch(CURRENT_SEASON, "solo", null, resolve, true /* quickMode */));
+    }
+    // Step 2: Rank refresh
     await refreshSquadCache();
-    // Step 3: Schedule page reload so frontend gets new data
     scheduleReloadAt = Date.now() + 2 * 60 * 1000;
     console.log("✅ Full cycle complete — reload in 2 min");
   } catch (e) {
@@ -478,16 +509,14 @@ async function runFullCycle() {
   }
 }
 
-// Browser calls this when timer hits 0 — awaits full cycle so Vercel doesn't kill it
-// After responding, clear scheduleReloadAt — browser reloads itself immediately
 app.post("/full-cycle", async (req, res) => {
   if (cycleRunning) return res.json({ status: "already_running" });
   await runFullCycle();
-  scheduleReloadAt = null;  // browser triggers its own reload, no need to reschedule
+  scheduleReloadAt = null;
   res.json({ status: "done" });
 });
 
-// Auto full cycle on schedule (every AUTO_FETCH_INTERVAL)
+// Auto full cycle every 5 minutes
 setInterval(runFullCycle, AUTO_FETCH_INTERVAL);
 
 // ─────────────────────────────────────────────
@@ -526,6 +555,5 @@ function emitFetchProgress() {
 
 http.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
-  console.log("🚀 Running full cycle on launch...");
-  runFullCycle();
+  runBootCycle();
 });
