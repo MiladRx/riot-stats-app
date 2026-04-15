@@ -1,6 +1,5 @@
 // Countdown Timer & Auto-Reload — Socket.io powered
 var _scheduleData  = null;
-var _reloadScheduled = false;
 var _cycleTriggered  = false;
 var _timerTick       = null;
 var _schedSocket     = null;
@@ -27,13 +26,6 @@ function _updateTimerUI() {
     return;
   }
 
-  if (d.scheduleReloadAt && d.scheduleReloadAt > now) {
-    var rem = d.scheduleReloadAt - now;
-    el.className = "update-timer visible state-reload";
-    el.innerHTML = '<span class="loading loading-dots loading-xs"></span>Refreshing in ' + _fmtCountdown(rem);
-    return;
-  }
-
   if (d.nextFetchAt) {
     var rem2 = d.nextFetchAt - now;
     el.className = "update-timer visible state-idle";
@@ -55,15 +47,6 @@ function _handleSchedule(d) {
     return;
   }
 
-  if (d.scheduleReloadAt && !_reloadScheduled) {
-    var delay = d.scheduleReloadAt - now;
-    if (delay > 0) {
-      _reloadScheduled = true;
-      setTimeout(function() { _reloadScheduled = false; loadSquad(); }, delay + 2000);
-    } else if (delay > -5000) {
-      loadSquad();
-    }
-  }
 }
 
 // Trigger full cycle from browser

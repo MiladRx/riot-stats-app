@@ -44,7 +44,6 @@ const SQUAD_CACHE_FILE = path.join(__dirname, "data", "squad-live-cache.json");
 
 let cachedSquadData = null;
 let lastFetchTime    = 0;
-let scheduleReloadAt = null;   // Set only AFTER fresh data is written to disk
 
 // Load persisted squad cache on startup — instant first load
 try {
@@ -78,7 +77,7 @@ async function fetchPlayerStatsSafe(p) {
 
 // Fetch fresh rank/LP/win data for all players — concurrent (RANK_CONCURRENCY at a time)
 async function refreshSquadCache() {
-  console.log(`🔄 Refreshing squad rank data (${RANK_CONCURRENCY} concurrent)…`);
+  console.log(`🔄 Refreshing squad rank data (${FULL_SQUAD.length} players, 1 at a time)…`);
 
   const results = new Array(FULL_SQUAD.length);
 
@@ -88,7 +87,7 @@ async function refreshSquadCache() {
     const batchResults = await Promise.all(batch.map(p => fetchPlayerStatsSafe(p)));
     batchResults.forEach((r, j) => { results[i + j] = r; });
     // Small gap between batches to respect rate limits
-    if (i + RANK_CONCURRENCY < FULL_SQUAD.length) await sleep(1500);
+    if (i + RANK_CONCURRENCY < FULL_SQUAD.length) await sleep(2000);
   }
 
   const squad = results.map((r, i) => {
@@ -131,13 +130,9 @@ async function refreshSquadCache() {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// Called after deep match-history fetch completes:
-// refresh rank data → persist → then (and only then) schedule reload.
 async function afterDeepFetch() {
   try {
     await refreshSquadCache();
-    scheduleReloadAt = Date.now() + 2 * 60 * 1000;
-    console.log("🕑 Reload scheduled in 2 min.");
   } catch (e) {
     console.log("❌ afterDeepFetch failed:", e.message);
   }
@@ -152,7 +147,6 @@ app.post("/force-refresh", async (req, res) => {
   if (fetchJob.running) return res.status(409).json({ error: "Deep fetch already running" });
   try {
     await refreshSquadCache();
-    scheduleReloadAt = Date.now() + 2 * 60 * 1000;
     res.json({ ok: true, cachedAt: lastFetchTime });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -481,7 +475,6 @@ async function runBootCycle() {
   console.log("⚡ Boot cycle — refreshing ranks only (no match fetch)…");
   try {
     await refreshSquadCache();
-    scheduleReloadAt = Date.now() + 30 * 1000; // short reload delay on boot
     console.log("✅ Boot cycle complete");
   } catch (e) {
     console.log("❌ Boot cycle failed:", e.message);
@@ -500,8 +493,7 @@ async function runFullCycle() {
     }
     // Step 2: Rank refresh
     await refreshSquadCache();
-    scheduleReloadAt = Date.now() + 2 * 60 * 1000;
-    console.log("✅ Full cycle complete — reload in 2 min");
+    console.log("✅ Full cycle complete");
   } catch (e) {
     console.log("❌ Full cycle failed:", e.message);
   } finally {
@@ -512,7 +504,6 @@ async function runFullCycle() {
 app.post("/full-cycle", async (req, res) => {
   if (cycleRunning) return res.json({ status: "already_running" });
   await runFullCycle();
-  scheduleReloadAt = null;
   res.json({ status: "done" });
 });
 
@@ -534,7 +525,6 @@ function buildSchedulePayload() {
     : Date.now() + AUTO_FETCH_INTERVAL;
   return {
     nextFetchAt,
-    scheduleReloadAt,
     fetchRunning: fetchJob.running || cycleRunning,
     interval: AUTO_FETCH_INTERVAL,
   };
@@ -555,5 +545,5 @@ function emitFetchProgress() {
 
 http.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
-  runBootCycle();
+  runFullCycle();
 });

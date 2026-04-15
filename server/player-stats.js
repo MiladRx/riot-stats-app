@@ -29,6 +29,7 @@ export async function getPlayerStats(gameName, tagLine) {
   const account = await riotFetch(
     `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
   );
+  if (!account?.puuid) throw Object.assign(new Error(`No PUUID returned for ${gameName}#${tagLine}`), { status: 404 });
   const { puuid } = account;
 
   // Steps 2-5: All independent — run in parallel
@@ -39,8 +40,8 @@ export async function getPlayerStats(gameName, tagLine) {
     riotFetch(`https://eun1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=1`).catch(() => null),
   ]);
 
-  const summoner = summonerResult;
-  const isLive = isLiveResult;
+  const summoner = summonerResult || {};
+  const isLive = isLiveResult || false;
 
   let topChamp = null;
   if (masteryResult && masteryResult.length > 0) {
@@ -127,7 +128,7 @@ export async function getPlayerStats(gameName, tagLine) {
     }
   } catch (e) { }
 
-  const solo = allEntries.find(e => e.queueType === "RANKED_SOLO_5x5") || null;
+  const solo = Array.isArray(allEntries) ? (allEntries.find(e => e.queueType === "RANKED_SOLO_5x5") || null) : null;
   const tierOrder = { IRON: 0, BRONZE: 1, SILVER: 2, GOLD: 3, PLATINUM: 4, EMERALD: 5, DIAMOND: 6, MASTER: 7, GRANDMASTER: 8, CHALLENGER: 9 };
   const rankOrder = { IV: 0, III: 1, II: 2, I: 3 };
 

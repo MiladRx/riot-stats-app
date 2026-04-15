@@ -1,6 +1,6 @@
 import { riotFetch } from "./riot-api.js";
 import { saveMatch, markMatchFetched, getKnownIds, savePlayerState } from "./db.js";
-import { FULL_SQUAD, FETCH_DELAY_MS, SEASONS, QUEUE_IDS, AUTO_CYCLE_MAX_PAGES, FETCH_RETRY_ATTEMPTS } from "./config.js";
+import { FULL_SQUAD, FETCH_DELAY_MS, SEASONS, QUEUE_IDS } from "./config.js";
 
 export const fetchJob = {
   running:   false,
@@ -21,23 +21,6 @@ function jobLog(msg) {
   if (fetchJob.log.length > 1000) fetchJob.log = fetchJob.log.slice(-1000);
 }
 
-// Retry wrapper — retries on rate-limit (429) or transient network errors
-async function fetchWithRetry(url, attempts = FETCH_RETRY_ATTEMPTS) {
-  for (let i = 0; i <= attempts; i++) {
-    try {
-      return await riotFetch(url);
-    } catch (e) {
-      const isRetryable = e.status === 429 || e.status >= 500 || e.message?.includes("fetch");
-      if (i < attempts && isRetryable) {
-        const wait = (i + 1) * 3000; // 3s, 6s backoff
-        jobLog(`⚠️ Retry ${i + 1}/${attempts} in ${wait / 1000}s — ${e.message}`);
-        await sleep(wait);
-      } else {
-        throw e;
-      }
-    }
-  }
-}
 
 // quickMode = true  → auto-cycle: check only 1 page per player (last ~20 games)
 // quickMode = false → manual deep fetch: paginate full history
@@ -50,7 +33,7 @@ async function fetchForPlayer(gameName, tagLine, season, mode, quickMode = false
   try {
     await sleep(FETCH_DELAY_MS);
 
-    const account = await fetchWithRetry(
+    const account = await riotFetch(
       `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
     );
     if (!account?.puuid) throw new Error("no puuid returned");
@@ -63,8 +46,8 @@ async function fetchForPlayer(gameName, tagLine, season, mode, quickMode = false
 
     // ── Paginate match IDs ────────────────────────────────────────────────────
     let start  = 0;
-    const PAGE = 20;
-    const maxPages = quickMode ? AUTO_CYCLE_MAX_PAGES : Infinity;
+    const PAGE = quickMode ? 2 : 20;   // quickMode: fetch 2 IDs, skip any already cached
+    const maxPages = quickMode ? 1 : Infinity;
     let allNewIds = [];
     let pagesFetched = 0;
 
@@ -79,7 +62,7 @@ async function fetchForPlayer(gameName, tagLine, season, mode, quickMode = false
 
       let pageIds;
       try {
-        pageIds = await fetchWithRetry(url);
+        pageIds = await riotFetch(url);
       } catch (e) {
         jobLog(`❌ ${gameName}: page ${start} failed — ${e.message}`);
         break;
@@ -119,7 +102,7 @@ async function fetchForPlayer(gameName, tagLine, season, mode, quickMode = false
       await sleep(FETCH_DELAY_MS);
 
       try {
-        const md   = await fetchWithRetry(`https://europe.api.riotgames.com/lol/match/v5/matches/${matchId}`);
+        const md   = await riotFetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${matchId}`);
         const info = md?.info;
         const self = info?.participants?.find(p => p.puuid === puuid);
 

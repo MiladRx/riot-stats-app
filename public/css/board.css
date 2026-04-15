@@ -216,8 +216,7 @@
   font-size: 0.75rem; display: flex; align-items: center; justify-content: center;
   transition: all 0.15s; flex-shrink: 0;
 }
-.vs-btn:hover { background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.4); color: var(--accent); }
-.player-card.compare-selected { border-color: rgba(10,132,255,0.5); box-shadow: 0 0 0 2px rgba(10,132,255,0.2); }
+.vs-btn:hover { background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.4); color: var(--accent); }.player-card.compare-selected { border-color: rgba(10,132,255,0.5); box-shadow: 0 0 0 2px rgba(10,132,255,0.2); }
 .player-card.compare-selected .vs-btn { background: rgba(10,132,255,0.15); border-color: rgba(10,132,255,0.5); color: var(--accent); }
 
 /* ── Badge subrow ── */

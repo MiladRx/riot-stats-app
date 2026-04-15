@@ -24,9 +24,6 @@ export function saveMatchCache(cache) {
 
 // --- Background Fetch Job ---
 export const fetchJob = { running: false, startedAt: null, progress: {}, log: [] };
-export let scheduleReloadAt = null;
-
-export function setScheduleReloadAt(val) { scheduleReloadAt = val; }
 
 function jobLog(msg) {
   const ts = new Date().toISOString().slice(11, 19);
@@ -146,6 +143,5 @@ export async function runFetchJob(players, onComplete, startTime = SEASONS[CURRE
   fetchJob.running = false;
   jobLog("🎉 Done!");
 
-  scheduleReloadAt = Date.now() + 2 * 60 * 1000;
   if (onComplete) onComplete();
 }
