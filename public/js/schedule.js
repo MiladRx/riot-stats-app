@@ -1,8 +1,9 @@
-// Countdown Timer & Auto-Reload
-var _scheduleData = null;
+// Countdown Timer & Auto-Reload — Socket.io powered
+var _scheduleData  = null;
 var _reloadScheduled = false;
-var _cycleTriggered = false;
-var _timerTick = null;
+var _cycleTriggered  = false;
+var _timerTick       = null;
+var _schedSocket     = null;
 
 function _fmtCountdown(ms) {
   if (ms <= 0) return "now";
@@ -15,7 +16,7 @@ function _fmtCountdown(ms) {
 function _updateTimerUI() {
   var el = document.getElementById("update-timer");
   if (!el || !_scheduleData) return;
-  var d = _scheduleData;
+  var d   = _scheduleData;
   var now = Date.now();
 
   el.classList.add("visible");
@@ -43,7 +44,29 @@ function _updateTimerUI() {
   el.className = "update-timer";
 }
 
-// Trigger full cycle from browser — keeps request open so Vercel can't kill it
+function _handleSchedule(d) {
+  _scheduleData = d;
+  _updateTimerUI();
+
+  var now = Date.now();
+
+  if (!_cycleTriggered && !d.fetchRunning && d.nextFetchAt && d.nextFetchAt <= now) {
+    _triggerCycle();
+    return;
+  }
+
+  if (d.scheduleReloadAt && !_reloadScheduled) {
+    var delay = d.scheduleReloadAt - now;
+    if (delay > 0) {
+      _reloadScheduled = true;
+      setTimeout(function() { _reloadScheduled = false; loadSquad(); }, delay + 2000);
+    } else if (delay > -5000) {
+      loadSquad();
+    }
+  }
+}
+
+// Trigger full cycle from browser
 function _triggerCycle() {
   if (_cycleTriggered) return;
   _cycleTriggered = true;
@@ -53,41 +76,47 @@ function _triggerCycle() {
     .then(function() {
       _cycleTriggered = false;
       loadSquad();
-      pollSchedule();
+      // Socket will push updated schedule automatically
     })
     .catch(function() { _cycleTriggered = false; });
 }
 
+// Legacy HTTP poll — only used when socket isn't available
 function pollSchedule() {
   fetch("/schedule")
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      _scheduleData = d;
-      _updateTimerUI();
+    .then(function(r) { return r.json(); })
+    .then(_handleSchedule)
+    .catch(function() {});
+}
 
-      var now = Date.now();
+// ── Socket.io connection ──────────────────────────────────────────────────────
+function _initSocket() {
+  if (typeof io === "undefined") {
+    // Fallback to HTTP polling if socket.io not loaded
+    pollSchedule();
+    setInterval(pollSchedule, 15000);
+    return;
+  }
 
-      // Timer hit 0 — trigger fetch from browser
-      if (!_cycleTriggered && !d.fetchRunning && d.nextFetchAt && d.nextFetchAt <= now) {
-        _triggerCycle();
-        return;
-      }
+  _schedSocket = io();
 
-      // Schedule reload when fresh data is ready
-      if (d.scheduleReloadAt && !_reloadScheduled) {
-        var delay = d.scheduleReloadAt - now;
-        if (delay > 0) {
-          _reloadScheduled = true;
-          setTimeout(function () {
-            _reloadScheduled = false;
-            loadSquad();
-          }, delay + 2000);
-        } else if (delay > -5000) {
-          loadSquad();
-        }
-      }
-    })
-    .catch(function () { });
+  _schedSocket.on("schedule", function(d) {
+    _handleSchedule(d);
+  });
+
+  _schedSocket.on("squad:updated", function() {
+    loadSquad();
+  });
+
+  _schedSocket.on("disconnect", function() {
+    // Fallback to polling on disconnect
+    setTimeout(pollSchedule, 2000);
+  });
+
+  _schedSocket.on("connect", function() {
+    // Re-request current state on reconnect
+    pollSchedule();
+  });
 }
 
 // Tick the timer every second for smooth countdown
@@ -96,5 +125,7 @@ _timerTick = setInterval(_updateTimerUI, 1000);
 
 // Init
 loadSquad();
+_initSocket();
+// Also do one HTTP poll immediately for resilience
 pollSchedule();
-setInterval(pollSchedule, 15000);
+setInterval(pollSchedule, 30000); // reduced from 15s since socket handles most updates

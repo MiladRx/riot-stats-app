@@ -336,6 +336,7 @@ function renderBoard() {
     html += cardHTML(p, i, hasStats ? ++ranked : null);
   }
   board.innerHTML = html;
+  if (typeof wrRingMountAll === "function") wrRingMountAll(board);
 }
 
 function togglePlayer(idx) {

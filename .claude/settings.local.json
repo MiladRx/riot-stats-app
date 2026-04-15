@@ -61,7 +61,27 @@
       "Bash(powershell.exe -Command \"if \\(Test-Path 'C:\\\\Program Files\\\\nodejs\\\\node.exe'\\) { Write-Host 'Found at C:\\\\Program Files\\\\nodejs\\\\node.exe' } else { Write-Host 'Not found' }\")",
       "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\' -Filter 'node.exe' -Recurse -ErrorAction SilentlyContinue -Depth 4 | Select-Object FullName\")",
       "Bash(find \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\" -type f \\\\\\( -name \"*.js\" -o -name \"*.json\" -o -name \"*.css\" -o -name \"*.html\" \\\\\\) ! -path \"*/node_modules/*\" -exec grep -l \"flex\" {} \\\\;)",
-      "Bash(del \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\season-2025-flex.json\" \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\season-2026-flex.json\")"
+      "Bash(del \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\season-2025-flex.json\" \"C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\season-2026-flex.json\")",
+      "Bash(cmd.exe /c \"dir C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\")",
+      "Bash(cmd.exe /c \"dir \\\\\"C:\\\\\\\\Users\\\\\\\\milad\\\\\\\\Documents\\\\\\\\riot-stats-app\\\\\\\\data\\\\\"\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\pinokio\\\\bin\\\\miniconda' -Filter 'npm*' | Select-Object Name\")",
+      "Bash(\"C:\\\\pinokio\\\\bin\\\\miniconda\\\\npm.cmd\" install:*)",
+      "Bash(set \"PATH=C:\\\\pinokio\\\\bin\\\\miniconda;%PATH%\")",
+      "Bash(\"C:\\\\pinokio\\\\bin\\\\miniconda\\\\node.exe\" --version)",
+      "Bash(cmd /c \"set PATH=C:\\\\pinokio\\\\bin\\\\miniconda;%PATH% && npm.cmd install better-sqlite3\")",
+      "Bash(cmd /c \"set PATH=C:\\\\pinokio\\\\bin\\\\miniconda;%PATH% && C:\\\\pinokio\\\\bin\\\\miniconda\\\\npm.cmd install better-sqlite3 2>&1\")",
+      "Bash(\"C:\\\\pinokio\\\\bin\\\\miniconda\\\\node.exe\" -e \"require\\('better-sqlite3'\\)\")",
+      "Bash(\"C:\\\\pinokio\\\\bin\\\\miniconda\\\\node.exe\" --input-type=module --eval \"import './server/db.js'; console.log\\('DB OK'\\)\")",
+      "Bash(\"C:\\\\pinokio\\\\bin\\\\miniconda\\\\node.exe\" \"C:\\\\pinokio\\\\bin\\\\miniconda\\\\node_modules\\\\npm\\\\node_modules\\\\.bin\\\\node-gyp\")",
+      "Bash(\"C:/pinokio/bin/miniconda/npm.cmd\" install:*)",
+      "Bash(\"C:/pinokio/bin/miniconda/npm.cmd\" root:*)",
+      "Bash(\"C:/pinokio/bin/miniconda/node.exe\" \"C:/pinokio/bin/miniconda/node_modules/node-gyp/bin/node-gyp.js\" rebuild)",
+      "Bash(\"C:/pinokio/bin/miniconda/node.exe\" node_modules/.bin/prebuild-install)",
+      "Bash(\"C:/pinokio/bin/miniconda/node.exe\" \"C:/Users/milad/Documents/riot-stats-app/node_modules/prebuild-install/bin.js\")",
+      "Bash(\"C:/pinokio/bin/miniconda/node.exe\" -e \"require\\('better-sqlite3'\\)\")",
+      "Bash(\"C:/pinokio/bin/miniconda/node.exe\" --input-type=module --eval \"import './server/db.js'; console.log\\('DB OK'\\)\")",
+      "Bash(timeout 8 \"C:/pinokio/bin/miniconda/node.exe\" server.js)",
+      "Bash(timeout 5 \"C:/pinokio/bin/miniconda/node.exe\" server.js)"
     ]
   }
 }

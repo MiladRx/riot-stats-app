@@ -151,6 +151,14 @@
   flex: 1; display: flex; flex-direction: column; overflow: hidden;
 }
 
+/* KDA bar chart */
+.dp2-kda-chart-wrap {
+  padding: 10px 12px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  height: 68px;
+  flex-shrink: 0;
+}
+
 /* Skeleton loader */
 .dp2-mh-skeleton { display: flex; flex-direction: column; flex: 1; }
 .dp2-mh-skel-row {

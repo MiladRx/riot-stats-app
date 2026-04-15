@@ -1,4 +1,6 @@
 import express from "express";
+import { createServer } from "http";
+import { Server as SocketIO } from "socket.io";
 import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
@@ -6,8 +8,10 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const app    = express();
+const http   = createServer(app);
+export const io = new SocketIO(http, { cors: { origin: "*" } });
+const PORT   = process.env.PORT || 3000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 if (!process.env.RIOT_API_KEY) {
@@ -78,6 +82,8 @@ async function refreshSquadCache() {
   cachedSquadData = squad;
   lastFetchTime   = Date.now();
   console.log("✅ Squad rank data refreshed.");
+  emitSquadUpdated();
+  emitSchedule();
 
   // Ensure weekly snapshot exists; roll over if one week has passed since last snapshot
   const weekKey = getWeekKey();
@@ -161,7 +167,15 @@ app.post("/fetch", (req, res) => {
     ? FULL_SQUAD.filter(p => playerNames.includes(p.gameName))
     : null;
 
-  runFetch(season, mode, targets, () => { afterDeepFetch(); });
+  let progressTimer = setInterval(() => {
+    emitFetchProgress();
+    if (!fetchJob.running) clearInterval(progressTimer);
+  }, 800);
+  runFetch(season, mode, targets, () => {
+    clearInterval(progressTimer);
+    emitFetchProgress();
+    afterDeepFetch();
+  });
   res.json({ status: "started", season, mode });
 });
 
@@ -241,19 +255,7 @@ app.get("/cache-summary", (req, res) => {
 // ─────────────────────────────────────────────
 // Schedule endpoint — drives the frontend timer
 // ─────────────────────────────────────────────
-app.get("/schedule", (req, res) => {
-  // Compute nextFetchAt: prefer cached value → lastFetchTime + interval → now + interval
-  const nextFetchAt = lastFetchTime
-    ? lastFetchTime + AUTO_FETCH_INTERVAL
-    : Date.now() + AUTO_FETCH_INTERVAL;
-
-  res.json({
-    nextFetchAt,
-    scheduleReloadAt,
-    fetchRunning: fetchJob.running || cycleRunning,
-    interval: AUTO_FETCH_INTERVAL,
-  });
-});
+app.get("/schedule", (req, res) => res.json(buildSchedulePayload()));
 
 // ─────────────────────────────────────────────
 // Seasons available
@@ -487,7 +489,38 @@ setInterval(runFullCycle, AUTO_FETCH_INTERVAL);
 // ─────────────────────────────────────────────
 // Start — run full cycle immediately on launch
 // ─────────────────────────────────────────────
-app.listen(PORT, () => {
+io.on("connection", (socket) => {
+  console.log("🔌 Socket connected:", socket.id);
+  // Send current schedule state immediately on connect
+  socket.emit("schedule", buildSchedulePayload());
+});
+
+function buildSchedulePayload() {
+  const nextFetchAt = lastFetchTime
+    ? lastFetchTime + AUTO_FETCH_INTERVAL
+    : Date.now() + AUTO_FETCH_INTERVAL;
+  return {
+    nextFetchAt,
+    scheduleReloadAt,
+    fetchRunning: fetchJob.running || cycleRunning,
+    interval: AUTO_FETCH_INTERVAL,
+  };
+}
+
+// Emit schedule updates whenever state changes
+function emitSchedule() { io.emit("schedule", buildSchedulePayload()); }
+function emitSquadUpdated() { io.emit("squad:updated"); }
+function emitFetchProgress() {
+  io.emit("fetch:status", {
+    running:  fetchJob.running,
+    season:   fetchJob.season,
+    mode:     fetchJob.mode,
+    progress: fetchJob.progress,
+    log:      fetchJob.log.slice(-80),
+  });
+}
+
+http.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
   console.log("🚀 Running full cycle on launch...");
   runFullCycle();

@@ -1,5 +1,5 @@
 import { riotFetch } from "./riot-api.js";
-import { loadSeasonCache, saveSeasonCache } from "./season-cache.js";
+import { saveMatch, markMatchFetched, getKnownIds, savePlayerState, getMatchCount } from "./db.js";
 import { FULL_SQUAD, FETCH_DELAY_MS, SEASONS, QUEUE_IDS } from "./config.js";
 
 export const fetchJob = {
@@ -34,14 +34,7 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
     );
     const { puuid } = account;
 
-    const cache = loadSeasonCache(season, mode);
-    if (!cache[key]) cache[key] = { puuid, matches: {}, fetchedIds: [] };
-    cache[key].puuid = puuid;
-
-    const knownIds = new Set([
-      ...(cache[key].fetchedIds || []),
-      ...Object.keys(cache[key].matches || {}),
-    ]);
+    const knownIds = getKnownIds(key, season, mode);
     const initialCount = knownIds.size;
     jobLog(`👤 ${gameName}: ${initialCount} cached — fetching Season ${season} ${mode}...`);
 
@@ -136,7 +129,8 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
             }));
         }
 
-        cache[key].matches[matchId] = matchData;
+        saveMatch(key, season, mode, matchId, matchData);
+        markMatchFetched(matchId, key, season, mode);
         knownIds.add(matchId);
 
         fetchJob.progress[key] = {
@@ -149,14 +143,12 @@ async function fetchForPlayer(gameName, tagLine, season, mode) {
         };
       } catch (e) {
         jobLog(`⚠️ ${gameName}: skipped ${matchId} (${e.message}) [${currentFetch}/${totalToFetch}]`);
+        markMatchFetched(matchId, key, season, mode);
         knownIds.add(matchId);
       }
     }
 
-    cache[key].fetchedIds = [...knownIds];
-    cache[key].lastUpdated = Date.now();
-    saveSeasonCache(season, mode, cache);
-
+    savePlayerState(key, season, mode, puuid, Date.now());
     const newThisRun = knownIds.size - initialCount;
     fetchJob.progress[key] = { gameName, status: "done", fetched: knownIds.size, newThisRun };
     jobLog(`✅ ${gameName}: done — ${knownIds.size} total, +${newThisRun} new`);

@@ -204,7 +204,51 @@ function renderDetail(p, i) {
             + '</div>';
         }).join('');
 
-        el2.innerHTML = '<div class="dp2-mh-list">' + rows + '</div>';
+        // Build KDA trend chart (most recent → left)
+        var kdaChartId = matchHistId + '-kda-chart';
+        var kdaVals = matches.slice().reverse().map(function(m) {
+          return m.deaths === 0 ? (m.kills + m.assists) : ((m.kills + m.assists) / m.deaths);
+        });
+        var kdaColors = matches.slice().reverse().map(function(m) {
+          return m.win ? 'rgba(48,209,88,0.85)' : 'rgba(255,69,58,0.75)';
+        });
+        var chartHtml = typeof Chart !== 'undefined'
+          ? '<div class="dp2-kda-chart-wrap"><canvas id="' + kdaChartId + '" height="56"></canvas></div>'
+          : '';
+        el2.innerHTML = chartHtml + '<div class="dp2-mh-list">' + rows + '</div>';
+
+        // Mount the chart
+        if (typeof Chart !== 'undefined') {
+          requestAnimationFrame(function() {
+            var cv = document.getElementById(kdaChartId);
+            if (!cv) return;
+            new Chart(cv, {
+              type: 'bar',
+              data: {
+                labels: kdaVals.map(function(_, i) { return 'G' + (i + 1); }),
+                datasets: [{
+                  data: kdaVals,
+                  backgroundColor: kdaColors,
+                  borderRadius: 3,
+                  borderSkipped: false,
+                }]
+              },
+              options: {
+                animation: { duration: 500 },
+                plugins: { legend: { display: false }, tooltip: {
+                  callbacks: { label: function(ctx) { return 'KDA: ' + ctx.raw.toFixed(2); } }
+                }},
+                scales: {
+                  x: { display: false },
+                  y: { display: false, min: 0 }
+                },
+                responsive: true,
+                maintainAspectRatio: false,
+              }
+            });
+          });
+        }
+
         // Sync left column height to right panel's natural height
         requestAnimationFrame(function() {
           var body = el2.closest('.dp2-body');

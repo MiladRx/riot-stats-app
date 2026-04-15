@@ -6,12 +6,23 @@ var _fdMode       = "solo";
 var _fdSel        = {};      // { gameName: bool }
 var _fdSummary    = [];      // [{ gameName, tagLine, total, lastUpdated }]
 var _fdPollTimer  = null;
+var _fdSocket     = null;    // socket.io listener
 
 var FD_SEASONS = ["2026", "2025", "2024", "2023"];
 var FD_MODES   = [
   { id: "solo",  label: "Solo/Duo" },
   { id: "clash", label: "Clash"    },
 ];
+
+// ── Socket.io wiring — deferred so schedule.js has a chance to create the socket ──
+window.addEventListener("load", function() {
+  if (typeof io === "undefined") return;
+  var sock = (typeof _schedSocket !== "undefined" && _schedSocket) ? _schedSocket : io();
+  _fdSocket = sock;
+  sock.on("fetch:status", function(d) {
+    if (_fdOpen) _fdRenderStatus(d);
+  });
+});
 
 // ── Open / Close ──────────────────────────────────────────────────────────────
 function openFetchDashboard() {

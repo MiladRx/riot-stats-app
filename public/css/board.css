@@ -195,8 +195,7 @@
 /* ── WR ring ── */
 .wr-col { display: flex; justify-content: center; align-items: center; }
 .wr-ring { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; position: relative; }
-.wr-ring svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
-.wr-ring circle { transition: stroke-dasharray 1s ease-out; }
+.wr-ring canvas { position: absolute; top: 0; left: 0; }
 .wr-ring .wr-text { position: relative; z-index: 1; font-size: 0.68rem; font-weight: 700; }
 
 /* ── Games column ── */
