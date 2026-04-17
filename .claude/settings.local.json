@@ -87,7 +87,10 @@
       "Bash(\"C:/pinokio/bin/miniconda/npm.cmd\" remove:*)",
       "Bash(\"C:/pinokio/bin/miniconda/node.exe\" --input-type=module --eval \"import\\('./server/db.js'\\).then\\(\\(\\)=>console.log\\('✅ DB module ready'\\)\\).catch\\(e=>console.error\\(e\\)\\)\")",
       "Bash(timeout 10 \"C:/pinokio/bin/miniconda/node.exe\" server.js)",
-      "Bash(C:/pinokio/bin/miniconda/node.exe --input-type=module --eval ':*)"
+      "Bash(C:/pinokio/bin/miniconda/node.exe --input-type=module --eval ':*)",
+      "Bash(node -e ' *)",
+      "Bash(python3 -c ' *)",
+      "Bash(powershell -Command \"Remove-Item 'C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\matches.db' -Force; Write-Host 'done'\")"
     ]
   }
 }

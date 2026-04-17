@@ -52,8 +52,9 @@
     }
 
     tip.style.setProperty('--tip-accent', accent);
+    var title = el.getAttribute("data-tip-title") || el.textContent.trim();
     tip.innerHTML =
-      '<div class="tip-title">' + el.textContent.trim() + '</div>' +
+      '<div class="tip-title">' + title + '</div>' +
       '<div class="tip-body">' + text + '</div>';
     tip.classList.remove("tip-hide");
 

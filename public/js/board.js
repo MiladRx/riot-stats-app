@@ -154,7 +154,7 @@ function cardHTML(p, i, rankPos) {
   var rankClass = rankPos <= 3 ? "rank-" + rankPos : "";
 
   // ── Badge System ──────────────────────────────────────────
-  var totalGames = s.wins + s.losses;
+  var totalGames = s.wins + s.losses + (p.altGames || 0);
   var kdaVal     = parseFloat(s.kda) || 0;
   var deathsVal  = parseFloat(s.deaths) || 0;
   var assistsVal = parseFloat(s.assists) || 0;
@@ -312,10 +312,20 @@ function cardHTML(p, i, rankPos) {
     + (badges ? '<div class="badge-row">' + badges + '</div>' : '')
     + '</div></div>'
     + tierCol
-    + '<div class="wl-col"><div class="wl-numbers"><span class="w">' + s.wins + 'W</span> <span style="color:var(--text3)">/</span> <span class="l">' + s.losses + 'L</span></div>'
-    + '<div class="wl-bar"><div class="wl-bar-win" style="width:' + s.winRate + '%"></div><div class="wl-bar-loss" style="width:' + (100 - s.winRate) + '%"></div></div></div>'
-    + '<div class="wr-col">' + wrRing(s.winRate) + '</div>'
-    + '<div class="games-col"><div class="g-num">' + (s.wins + s.losses) + '</div><div class="g-label">games</div></div>'
+    + (function() {
+        var mainGames = s.wins + s.losses;
+        var wlTip = p.altAccount
+          ? p.gameName + ': ' + s.wins + 'W / ' + s.losses + 'L&#10;' + p.altAccount.gameName + ': ' + p.altWins + 'W / ' + p.altLosses + 'L&#10;Total: ' + totalGames + ' games'
+          : '';
+        var gamesTip = p.altAccount
+          ? p.gameName + ': +' + p.altGames + ' games on ' + p.altAccount.gameName + '&#10;Total: ' + totalGames + ' games'
+          : '';
+        return '<div class="wl-col"' + (wlTip ? ' data-tip="' + wlTip + '" data-tip-title="Alt account"' : '') + '>'
+          + '<div class="wl-numbers"><span class="w">' + s.wins + 'W</span> <span style="color:var(--text3)">/</span> <span class="l">' + s.losses + 'L</span></div>'
+          + '<div class="wl-bar"><div class="wl-bar-win" style="width:' + s.winRate + '%"></div><div class="wl-bar-loss" style="width:' + (100 - s.winRate) + '%"></div></div></div>'
+          + '<div class="wr-col">' + wrRing(s.winRate) + '</div>'
+          + '<div class="games-col"' + (gamesTip ? ' data-tip="' + gamesTip + '" data-tip-title="Alt account"' : '') + '><div class="g-num">' + mainGames + '</div><div class="g-label">games</div></div>';
+      })()
     + '<button class="vs-btn badge-carry" onclick="selectForCompare(' + i + ', event)" data-tip="Select to compare head-to-head. Pick a second player to open the matchup.">⚔</button>'
     + '</div>';
 

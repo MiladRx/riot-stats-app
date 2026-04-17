@@ -77,11 +77,25 @@ function renderDetail(p, i) {
     + '</div>'
 
     // Games
-    + '<div class="dp2-pill">'
-    + '<div class="dp2-pill-label">Games</div>'
-    + '<div class="dp2-pill-val">' + (s.wins + s.losses) + '</div>'
-    + '<div class="dp2-pill-sub">' + (timePlayed || '—') + '</div>'
-    + '</div>'
+    + (function() {
+        var mainGames = s.wins + s.losses;
+        var combined  = mainGames + (p.altGames || 0);
+        var gameTip = '';
+        if (p.altAccount && s.totalTimeSecs && mainGames > 0) {
+          var avgSecs = s.totalTimeSecs / mainGames;
+          var totalSecs = Math.round(s.totalTimeSecs + avgSecs * p.altGames);
+          var td = Math.floor(totalSecs / 86400);
+          var th = Math.floor((totalSecs % 86400) / 3600);
+          var tm = Math.floor((totalSecs % 3600) / 60);
+          var totalTime = td > 0 ? td + 'd ' + th + 'h' : th + 'h ' + tm + 'm';
+          gameTip = p.gameName + ' + ' + p.altAccount.gameName + '&#10;Total: ' + totalTime;
+        }
+        return '<div class="dp2-pill"' + (gameTip ? ' data-tip="' + gameTip + '" data-tip-title="Time played"' : '') + '>'
+          + '<div class="dp2-pill-label">Games</div>'
+          + '<div class="dp2-pill-val">' + mainGames + '</div>'
+          + '<div class="dp2-pill-sub">' + (timePlayed || '—') + '</div>'
+          + '</div>';
+      })()
 
     // Champions button
     + '<button class="dp2-champ-btn" onclick="openChampHistory(\'' + encodeURIComponent(p.gameName) + '\',\'' + encodeURIComponent(p.tagLine) + '\',\'' + champVersion + '\',' + (p.profileIconId||1) + '); event.stopPropagation()">'

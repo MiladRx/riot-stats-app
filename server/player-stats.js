@@ -66,7 +66,7 @@ export async function getPlayerStats(gameName, tagLine) {
 
     if (cached && Object.keys(cached).length > 0) {
       const recent = Object.values(cached);
-      let validGames = 0, totalVision = 0, totalPentas = 0;
+      let validGames = 0, durationGames = 0, totalVision = 0, totalPentas = 0;
       let recentWins = 0, positionCounts = {};
       const champStats = {};
 
@@ -77,9 +77,9 @@ export async function getPlayerStats(gameName, tagLine) {
         totalCS      += m.cs      || 0;
         totalVision  += m.vision  || 0;
         totalDamage  += m.damage  || 0;
-        totalDuration += m.duration || 0;
         totalPentas  += m.pentas  || 0;
         totalGold    += m.gold    || 0;
+        if (m.duration) { totalDuration += m.duration; durationGames++; }
         if ((m.deaths || 0) === 0 && (m.kills || 0) > maxKillsDeathless) maxKillsDeathless = m.kills;
         validGames++;
         if (m.win) recentWins++;
@@ -97,10 +97,15 @@ export async function getPlayerStats(gameName, tagLine) {
         avgAssists = (totalAssists / validGames).toFixed(1);
         kdaRatio   = totalDeaths === 0 ? "Perfect" : ((totalKills + totalAssists) / totalDeaths).toFixed(2);
         lpEstimate = (recentWins - (validGames - recentWins)) * 20;
-        avgCsMin   = totalDuration > 0 ? (totalCS / (totalDuration / 60)).toFixed(1) : null;
+        if (durationGames > 0) {
+          const avgSecs = totalDuration / durationGames;
+          avgCsMin    = (totalCS / (totalDuration / 60)).toFixed(1);
+          avgDuration = Math.round(avgSecs / 60);
+          // Extrapolate total time using per-game average across all games
+          totalDuration = Math.round(avgSecs * validGames);
+        }
         avgVision  = (totalVision / validGames).toFixed(1);
         avgDamage  = Math.round(totalDamage / validGames);
-        avgDuration = Math.round(totalDuration / validGames / 60);
         pentas     = totalPentas;
       }
 

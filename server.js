@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // --- Imports ---
-import { FULL_SQUAD, CACHE_DURATION, AUTO_FETCH_INTERVAL, CURRENT_SEASON, SEASONS, RANK_CONCURRENCY, FETCH_RETRY_ATTEMPTS } from "./server/config.js";
+import { FULL_SQUAD, CACHE_DURATION, AUTO_FETCH_INTERVAL, CURRENT_SEASON, SEASONS, RANK_CONCURRENCY, FETCH_RETRY_ATTEMPTS, ALT_ACCOUNTS, ALT_KEYS } from "./server/config.js";
 import { loadSeasonCache, getSeasonCacheSummary } from "./server/season-cache.js";
 import { fetchJob, runFetch } from "./server/fetch-engine.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
@@ -95,6 +95,23 @@ async function refreshSquadCache() {
     const p = r?.player || FULL_SQUAD[i];
     return { gameName: p.gameName, tagLine: p.tagLine, error: r?.reason?.message ?? "Unknown error" };
   });
+
+  // Tag alt accounts and attach combined stats to main accounts
+  const squadByKey = {};
+  for (const p of squad) squadByKey[`${p.gameName}#${p.tagLine}`.toLowerCase()] = p;
+  for (const p of squad) {
+    const key = `${p.gameName}#${p.tagLine}`.toLowerCase();
+    if (ALT_KEYS.has(key)) { p.isAlt = true; continue; }
+    const altKey = ALT_ACCOUNTS[key];
+    if (altKey && squadByKey[altKey]?.solo) {
+      const alt = squadByKey[altKey];
+      p.altAccount = { gameName: alt.gameName, tagLine: alt.tagLine };
+      p.altGames   = (alt.solo.wins || 0) + (alt.solo.losses || 0);
+      p.altWins    = alt.solo.wins  || 0;
+      p.altLosses  = alt.solo.losses || 0;
+    }
+  }
+
   squad.sort((a, b) => (b.solo?.sortScore ?? -1) - (a.solo?.sortScore ?? -1));
 
   // Write to disk first, then swap in-memory — no window of stale data
@@ -376,12 +393,50 @@ app.get("/squad-stats", (req, res) => {
 // ─────────────────────────────────────────────
 // Power Rankings
 // ─────────────────────────────────────────────
+app.get("/power-rankings/weeks", (req, res) => {
+  try {
+    const files = fs.readdirSync("./data")
+      .filter(f => /^power-snapshot-\d{4}-W\d{2}\.json$/.test(f))
+      .map(f => f.replace("power-snapshot-", "").replace(".json", ""))
+      .sort();
+    res.json({ weeks: files, current: getWeekKey() });
+  } catch (e) {
+    res.json({ weeks: [], current: getWeekKey() });
+  }
+});
+
 app.get("/power-rankings", (req, res) => {
   if (!cachedSquadData) return res.status(503).json({ error: "Squad data not loaded yet." });
-  const weekKey  = getWeekKey();
-  const snapshot = loadSnapshot(weekKey);
+  const currentWeek = getWeekKey();
+  const weekKey     = req.query.week || currentWeek;
+  const snapshot    = loadSnapshot(weekKey);
   if (!snapshot) return res.status(503).json({ error: "Weekly snapshot not ready yet. Check back in a moment." });
-  const rankings = computeRankings(cachedSquadData, snapshot);
+
+  let rankings;
+  if (weekKey === currentWeek) {
+    // Live week: compare snapshot (start of week) vs current squad data
+    rankings = computeRankings(cachedSquadData, snapshot);
+  } else {
+    // Past week: compare snapshot (start of week) vs next week's snapshot (end of week)
+    const endSnapshot = loadSnapshot(nextWeekKey(weekKey));
+    if (endSnapshot) {
+      // Build a fake squadPlayers array from the end-of-week snapshot
+      const endPlayers = Object.entries(endSnapshot.players).map(([key, p]) => {
+        const [gameName, tagLine] = key.split("#");
+        return { gameName, tagLine: tagLine || "", profileIconId: 0, solo: p, error: null };
+      });
+      // Carry over profileIconIds from live data where available
+      for (const ep of endPlayers) {
+        const live = cachedSquadData.find(p => `${p.gameName}#${p.tagLine}`.toLowerCase() === `${ep.gameName}#${ep.tagLine}`);
+        if (live) ep.profileIconId = live.profileIconId || 0;
+      }
+      rankings = computeRankings(endPlayers, snapshot);
+    } else {
+      // No end snapshot yet — just show start-of-week standings with no delta
+      rankings = computeRankings(cachedSquadData, snapshot);
+    }
+  }
+
   res.json({ rankings, weekKey, nextResetAt: getNextResetMs(snapshot), snapshotAt: snapshot.createdAt, ddragonVersion });
 });
 

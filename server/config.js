@@ -25,6 +25,16 @@ export const FULL_SQUAD = [
   { gameName: "biigdaddy", tagLine: "EUNE" },
 ];
 
+// Alt account pairs — key: main account (lower), value: alt account (lower)
+export const ALT_ACCOUNTS = {
+  "la cabra#iii":       "la cabra ii#qlawi",
+  "littlestjeff1#goyem": "darwizzy#høes",
+  "fåce#tap":           "dårk#abo",
+  "mohsh#eune":         "biigdaddy#eune",
+};
+// Set of alt keys (for quick lookup)
+export const ALT_KEYS = new Set(Object.values(ALT_ACCOUNTS));
+
 export const CACHE_DURATION       = 10 * 60 * 1000;  // 10 minutes
 export const FETCH_DELAY_MS       = 1300;             // 1 req/1.3s = ~46/min — safely under Riot 50/min (100 req/2 min) personal key limit
 export const AUTO_FETCH_INTERVAL  = 5 * 60 * 1000;  // Auto cycle every 5 minutes

@@ -1,23 +1,50 @@
 // ── Power Rankings ─────────────────────────────────────────────────────────
 var _prData = null;
 var _prResetTimer = null;
+var _prWeeks = [];       // sorted list of available week keys
+var _prWeekIdx = -1;     // index into _prWeeks of currently shown week
 
 function openPowerRankings() {
-  fetch("/power-rankings")
+  document.getElementById("pr-modal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  // Load available weeks, then show the latest
+  fetch("/power-rankings/weeks")
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      document.getElementById("pr-modal").classList.remove("hidden");
-      document.body.style.overflow = "hidden";
+      _prWeeks = d.weeks || [];
+      _prWeekIdx = _prWeeks.length - 1; // start at latest
+      _prLoadWeek();
+    })
+    .catch(function(e) { _renderPrError(e.message); });
+}
+
+function _prLoadWeek() {
+  var week = _prWeeks[_prWeekIdx];
+  var url = week ? "/power-rankings?week=" + week : "/power-rankings";
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
       if (d.error) { _renderPrError(d.error); return; }
       _prData = d;
       if (d.ddragonVersion) ICON_BASE = "https://ddragon.leagueoflegends.com/cdn/" + d.ddragonVersion + "/img/profileicon/";
       _renderPr(d);
+      _prUpdateNavBtns();
     })
-    .catch(function(e) {
-      document.getElementById("pr-modal").classList.remove("hidden");
-      document.body.style.overflow = "hidden";
-      _renderPrError(e.message);
-    });
+    .catch(function(e) { _renderPrError(e.message); });
+}
+
+function prNavWeek(dir) {
+  var next = _prWeekIdx + dir;
+  if (next < 0 || next >= _prWeeks.length) return;
+  _prWeekIdx = next;
+  _prLoadWeek();
+}
+
+function _prUpdateNavBtns() {
+  var prev = document.getElementById("pr-nav-prev");
+  var next = document.getElementById("pr-nav-next");
+  if (prev) prev.disabled = _prWeekIdx <= 0;
+  if (next) next.disabled = _prWeekIdx >= _prWeeks.length - 1;
 }
 
 function closePowerRankings() {
@@ -54,6 +81,30 @@ function _pillsHTML(r) {
     if (r.weekWR !== null) {
       var wrCls = r.weekWR >= 55 ? "up" : r.weekWR <= 45 ? "down" : "flat";
       pills += '<span class="pr-pill pr-pill-wr ' + wrCls + '">' + r.weekWR + '% WR</span>';
+    }
+  }
+  if (r.gamesThisWeek > 0) {
+    pills += '<span class="pr-pill pr-pill-total">' + r.gamesThisWeek + ' games</span>';
+  }
+  if (r.mainAccount && r.score !== null) {
+    var mainGames  = r.mainAccount.gamesThisWeek || 0;
+    var altGames2  = r.gamesThisWeek;
+    if (mainGames > 0 && altGames2 > 0) {
+      var total2 = mainGames + altGames2;
+      var tip2 = r.gameName + ': ' + altGames2 + ' games&#10;' + r.mainAccount.gameName + ': ' + mainGames + ' games&#10;Total: ' + total2 + ' games';
+      pills += '<span class="pr-pill pr-pill-alt" data-tip="' + tip2 + '" data-tip-title="This week">' + total2 + ' total games</span>';
+    }
+  }
+  if (r.altAccount && r.score !== null) {
+    var mainGames = r.gamesThisWeek;
+    var altGames  = r.altAccount.gamesThisWeek;
+    if (mainGames > 0 && altGames > 0) {
+      var totalGames = mainGames + altGames;
+      var altTip = r.gameName + ': ' + mainGames + ' games&#10;'
+        + r.altAccount.gameName + ': ' + altGames + ' games&#10;'
+        + 'Total: ' + totalGames + ' games';
+      pills += '<span class="pr-pill pr-pill-alt" data-tip="' + altTip + '" data-tip-title="This week">'
+        + totalGames + ' total games</span>';
     }
   }
   return pills;
@@ -138,7 +189,10 @@ function _renderPr(d) {
   var weekNum = d.weekKey ? d.weekKey.split("-W")[1] : "—";
   var weekEl = document.getElementById("pr-week-badge");
   if (weekEl) weekEl.textContent = "Week " + weekNum;
-  _startResetCountdown(d.nextResetAt);
+  var isLatest = _prWeekIdx >= _prWeeks.length - 1;
+  var resetEl = document.getElementById("pr-reset-badge");
+  if (resetEl) resetEl.style.display = isLatest ? "" : "none";
+  if (isLatest) _startResetCountdown(d.nextResetAt);
 
   if (r.length === 0) {
     document.getElementById("pr-body").innerHTML =

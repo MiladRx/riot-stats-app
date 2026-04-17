@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { ALT_ACCOUNTS, ALT_KEYS } from "./config.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, "..", "data");
@@ -102,27 +103,50 @@ function normalizeLp(lpProgress, tier) {
 export function computeRankings(squadPlayers, snapshot) {
   const snapPlayers = snapshot?.players || {};
 
-  return squadPlayers
+  // Build lookup for alt players
+  const playersByKey = {};
+  for (const p of squadPlayers) playersByKey[`${p.gameName}#${p.tagLine}`.toLowerCase()] = p;
+
+  const rankings = squadPlayers
     .filter(p => !p.error && p.solo)
     .map(p => {
       const key = `${p.gameName}#${p.tagLine}`.toLowerCase();
       const snap = snapPlayers[key] || null;
 
+      // Main account LP progress
       const curFull  = fullLP(p.solo.tier, p.solo.rank, p.solo.lp);
       const snapFull = snap ? fullLP(snap.tier, snap.rank, snap.lp) : curFull;
-      const lpProgress = snap ? curFull - snapFull : 0;
+      let lpProgress = snap ? curFull - snapFull : 0;
 
-      // Use snapshot tier (start-of-week rank) for normalization so rank-ups don't skew it
       const snapTier = snap?.tier || p.solo.tier;
-      const normalizedLp = normalizeLp(lpProgress, snapTier);
+      let normalizedLp = normalizeLp(lpProgress, snapTier);
 
-      const curGames     = p.solo.wins + p.solo.losses;
-      const snapGames    = snap ? (snap.wins + snap.losses) : curGames;
-      const gamesThisWeek  = Math.max(0, curGames - snapGames);
-      const winsThisWeek   = snap ? Math.max(0, p.solo.wins - snap.wins) : 0;
-      const lossesThisWeek = Math.max(0, gamesThisWeek - winsThisWeek);
+      const curGames   = p.solo.wins + p.solo.losses;
+      const snapGames  = snap ? (snap.wins + snap.losses) : curGames;
+      let gamesThisWeek  = Math.max(0, curGames - snapGames);
+      let winsThisWeek   = snap ? Math.max(0, p.solo.wins - snap.wins) : 0;
+      let lossesThisWeek = Math.max(0, gamesThisWeek - winsThisWeek);
+
+      // Alt account — info only, does NOT affect score
+      const altKey = ALT_ACCOUNTS[key];
+      const altPlayer = altKey ? playersByKey[altKey] : null;
+      let altAccount = null;
+      if (altPlayer?.solo) {
+        const altSnap = snapPlayers[altKey] || null;
+        const altCurGames = altPlayer.solo.wins + altPlayer.solo.losses;
+        const altSnapGames = altSnap ? (altSnap.wins + altSnap.losses) : altCurGames;
+        const altGamesWeek = Math.max(0, altCurGames - altSnapGames);
+        const altWinsWeek  = altSnap ? Math.max(0, altPlayer.solo.wins - altSnap.wins) : 0;
+        const altLpProgress = altSnap ? fullLP(altPlayer.solo.tier, altPlayer.solo.rank, altPlayer.solo.lp) - fullLP(altSnap.tier, altSnap.rank, altSnap.lp) : 0;
+        altAccount = {
+          gameName: altPlayer.gameName, tagLine: altPlayer.tagLine,
+          tier: altPlayer.solo.tier, rank: altPlayer.solo.rank, lp: altPlayer.solo.lp,
+          gamesThisWeek: altGamesWeek, winsThisWeek: altWinsWeek,
+          lpProgress: altLpProgress,
+        };
+      }
+
       const weekWR = gamesThisWeek > 0 ? Math.round(winsThisWeek / gamesThisWeek * 100) : null;
-
       const inactive = snap && gamesThisWeek === 0 && lpProgress === 0;
 
       let score = normalizedLp + gamesThisWeek * 5 + winsThisWeek * 3;
@@ -133,6 +157,9 @@ export function computeRankings(squadPlayers, snapshot) {
         else if (weekWR <= 45) score -= 7;
       }
 
+      // If this is an alt, note the main key for second pass
+      const mainKey = [...Object.entries(ALT_ACCOUNTS)].find(([, v]) => v === key)?.[0] || null;
+
       return {
         gameName: p.gameName, tagLine: p.tagLine,
         profileIconId: p.profileIconId,
@@ -141,9 +168,23 @@ export function computeRankings(squadPlayers, snapshot) {
         score: inactive ? null : Math.round(score),
         lpProgress, normalizedLp: Math.round(normalizedLp), gamesThisWeek, winsThisWeek, lossesThisWeek, weekWR,
         curWR: curGames > 0 ? Math.round(p.solo.wins / curGames * 100) : 0,
+        altAccount,
+        _mainKey: mainKey,
       };
-    })
-    .sort((a, b) => {
+    });
+
+  // Second pass — enrich alt accounts with main account's gamesThisWeek
+  const byKey = {};
+  for (const r of rankings) byKey[`${r.gameName}#${r.tagLine}`.toLowerCase()] = r;
+  for (const r of rankings) {
+    if (r._mainKey) {
+      const main = byKey[r._mainKey];
+      r.mainAccount = main ? { gameName: main.gameName, tagLine: main.tagLine, gamesThisWeek: main.gamesThisWeek } : null;
+    }
+    delete r._mainKey;
+  }
+
+  return rankings.sort((a, b) => {
       if (a.score === null && b.score === null) return 0;
       if (a.score === null) return 1;
       if (b.score === null) return -1;
