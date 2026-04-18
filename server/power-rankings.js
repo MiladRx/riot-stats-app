@@ -89,8 +89,11 @@ const EXPECTED_LP_PER_WIN = {
 };
 const BASELINE_LP = 21; // Diamond as the reference point
 
+const NO_DIVISIONS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
+
 function fullLP(tier, rank, lp) {
-  return (TIER_VAL[tier] || 0) + (RANK_VAL[rank] || 0) + (lp || 0);
+  const rankVal = NO_DIVISIONS.has(tier) ? 0 : (RANK_VAL[rank] || 0);
+  return (TIER_VAL[tier] || 0) + rankVal + (lp || 0);
 }
 
 // Normalize raw LP progress to be fair across ranks
