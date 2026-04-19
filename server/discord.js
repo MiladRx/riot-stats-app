@@ -22,7 +22,7 @@ const TIER_LABEL = {
 function tierScore(tier, rank) {
   const t = TIER_ORDER.indexOf(tier);
   const r = NO_DIVISIONS.has(tier) ? 0 : RANK_ORDER.indexOf(rank);
-  return t * 4 + (3 - r);
+  return t * 4 + r; // IV=0, III=1, II=2, I=3 — higher is better
 }
 
 function rankLabel(tier, rank) {
