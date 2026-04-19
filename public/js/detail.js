@@ -203,8 +203,8 @@ function renderDetail(p, i) {
             + '<div class="dp2-mh-outcome">' + (win ? 'W' : 'L') + '</div>'
             + '<img class="dp2-mh-icon" src="' + icon + '" onerror="this.style.opacity=0" />'
             + '<div class="dp2-mh-champ-wrap">'
-            + '<div class="dp2-mh-champ-name">' + m.champion + '</div>'
-            + (m.pentas ? '<div class="dp2-mh-penta">PENTA</div>' : '')
+            + '<div class="dp2-mh-champ-name">' + m.champion + (m.pentas ? '<span class="dp2-mh-penta">PENTA</span>' : '') + '</div>'
+            + '<div class="dp2-mh-champ-sub">' + ago + '</div>'
             + '</div>'
             + '<div class="dp2-mh-kda">'
             + m.kills + '<span class="dp2-mh-slash">/</span><span class="dp2-mh-d">' + m.deaths + '</span><span class="dp2-mh-slash">/</span>' + m.assists
