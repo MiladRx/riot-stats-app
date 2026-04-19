@@ -30,6 +30,7 @@ import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-sta
 import { buildLineups } from "./server/clash.js";
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
 import { notifyRankChanges } from "./server/discord.js";
+import { startDailyRecapScheduler, saveDailySnapshot, postDailyRecap } from "./server/daily-recap.js";
 import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
 import { ready as dbReady } from "./server/db.js";
 
@@ -126,7 +127,7 @@ async function refreshSquadCache() {
   emitSquadUpdated();
 
   // Notify Discord of any rank changes (fire-and-forget)
-  if (prevSquad.length > 0) notifyRankChanges(prevSquad, squad).catch(() => {});
+  if (prevSquad.length > 0) notifyRankChanges(prevSquad, squad, ddragonVersion).catch(() => {});
   emitSchedule();
 
   // Ensure weekly snapshot exists; roll over if one week has passed since last snapshot
@@ -176,6 +177,10 @@ app.post("/force-refresh", async (req, res) => {
 });
 
 app.get("/health", (req, res) => res.json({ ok: true }));
+app.post("/test-recap", async (req, res) => {
+  await postDailyRecap(cachedSquadData);
+  res.json({ ok: true });
+});
 
 app.get("/stats", async (req, res) => {
   const { gameName = "adam1276", tagLine = "EUNE" } = req.query;
@@ -605,5 +610,31 @@ function emitFetchProgress() {
 
 http.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
-  runFullCycle();
+  runBootCycle();
+  startDailyRecapScheduler(() => cachedSquadData || []);
+});
+
+// ── Test endpoint — fire recap immediately (admin use)
+app.post("/test-recap", async (req, res) => {
+  if (!cachedSquadData) return res.status(503).json({ error: "Squad data not loaded yet" });
+  try {
+    await postDailyRecap(cachedSquadData);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Test endpoint — fake a promo/demo card
+app.post("/test-rank-change", async (req, res) => {
+  try {
+    const { promoted = true } = req.query;
+    const p = cachedSquadData?.find(p => p.solo) || {};
+    const fakeOld = [{ ...p, solo: { tier: promoted === "false" ? "MASTER" : "SILVER", rank: promoted === "false" ? "I" : "I", lp: 85 } }];
+    const fakeNew = [{ ...p, solo: { tier: promoted === "false" ? "DIAMOND" : "GOLD", rank: promoted === "false" ? "I" : "IV", lp: 12 } }];
+    await notifyRankChanges(fakeOld, fakeNew, ddragonVersion);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });

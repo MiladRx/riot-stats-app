@@ -252,6 +252,22 @@ export function bulkInsert(playerKey, season, mode, matchesObj, puuid, lastUpdat
   savePlayerState(playerKey, season, mode, puuid || null, lastUpdated || null);
 }
 
+// Returns { player_key: { wins, losses } } for all matches since a given timestamp
+export function getMatchesSince(sinceTs, season = "2026", mode = "solo") {
+  if (!db) return {};
+  const rows = db.exec(
+    `SELECT player_key, win FROM matches WHERE ts >= ${sinceTs} AND season='${season}' AND mode='${mode}'`
+  );
+  const result = {};
+  if (!rows.length) return result;
+  for (const [playerKey, win] of rows[0].values) {
+    if (!result[playerKey]) result[playerKey] = { wins: 0, losses: 0 };
+    if (win) result[playerKey].wins++;
+    else     result[playerKey].losses++;
+  }
+  return result;
+}
+
 export async function ready() {
   return initDb();
 }

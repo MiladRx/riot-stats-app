@@ -90,7 +90,15 @@
       "Bash(C:/pinokio/bin/miniconda/node.exe --input-type=module --eval ':*)",
       "Bash(node -e ' *)",
       "Bash(python3 -c ' *)",
-      "Bash(powershell -Command \"Remove-Item 'C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\matches.db' -Force; Write-Host 'done'\")"
+      "Bash(powershell -Command \"Remove-Item 'C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\data\\\\matches.db' -Force; Write-Host 'done'\")",
+      "Bash(cmd /c \"node -e \\\\\"fetch\\('https://discord.com/api/webhooks/1495233976762236998/zlYwySQn6xxy8FfSzVOwQcHnLN8XKcyV-tBJ6l8SfMzjTHnvmeewed-ccwThBWls3U9-', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify\\({embeds:[{title:'💎 Test — Squad Tracker connected!',description:'Rank notifications are live.',color:0x6ab8f7,footer:{text:'Squad Tracker'},timestamp:new Date\\(\\).toISOString\\(\\)}]}\\)}\\).then\\(r=>console.log\\('Status:',r.status\\)\\).catch\\(e=>console.error\\(e.message\\)\\)\\\\\"\")",
+      "Bash(cmd /c \"node --input-type=module\")",
+      "Bash(cmd /c \"node test-webhook.mjs\")",
+      "Bash(cmd /c \"node test-webhook.mjs && echo done\")",
+      "Bash(cmd /c \"node test-webhook.mjs 2>&1\")",
+      "Bash(cmd /c \"node -e \\\\\"const db = require\\('./server/db.js'\\); console.log\\('ok'\\)\\\\\"\")",
+      "Bash(cmd /c \"type C:\\\\Users\\\\milad\\\\Documents\\\\riot-stats-app\\\\package.json\")",
+      "Bash(npm list *)"
     ]
   }
 }
