@@ -46,9 +46,11 @@ function buildPromoHTML({ gameName, profileIconId, ddragonVersion, prevTier, pre
 <html>
 <head>
 <meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: transparent; width: 460px; }
+  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: transparent; width: 460px; }
+  .status-pill { font-family: 'Noto Sans', sans-serif; }
 
   .card {
     width: 460px;
@@ -228,7 +230,7 @@ async function postImageToDiscord(imageBuffer, filename) {
 
   const form = new FormData();
   form.append("files[0]", new Blob([imageBuffer], { type: "image/png" }), filename);
-  form.append("payload_json", JSON.stringify({ flags: 4096 }));
+  form.append("payload_json", JSON.stringify({}));
 
   try {
     const res = await fetch(WEBHOOK_URL, { method: "POST", body: form });
