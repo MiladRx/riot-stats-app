@@ -98,7 +98,7 @@ function buildRecapHTML(rows, date) {
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: transparent; width: 500px; }
-  .medal, .status, .mvp-crown { font-family: 'Noto Color Emoji', sans-serif; }
+  .medal, .status, .mvp-crown, .title { font-family: 'Noto Color Emoji', 'Noto Sans', sans-serif; }
 
   .card {
     width: 500px;
@@ -229,7 +229,7 @@ function buildRecapHTML(rows, date) {
   <div class="bg-glow"></div>
   <div class="inner">
     <div class="header">
-      <div class="title">📊 Daily Recap</div>
+      <div class="title">&#x1F4CA; Daily Recap</div>
       <div class="date-pill">${date}</div>
     </div>
     ${mvp ? `

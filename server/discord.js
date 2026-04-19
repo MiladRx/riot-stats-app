@@ -40,13 +40,16 @@ function buildPromoHTML({ gameName, profileIconId, ddragonVersion, prevTier, pre
   const emblemUrl   = `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/ranked-emblem/emblem-${newTier.toLowerCase()}.png`;
   const badgeColor  = promoted ? accent : "#ff453a";
   const bigText     = promoted ? "PROMOTED" : "DEMOTED";
-  const subText     = promoted ? "just ranked up 🔥" : "dropped a rank 💀";
+  const subText     = promoted ? "just ranked up &#x1F525;" : "dropped a rank &#x1F480;";
 
   return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8"/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  .sub { font-family: 'Noto Color Emoji', 'Noto Sans', sans-serif; }
+</style>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: transparent; width: 460px; }
