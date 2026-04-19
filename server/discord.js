@@ -233,7 +233,7 @@ async function postImageToDiscord(imageBuffer, filename) {
 
   const form = new FormData();
   form.append("files[0]", new Blob([imageBuffer], { type: "image/png" }), filename);
-  form.append("payload_json", JSON.stringify({}));
+  form.append("payload_json", JSON.stringify({ content: "<@&1495245177147621427>" }));
 
   try {
     const res = await fetch(WEBHOOK_URL, { method: "POST", body: form });

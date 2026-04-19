@@ -271,7 +271,7 @@ async function renderRecapImage(html) {
 async function postImageToDiscord(webhookUrl, imageBuffer, date) {
   const form = new FormData();
   form.append("files[0]", new Blob([imageBuffer], { type: "image/png" }), `recap-${date}.png`);
-  form.append("payload_json", JSON.stringify({}));
+  form.append("payload_json", JSON.stringify({ content: "<@&1495245177147621427>" }));
 
   const res = await fetch(webhookUrl, { method: "POST", body: form });
   if (!res.ok) {
