@@ -29,6 +29,7 @@ import { fetchJob, runFetch } from "./server/fetch-engine.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
 import { buildLineups } from "./server/clash.js";
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
+import { notifyRankChanges } from "./server/discord.js";
 import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
 import { ready as dbReady } from "./server/db.js";
 
@@ -118,10 +119,14 @@ async function refreshSquadCache() {
   const payload = JSON.stringify({ players: squad, cachedAt: Date.now() });
   try { fs.writeFileSync(SQUAD_CACHE_FILE, payload); } catch (_) {}
 
+  const prevSquad = cachedSquadData;
   cachedSquadData = squad;
   lastFetchTime   = Date.now();
   console.log("✅ Squad rank data refreshed.");
   emitSquadUpdated();
+
+  // Notify Discord of any rank changes (fire-and-forget)
+  if (prevSquad.length > 0) notifyRankChanges(prevSquad, squad).catch(() => {});
   emitSchedule();
 
   // Ensure weekly snapshot exists; roll over if one week has passed since last snapshot
