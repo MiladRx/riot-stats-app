@@ -30,7 +30,6 @@ import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-sta
 import { buildLineups } from "./server/clash.js";
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
 import { notifyRankChanges } from "./server/discord.js";
-import { startDailyRecapScheduler, saveDailySnapshot, postDailyRecap } from "./server/daily-recap.js";
 import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
 import { ready as dbReady } from "./server/db.js";
 
@@ -611,18 +610,6 @@ function emitFetchProgress() {
 http.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
   runBootCycle();
-  startDailyRecapScheduler(() => cachedSquadData || []);
-});
-
-// ── Test endpoint — fire recap immediately (admin use)
-app.post("/test-recap", async (req, res) => {
-  if (!cachedSquadData) return res.status(503).json({ error: "Squad data not loaded yet" });
-  try {
-    await postDailyRecap(cachedSquadData);
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
 });
 
 // ── Test endpoint — fake a promo/demo card
