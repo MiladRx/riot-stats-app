@@ -176,7 +176,7 @@ function _hmColor(t) {
 
 function _hmFmtSlot(s) {
   var h1 = String(s * 2).padStart(2, '0');
-  var h2 = String(s * 2 + 2).padStart(2, '0');
+  var h2 = String((s * 2 + 2) % 24).padStart(2, '0');
   return h1 + ':00–' + h2 + ':00';
 }
 
