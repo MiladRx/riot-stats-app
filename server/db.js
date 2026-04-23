@@ -159,6 +159,21 @@ export function getMatchCount(playerKey, season, mode) {
   return row.cnt || 0;
 }
 
+export function getHeatmapData(season, mode, playerKey = null) {
+  if (!db) return [];
+  const sql  = playerKey
+    ? `SELECT ts FROM matches WHERE season=? AND mode=? AND player_key=? AND ts IS NOT NULL`
+    : `SELECT ts FROM matches WHERE season=? AND mode=? AND ts IS NOT NULL`;
+  const stmt = db.prepare(sql);
+  stmt.bind(playerKey ? [season, mode, playerKey] : [season, mode]);
+  const result = [];
+  while (stmt.step()) {
+    result.push(stmt.getAsObject().ts);
+  }
+  stmt.free();
+  return result;
+}
+
 export function savePlayerState(playerKey, season, mode, puuid, lastUpdated) {
   if (!db) return;
 

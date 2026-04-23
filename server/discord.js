@@ -1,7 +1,12 @@
 // Discord webhook notifications — promo/demo image cards
 import puppeteer from "puppeteer";
+import GIFEncoder from "gif-encoder-2";
+import sharp from "sharp";
 
-function getWebhookUrl() { return process.env.DISCORD_WEBHOOK_URL; }
+function getWebhookUrl(forceLocal = false) {
+  if (!process.env.RAILWAY_ENVIRONMENT && !forceLocal) return null;
+  return process.env.DISCORD_WEBHOOK_URL;
+}
 
 const TIER_ORDER    = ["IRON","BRONZE","SILVER","GOLD","PLATINUM","EMERALD","DIAMOND","MASTER","GRANDMASTER","CHALLENGER"];
 const RANK_ORDER    = ["IV","III","II","I"];
@@ -226,14 +231,49 @@ async function renderCard(html) {
   }
 }
 
+// ── Render HTML → GIF (animated) ─────────────────────────────────────────────
+async function renderGif(html, { width = 460, height = 520, frames = 36, fps = 18 } = {}) {
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width, height, deviceScaleFactor: 1 });
+    await page.setContent(html, { waitUntil: "networkidle0" });
+
+    const encoder = new GIFEncoder(width, height, "neuquant", true);
+    encoder.setDelay(Math.round(1000 / fps));
+    encoder.setRepeat(0);
+    encoder.setQuality(10);
+    encoder.start();
+
+    const card = await page.$(".card");
+    const interval = Math.round(1000 / fps);
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let i = 0; i < frames; i++) {
+      await sleep(interval);
+      const png = await card.screenshot({ type: "png" });
+      const { data } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      encoder.addFrame(data);
+    }
+
+    encoder.finish();
+    return encoder.out.getData();
+  } finally {
+    await browser.close();
+  }
+}
+
 // ── Post image to Discord ──────────────────────────────────────────────────────
-async function postImageToDiscord(imageBuffer, filename) {
-  const WEBHOOK_URL = getWebhookUrl();
+async function postImageToDiscord(imageBuffer, filename, forceLocal = false, silent = false) {
+  const WEBHOOK_URL = getWebhookUrl(forceLocal);
   if (!WEBHOOK_URL) return;
 
   const form = new FormData();
   form.append("files[0]", new Blob([imageBuffer], { type: "image/png" }), filename);
-  form.append("payload_json", JSON.stringify({ content: "<@&1495245177147621427>" }));
+  form.append("payload_json", JSON.stringify(silent ? { flags: 4096 } : { content: "<@&1495245177147621427>" }));
 
   try {
     const res = await fetch(WEBHOOK_URL, { method: "POST", body: form });
@@ -244,8 +284,8 @@ async function postImageToDiscord(imageBuffer, filename) {
 }
 
 // ── Main export ────────────────────────────────────────────────────────────────
-export async function notifyRankChanges(prevSquad, newSquad, ddragonVersion) {
-  if (!getWebhookUrl()) return;
+export async function notifyRankChanges(prevSquad, newSquad, ddragonVersion, forceLocal = false) {
+  if (!getWebhookUrl(forceLocal)) return;
 
   const prevByKey = {};
   for (const p of prevSquad) {
@@ -277,11 +317,182 @@ export async function notifyRankChanges(prevSquad, newSquad, ddragonVersion) {
         promoted,
       });
       const buffer = await renderCard(html);
-      await postImageToDiscord(buffer, `${promoted ? "promo" : "demo"}-${p.gameName}.png`);
+      await postImageToDiscord(buffer, `${promoted ? "promo" : "demo"}-${p.gameName}.png`, forceLocal, forceLocal);
     } catch (e) {
       console.warn(`Failed to post rank card for ${p.gameName}:`, e.message);
     }
 
     await new Promise(r => setTimeout(r, 600));
+  }
+}
+
+// ── Penta Kill card ───────────────────────────────────────────────────────────
+function buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVersion }) {
+  const ddVer     = ddragonVersion || "16.8.1";
+  const champKey  = champion.replace(/\s/g, "").replace(/'/g, "");
+  const champUrl  = `https://ddragon.leagueoflegends.com/cdn/${ddVer}/img/champion/${champKey}.png`;
+  const kda       = deaths === 0 ? "Perfect" : ((kills + assists) / deaths).toFixed(2);
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans', sans-serif; background: transparent; width: 460px; }
+
+  .card {
+    width: 460px;
+    background: linear-gradient(160deg, #1a1208 0%, #0e0e15 60%);
+    border: 1px solid rgba(255,214,10,0.15);
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .shimmer {
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #ffd60a, #ff9f0a, #ffd60a, transparent);
+  }
+
+  .bg-glow {
+    position: absolute;
+    top: -40px; left: 50%;
+    transform: translateX(-50%);
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(255,214,10,0.19) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .inner {
+    padding: 28px 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .penta-badge {
+    font-size: 11px; font-weight: 900; letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #ffd60a;
+    background: rgba(255,214,10,0.12);
+    border: 1px solid rgba(255,214,10,0.4);
+    border-radius: 30px;
+    padding: 5px 20px;
+    margin-bottom: 20px;
+  }
+
+  .champ-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .champ-ring {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    border: 3px solid #ffd60a;
+    box-shadow: 0 0 30px rgba(255,214,10,0.5), 0 0 60px rgba(255,214,10,0.2);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .champ-img {
+    width: 115%; height: 115%;
+    margin: -7.5%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .player-name {
+    font-size: 22px; font-weight: 800; color: #fff;
+    margin-bottom: 4px;
+  }
+  .champ-name {
+    font-size: 14px; color: #ffd60a; font-weight: 600;
+    margin-bottom: 22px;
+  }
+
+  .stats-row {
+    display: flex; gap: 12px; margin-bottom: 6px;
+  }
+  .stat-box {
+    display: flex; flex-direction: column; align-items: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 10px 20px;
+    min-width: 80px;
+  }
+  .stat-val {
+    font-size: 20px; font-weight: 800;
+  }
+  .stat-val.k { color: #30d158; }
+  .stat-val.d { color: #ff453a; }
+  .stat-val.a { color: #ffd60a; }
+  .stat-val.kda { color: #9cb4e8; }
+  .stat-label {
+    font-size: 10px; color: #444; text-transform: uppercase;
+    letter-spacing: 1px; margin-top: 3px; font-weight: 700;
+  }
+
+  .footer {
+    font-size: 10px; color: #252530;
+    text-transform: uppercase; letter-spacing: 1.5px; margin-top: 18px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="shimmer"></div>
+  <div class="bg-glow"></div>
+  <div class="inner">
+    <div class="penta-badge">&#x1F525; PENTA KILL &#x1F525;</div>
+    <div class="champ-wrap">
+      <div class="champ-ring">
+        <img class="champ-img" src="${champUrl}" onerror="this.style.background='#2a2a1a'"/>
+      </div>
+    </div>
+    <div class="player-name">${gameName}</div>
+    <div class="champ-name">${champion}</div>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-val k">${kills}</div>
+        <div class="stat-label">Kills</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val d">${deaths}</div>
+        <div class="stat-label">Deaths</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val a">${assists}</div>
+        <div class="stat-label">Assists</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val kda">${kda}</div>
+        <div class="stat-label">KDA</div>
+      </div>
+    </div>
+    <div class="footer">Squad Tracker</div>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+export async function notifyPentaKill({ gameName, champion, kills, deaths, assists, ddragonVersion, forceLocal = false }) {
+  const WEBHOOK_URL = getWebhookUrl(forceLocal);
+  if (!WEBHOOK_URL) return;
+  console.log(`🎉 PENTA KILL — ${gameName} on ${champion}!`);
+  try {
+    const html   = buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVersion });
+    const buffer = await renderCard(html);
+    const form   = new FormData();
+    form.append("files[0]", new Blob([buffer], { type: "image/png" }), `penta-${gameName}.png`);
+    form.append("payload_json", JSON.stringify(forceLocal ? { flags: 4096 } : { content: "<@&1495245177147621427>" }));
+    const res = await fetch(WEBHOOK_URL, { method: "POST", body: form });
+    if (!res.ok) console.warn("Penta webhook failed:", res.status, await res.text());
+  } catch (e) {
+    console.warn("Penta notification error:", e.message);
   }
 }

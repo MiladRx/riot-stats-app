@@ -25,18 +25,21 @@ app.use(express.static(path.join(__dirname, "public")));
 // --- Imports ---
 import { FULL_SQUAD, CACHE_DURATION, AUTO_FETCH_INTERVAL, CURRENT_SEASON, SEASONS, RANK_CONCURRENCY, FETCH_RETRY_ATTEMPTS, ALT_ACCOUNTS, ALT_KEYS } from "./server/config.js";
 import { loadSeasonCache, getSeasonCacheSummary } from "./server/season-cache.js";
-import { fetchJob, runFetch } from "./server/fetch-engine.js";
+import { fetchJob, runFetch, setPentaKillHandler } from "./server/fetch-engine.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
 import { buildLineups } from "./server/clash.js";
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
-import { notifyRankChanges } from "./server/discord.js";
+import { notifyRankChanges, notifyPentaKill } from "./server/discord.js";
 import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
-import { ready as dbReady } from "./server/db.js";
+import { ready as dbReady, getHeatmapData } from "./server/db.js";
 
 loadDDragon();
 
 // Initialize database (must happen before any routes use it)
 await dbReady();
+
+// Wire up penta kill Discord notifications
+setPentaKillHandler(data => notifyPentaKill({ ...data, ddragonVersion }));
 
 // ─────────────────────────────────────────────
 // Squad Cache
@@ -287,6 +290,24 @@ app.get("/fetch-history/status", (req, res) => {
     progress:  matchFetchJob.progress,
     log:       matchFetchJob.log.slice(-80),
   });
+});
+
+app.get("/heatmap", (req, res) => {
+  const { season = CURRENT_SEASON, mode = "solo", player = null } = req.query;
+  const playerKey  = player ? player.toLowerCase() : null;
+  const timestamps = getHeatmapData(season, mode, playerKey);
+
+  // Build 7×12 grid (day 0=Mon…6=Sun, slot = floor(hour/2)) in Copenhagen time
+  const SLOTS = 12;
+  const grid = Array.from({ length: 7 }, () => new Array(SLOTS).fill(0));
+  for (const ts of timestamps) {
+    const cph  = new Date(new Date(ts).toLocaleString("en-US", { timeZone: "Europe/Copenhagen" }));
+    const dow  = (cph.getDay() + 6) % 7;
+    const slot = Math.floor(cph.getHours() / 2);
+    grid[dow][slot]++;
+  }
+
+  res.json({ grid, total: timestamps.length, season, mode });
 });
 
 app.get("/cache-summary", (req, res) => {
@@ -612,6 +633,17 @@ http.listen(PORT, () => {
   runBootCycle();
 });
 
+// ── Test endpoint — fake a penta kill card
+app.post("/test-penta", async (req, res) => {
+  try {
+    const p = cachedSquadData?.find(p => p.solo) || { gameName: "adam1276" };
+    await notifyPentaKill({ gameName: p.gameName, champion: "Yone", kills: 100, deaths: 2, assists: 5, ddragonVersion, forceLocal: true });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Test endpoint — fake a promo/demo card
 app.post("/test-rank-change", async (req, res) => {
   try {
@@ -619,7 +651,7 @@ app.post("/test-rank-change", async (req, res) => {
     const p = cachedSquadData?.find(p => p.solo) || {};
     const fakeOld = [{ ...p, solo: { tier: promoted === "false" ? "MASTER" : "SILVER", rank: promoted === "false" ? "I" : "I", lp: 85 } }];
     const fakeNew = [{ ...p, solo: { tier: promoted === "false" ? "DIAMOND" : "GOLD", rank: promoted === "false" ? "I" : "IV", lp: 12 } }];
-    await notifyRankChanges(fakeOld, fakeNew, ddragonVersion);
+    await notifyRankChanges(fakeOld, fakeNew, ddragonVersion, true);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });

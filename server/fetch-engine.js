@@ -2,6 +2,10 @@ import { riotFetch } from "./riot-api.js";
 import { saveMatch, markMatchFetched, getKnownIds, savePlayerState } from "./db.js";
 import { FULL_SQUAD, FETCH_DELAY_MS, SEASONS, QUEUE_IDS } from "./config.js";
 
+// Called when a new penta kill is found — set by server.js
+export let onPentaKill = null;
+export function setPentaKillHandler(fn) { onPentaKill = fn; }
+
 export const fetchJob = {
   running:   false,
   startedAt: null,
@@ -46,7 +50,7 @@ async function fetchForPlayer(gameName, tagLine, season, mode, quickMode = false
 
     // ── Paginate match IDs ────────────────────────────────────────────────────
     let start  = 0;
-    const PAGE = quickMode ? 2 : 20;   // quickMode: fetch 2 IDs, skip any already cached
+    const PAGE = quickMode ? 5 : 20;   // quickMode: check last 5 match IDs — catches recent games without over-fetching
     const maxPages = quickMode ? 1 : Infinity;
     let allNewIds = [];
     let pagesFetched = 0;
@@ -140,6 +144,11 @@ async function fetchForPlayer(gameName, tagLine, season, mode, quickMode = false
         saveMatch(key, season, mode, matchId, matchData);
         markMatchFetched(matchId, key, season, mode);
         knownIds.add(matchId);
+
+        // Fire penta kill notification
+        if (matchData.pentas > 0 && onPentaKill) {
+          onPentaKill({ gameName, tagLine, ...matchData }).catch(() => {});
+        }
 
       } catch (e) {
         jobLog(`⚠️ ${gameName}: skipped ${matchId} — ${e.message} [${fetched}/${totalToFetch}]`);

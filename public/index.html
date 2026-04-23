@@ -18,12 +18,19 @@
   <link rel="stylesheet" href="css/compare.css" />
   <link rel="stylesheet" href="css/modals.css" />
   <link rel="stylesheet" href="css/tooltips.css" />
-  <link rel="stylesheet" href="css/clash.css" />
   <link rel="stylesheet" href="css/fetch-dashboard.css" />
   <link rel="stylesheet" href="css/power-rankings.css" />
+  <link rel="stylesheet" href="css/heatmap.css" />
 </head>
 
 <body>
+  <!-- Page Loader -->
+  <div id="page-loader">
+    <div class="pl-logo">Squad<span>.</span></div>
+    <div class="pl-bar-wrap"><div class="pl-bar" id="pl-bar"></div></div>
+    <div class="pl-status" id="pl-status">Loading squad data…</div>
+  </div>
+
   <div class="bg-glow"></div>
   <div class="wrap">
     <header>
@@ -33,9 +40,9 @@
         <div id="update-timer" class="update-timer"></div>
       </div>
       <div class="header-right">
+        <button class="pr-btn" onclick="openHeatmap()"><span class="pr-btn-icon">🕐</span> Heatmap</button>
         <button class="pr-btn" onclick="openPowerRankings()"><span class="pr-btn-icon">👑</span> Power Rankings</button>
         <button id="fd-header-btn" class="fetch-dash-btn" onclick="openFetchDashboard()">📊 <span>Fetch</span></button>
-        <button class="clash-btn" onclick="openClashModal()">⚔️ <span>Clash Builder</span></button>
         <button class="cp-nav-btn" style="display: none;" onclick="window.location.href='counterpicks.html'">🎯
           <span>CounterPicks</span></button> <button class="btn btn-sm btn-circle btn-ghost force-refresh-btn" onclick="forceRefresh()"
           title="Force refresh rank data">↺</button>
@@ -105,22 +112,6 @@
     </div>
   </div>
 
-  <!-- Clash Builder Modal -->
-  <div id="clash-modal" class="clash-modal hidden">
-    <div class="clash-backdrop" onclick="closeClashModal()"></div>
-    <div class="clash-panel">
-      <div class="clash-panel-header">
-        <div>
-          <div class="clash-panel-title">⚔️ Clash Team Builder</div>
-          <div class="clash-panel-sub">Optimal role assignments based on match history &amp; rank</div>
-        </div>
-        <button class="btn btn-sm btn-circle btn-ghost clash-close" onclick="closeClashModal()">✕</button>
-      </div>
-      <div class="clash-body">
-        <div id="clash-content"></div>
-      </div>
-    </div>
-  </div>
 
   <!-- Power Rankings Modal -->
   <div id="pr-modal" class="pr-modal hidden">
@@ -184,6 +175,28 @@
 
   <link rel="stylesheet" href="css/champ-history.css" />
 
+  <!-- Heatmap Modal -->
+  <div id="hm-modal" class="hm-modal hidden">
+    <div class="hm-backdrop" onclick="closeHeatmap()"></div>
+    <div class="hm-panel">
+      <div class="hm-header">
+        <div>
+          <div class="hm-title">🕐 Play Heatmap</div>
+          <div class="hm-sub">When does the squad play most? · Season 2026 · Solo/Duo</div>
+        </div>
+        <button class="btn btn-sm btn-circle btn-ghost" onclick="closeHeatmap()">✕</button>
+      </div>
+      <div class="hm-filters">
+        <select id="hm-player-select" class="hm-select" onchange="_hmSetPlayer(this.value || null)">
+          <option value="">All Players</option>
+        </select>
+      </div>
+      <div class="hm-body">
+        <div id="hm-content"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Dev Auth Modal -->
   <div id="dev-auth-modal" class="dev-auth-overlay hidden">
     <div class="dev-auth-box">
@@ -213,10 +226,10 @@
   <script src="js/fetch-dashboard.js"></script>
   <script src="js/compare.js"></script>
   <script src="js/tooltips.js"></script>
-  <script src="js/clash.js"></script>
   <script src="js/champ-history.js"></script>
   <script src="js/power-rankings.js"></script>
   <script src="js/schedule.js"></script>
+  <script src="js/heatmap.js"></script>
   <script src="js/enhancements.js"></script>
 </body>
 

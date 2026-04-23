@@ -4,10 +4,9 @@ var _boardMode   = "solo";
 var _boardAvailableSeasons = ["2026"]; // always starts with current; updated after fetch
 
 var BOARD_MODES = [
-  { id: "solo",  label: "Solo/Duo" },
-  { id: "clash", label: "Clash"    },
+  { id: "solo", label: "Solo/Duo" },
 ];
-var MODE_LABELS = { solo: "Solo/Duo", clash: "Clash" };
+var MODE_LABELS = { solo: "Solo/Duo" };
 
 function setBoardSeason(season) {
   _boardSeason = season;
@@ -32,7 +31,6 @@ function setBoardMode(mode) {
 function _updatePageHeader() {
   var titles = {
     solo:  { h1: "Solo / Duo Ranked", sub: "Solo / Duo Ranked · EUNE", rankCol: "Rank" },
-    clash: { h1: "Clash",              sub: "Clash Tournament · EUNE",  rankCol: "Solo Strength" },
   };
   var t = titles[_boardMode] || titles.solo;
   var h1 = document.getElementById("page-title");
@@ -74,14 +72,7 @@ function _renderFilterBar() {
       return '<button class="join-item btn btn-ghost btn-xs bf-season' + (s === _boardSeason ? " active" : "") + '" onclick="setBoardSeason(\'' + s + '\')">' + s + '</button>';
     }).join('') + '</div>';
   }
-  if (modeEl) {
-    modeEl.innerHTML = '<div class="join">' + BOARD_MODES.map(function(m) {
-      if (m.id === 'clash') {
-        return '<button class="join-item btn btn-ghost btn-xs bf-mode dev-locked" disabled>' + m.label + ' 🔒</button>';
-      }
-      return '<button class="join-item btn btn-ghost btn-xs bf-mode' + (m.id === _boardMode ? " active " + m.id : "") + '" onclick="setBoardMode(\'' + m.id + '\')">' + m.label + '</button>';
-    }).join('') + '</div>';
-  }
+  if (modeEl) modeEl.innerHTML = '';
 }
 
 var _hideRank = false;
@@ -100,7 +91,7 @@ function loadSquadStats(season, mode) {
       _hideRank = !!data.hideRank;
       var col = document.getElementById("lb-rank-header");
       if (col) {
-        col.textContent = _boardMode === "clash" ? "Solo Strength" : "Rank";
+        col.textContent = "Rank";
         col.style.visibility = _hideRank ? "hidden" : "";
       }
       if (data.ddragonVersion) {
@@ -269,17 +260,7 @@ function cardHTML(p, i, rankPos) {
   }
 
   var tierCol = '';
-  if (p.mode === 'clash') {
-    var soloStrHtml = '';
-    if (p.liveRank && p.liveRank.tier) {
-      var lrKey2 = tc(p.liveRank.tier);
-      soloStrHtml = '<div class="tier-info"><div class="tier-name t-' + lrKey2 + '">' + p.liveRank.tier + ' ' + p.liveRank.rank + '</div>'
-        + '<div class="tier-lp">Solo rank</div></div>';
-    } else {
-      soloStrHtml = '<div class="tier-info"><div style="font-size:0.75rem;color:var(--text3)">Unranked</div></div>';
-    }
-    tierCol = '<div class="tier-col">' + soloStrHtml + '</div>';
-  } else if (p.cached) {
+  if (p.cached) {
     var lrHtml = '';
     if (!_hideRank && p.liveRank && p.liveRank.tier) {
       var lrKey3 = tc(p.liveRank.tier);
@@ -375,6 +356,87 @@ function renderSkeletons() {
   document.getElementById("board").innerHTML = skels;
 }
 
+// ── Page loader ───────────────────────────────────────────────────────────────
+var _plDataReady   = false;
+var _plTimerReady  = false;
+var _plDismissed   = false;
+
+var _PL_MESSAGES = [
+  "Loading squad data…",
+  "Fetching ranks…",
+  "Crunching stats…",
+  "Almost there…",
+];
+
+function _plInit() {
+  var logo   = document.querySelector(".pl-logo");
+  var barWrap = document.querySelector(".pl-bar-wrap");
+  var status = document.querySelector(".pl-status");
+  var bar    = document.getElementById("pl-bar");
+  if (!logo || !bar) return;
+
+  // Entrance animations
+  gsap.to(logo,    { opacity: 1, duration: 0.4, ease: "power2.out", delay: 0.1 });
+  gsap.to(barWrap, { opacity: 1, duration: 0.4, delay: 0.3 });
+  gsap.to(status,  { opacity: 1, duration: 0.4, delay: 0.4 });
+
+  // Smooth fake progress: 0 → 90% over 2.6s, then stall until data ready
+  gsap.to(bar, { width: "90%", duration: 2.6, ease: "power1.inOut" });
+
+  // Cycle status messages
+  var msgIdx = 0;
+  var msgTimer = setInterval(function() {
+    msgIdx++;
+    if (msgIdx < _PL_MESSAGES.length && status) {
+      gsap.to(status, { opacity: 0, duration: 0.2, onComplete: function() {
+        status.textContent = _PL_MESSAGES[msgIdx];
+        gsap.to(status, { opacity: 1, duration: 0.2 });
+      }});
+    } else {
+      clearInterval(msgTimer);
+    }
+  }, 700);
+
+  // 3 second minimum timer
+  setTimeout(function() {
+    _plTimerReady = true;
+    _plTryReveal();
+  }, 3000);
+}
+
+function _plDataDone() {
+  _plDataReady = true;
+  _plTryReveal();
+}
+
+function _plTryReveal() {
+  if (!_plDataReady || !_plTimerReady || _plDismissed) return;
+  _plDismissed = true;
+
+  var bar    = document.getElementById("pl-bar");
+  var loader = document.getElementById("page-loader");
+  var status = document.querySelector(".pl-status");
+
+  // Flash to 100% then fade out
+  if (status) { gsap.to(status, { opacity: 0, duration: 0.2 }); }
+  gsap.to(bar, {
+    width: "100%", duration: 0.3, ease: "power2.out",
+    onComplete: function() {
+      gsap.to(loader, {
+        opacity: 0, duration: 0.5, ease: "power2.inOut",
+        onComplete: function() { loader.classList.add("hidden"); }
+      });
+    }
+  });
+}
+
+function _plHide() {
+  // Fallback instant hide (errors)
+  _plDataReady  = true;
+  _plTimerReady = true;
+  _plTryReveal();
+}
+
 function loadSquad() {
   currentOpenIdx = null;
   _hideRank = false;
@@ -382,6 +444,7 @@ function loadSquad() {
   if (col) col.textContent = "Rank";
   _fetchAvailableSeasons(_renderFilterBar);
   renderSkeletons();
+  _plInit();
 
   fetch("/squad")
     .then(function (r) { return r.json(); })
@@ -395,9 +458,11 @@ function loadSquad() {
       window._currentSeason = _boardSeason;
       renderBoard();
       document.getElementById("lastUpdated").textContent = "";
+      _plDataDone();
     })
     .catch(function (e) {
       document.getElementById("board").innerHTML =
         '<div style="text-align:center;color:var(--red);padding:40px">' + e.message + '</div>';
+      _plHide();
     });
 }
