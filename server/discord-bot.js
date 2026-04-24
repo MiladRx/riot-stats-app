@@ -111,7 +111,7 @@ export function buildDuoHTML(duos) {
 <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: #0e0e15; width: 1380px; }
+  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: transparent; width: 1380px; }
 
   .card {
     width: 1380px;
@@ -299,7 +299,7 @@ export function buildStreakHTML(streaks) {
 <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: #0e0e15; width: 860px; }
+  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: transparent; width: 860px; }
 
   .card {
     width: 860px;
@@ -401,7 +401,7 @@ export async function renderDuoCard(html) {
     await page.setViewport({ width: 1380, height: 1200, deviceScaleFactor: 2 });
     await page.setContent(html, { waitUntil: "networkidle0" });
     const card = await page.$(".card");
-    return await card.screenshot({ type: "png" });
+    return await card.screenshot({ type: "png", omitBackground: true });
   } finally {
     await browser.close();
   }
