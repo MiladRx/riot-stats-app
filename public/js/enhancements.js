@@ -134,7 +134,7 @@ function animateCardNumbers(board) {
   }
 
   var modalSelectors = [
-    ".fd-panel", ".clash-panel", ".pr-panel",
+    ".fd-panel", ".pr-panel",
     ".ch-panel", ".compare-panel", ".dev-auth-box"
   ];
 
@@ -155,7 +155,7 @@ function animateCardNumbers(board) {
     });
   });
 
-  document.querySelectorAll(".fd-modal, .clash-modal, .pr-modal, .ch-modal, .compare-modal, .dev-auth-overlay")
+  document.querySelectorAll(".fd-modal, .pr-modal, .ch-modal, .compare-modal, .dev-auth-overlay")
     .forEach(function(modal) {
       modalObs.observe(modal, { attributes: true, attributeOldValue: true });
     });

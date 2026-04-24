@@ -132,15 +132,6 @@ async function fetchForPlayer(gameName, tagLine, season, mode, quickMode = false
           ts:       info.gameStartTimestamp,
         };
 
-        if (mode === "clash") {
-          matchData.teammates = info.participants
-            .filter(pt => pt.teamId === self.teamId && pt.puuid !== puuid)
-            .map(pt => ({ puuid: pt.puuid, gameName: pt.riotIdGameName || "", tagLine: pt.riotIdTagline || "", champion: pt.championName, role: pt.teamPosition || pt.individualPosition || null, kills: pt.kills, deaths: pt.deaths, assists: pt.assists, win: pt.win }));
-          matchData.enemies = info.participants
-            .filter(pt => pt.teamId !== self.teamId)
-            .map(pt => ({ champion: pt.championName, role: pt.teamPosition || pt.individualPosition || null }));
-        }
-
         saveMatch(key, season, mode, matchId, matchData);
         markMatchFetched(matchId, key, season, mode);
         knownIds.add(matchId);

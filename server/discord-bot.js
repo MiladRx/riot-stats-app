@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import puppeteer from "puppeteer";
-import { getDuoStats } from "./db.js";
+import { getDuoStats, getStreaks } from "./db.js";
 import { FULL_SQUAD, CURRENT_SEASON } from "./config.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -30,10 +30,10 @@ function verifyDiscordSignature(publicKey, signature, timestamp, rawBody) {
 }
 
 // ── Register /duo slash command ───────────────────────────────────────────────
-export async function registerDuoCommand() {
+export async function registerCommands() {
   const appId   = process.env.DISCORD_APP_ID;
   const token   = process.env.DISCORD_BOT_TOKEN;
-  const guildId = process.env.DISCORD_GUILD_ID; // optional — guild-scoped = instant update
+  const guildId = process.env.DISCORD_GUILD_ID;
   if (!appId || !token) {
     console.log("⚠️  DISCORD_APP_ID or DISCORD_BOT_TOKEN not set — skipping slash command registration");
     return;
@@ -43,36 +43,37 @@ export async function registerDuoCommand() {
     ? `https://discord.com/api/v10/applications/${appId}/guilds/${guildId}/commands`
     : `https://discord.com/api/v10/applications/${appId}/commands`;
 
-  const body = {
-    name:        "duo",
-    description: "Show top 3 duos by games played and win rate",
-  };
+  const commands = [
+    { name: "duo",    description: "Show squad duo win rates and games played" },
+    { name: "streak", description: "Show current win/loss streaks for each player" },
+  ];
 
-  const res = await fetch(url, {
-    method:  "POST",
-    headers: { Authorization: `Bot ${token}`, "Content-Type": "application/json" },
-    body:    JSON.stringify(body),
-  });
-
-  if (res.ok) {
-    console.log("✅ /duo slash command registered");
-  } else {
-    const err = await res.text();
-    console.warn("⚠️  Failed to register /duo command:", err);
+  for (const body of commands) {
+    const res = await fetch(url, {
+      method:  "POST",
+      headers: { Authorization: `Bot ${token}`, "Content-Type": "application/json" },
+      body:    JSON.stringify(body),
+    });
+    if (res.ok) console.log(`✅ /${body.name} slash command registered`);
+    else console.warn(`⚠️  Failed to register /${body.name}:`, await res.text());
   }
 }
+
+// Keep old export name for backwards compat
+export const registerDuoCommand = registerCommands;
 
 // ── Build duo card HTML ───────────────────────────────────────────────────────
 export function buildDuoHTML(duos) {
   // Sort by win rate descending
   const sorted = duos.slice().sort((a, b) => (b.wins / b.games) - (a.wins / a.games));
 
-  const rows = sorted.slice(0, 10).map((d, i) => {
+  const rows = sorted.map((d, i) => {
     const wr      = d.games > 0 ? Math.round((d.wins / d.games) * 100) : 0;
     const losses  = d.games - d.wins;
     const name1   = displayName(d.p1);
     const name2   = displayName(d.p2);
-    const medals  = ["&#x1F947;","&#x1F948;","&#x1F949;","4","5","6","7","8","9","10"];
+    const medals  = ["&#x1F947;","&#x1F948;","&#x1F949;"];
+    const medal   = i < 3 ? medals[i] : String(i + 1);
     const wrColor = wr >= 55 ? "#30d158" : wr >= 50 ? "#ffd60a" : "#ff453a";
     const rowBg   = wr >= 55 ? "rgba(48,209,88,0.04)" : wr >= 50 ? "rgba(255,214,10,0.04)" : "rgba(255,69,58,0.04)";
     const rowBdr  = wr >= 55 ? "rgba(48,209,88,0.12)" : wr >= 50 ? "rgba(255,214,10,0.12)" : "rgba(255,69,58,0.12)";
@@ -80,7 +81,7 @@ export function buildDuoHTML(duos) {
     return `
     <div class="duo-row" style="background:${rowBg};border-color:${rowBdr}">
       <div class="duo-top">
-        <div class="duo-medal${i >= 3 ? ' num' : ''}">${medals[i]}</div>
+        <div class="duo-medal${i >= 3 ? ' num' : ''}">${medal}</div>
         <div class="duo-info">
           <div class="duo-names">
             <span class="duo-n1">${name1}</span>
@@ -110,10 +111,10 @@ export function buildDuoHTML(duos) {
 <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: #0e0e15; width: 460px; }
+  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: #0e0e15; width: 1380px; }
 
   .card {
-    width: 460px;
+    width: 1380px;
     background: linear-gradient(160deg, #16161f 0%, #0e0e15 100%);
     border-radius: 24px;
     border: 1px solid rgba(255,255,255,0.07);
@@ -144,6 +145,17 @@ export function buildDuoHTML(duos) {
     z-index: 1;
   }
 
+  .duo-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .header {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    margin-bottom: 20px;
+  }
   .status-pill {
     font-size: 10px; font-weight: 900; letter-spacing: 3px;
     text-transform: uppercase;
@@ -152,7 +164,10 @@ export function buildDuoHTML(duos) {
     border: 1px solid rgba(10,132,255,0.3);
     border-radius: 30px;
     padding: 5px 18px;
-    margin-bottom: 20px;
+  }
+  .status-sub {
+    font-size: 10px; color: rgba(255,255,255,0.25);
+    letter-spacing: 1px; text-transform: uppercase;
   }
 
   .duo-row {
@@ -160,9 +175,7 @@ export function buildDuoHTML(duos) {
     border: 1px solid;
     border-radius: 16px;
     padding: 14px 16px 11px;
-    margin-bottom: 8px;
   }
-  .duo-row:last-child { margin-bottom: 0; }
 
   .duo-top {
     display: flex;
@@ -238,8 +251,138 @@ export function buildDuoHTML(duos) {
   <div class="shimmer"></div>
   <div class="bg-glow"></div>
   <div class="inner">
-    <div class="status-pill">TOP DUOS</div>
-    ${rows}
+    <div class="header">
+      <div class="status-pill">TOP DUOS</div>
+      <div class="status-sub">Season 2026 · Solo/Duo · Min. 5 games</div>
+    </div>
+    <div class="duo-grid">${rows}</div>
+    <div class="footer">Squad Tracker</div>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+// ── Build streak card HTML ────────────────────────────────────────────────────
+export function buildStreakHTML(streaks) {
+  const makeCard = ({ playerKey, win, streak }) => {
+    const name    = displayName(playerKey);
+    const color   = win ? "#30d158" : "#ff453a";
+    const bgColor = win ? "rgba(48,209,88,0.05)"  : "rgba(255,69,58,0.05)";
+    const border  = win ? "rgba(48,209,88,0.15)"  : "rgba(255,69,58,0.15)";
+    const icon    = win ? "🔥" : "❄️";
+    const label   = win ? `${streak}W` : `${streak}L`;
+    const bars    = Array.from({ length: Math.min(streak, 10) }, (_, i) =>
+      `<div class="bar" style="background:${color};opacity:${0.25 + (i / Math.min(streak, 10)) * 0.75}"></div>`
+    ).join("");
+    return `
+    <div class="row" style="background:${bgColor};border-color:${border}">
+      <div class="icon">${icon}</div>
+      <div class="info">
+        <div class="name">${name}</div>
+        <div class="bars">${bars}</div>
+      </div>
+      <div class="streak-val" style="color:${color};text-shadow:0 0 16px ${color}80">${label}</div>
+    </div>`;
+  };
+
+  const hot  = streaks.filter(s =>  s.win).sort((a, b) => b.streak - a.streak);
+  const cold = streaks.filter(s => !s.win).sort((a, b) => b.streak - a.streak);
+
+  const hotRows  = hot.map(makeCard).join("") || `<div class="empty">No win streaks</div>`;
+  const coldRows = cold.map(makeCard).join("") || `<div class="empty">No loss streaks</div>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: #0e0e15; width: 860px; }
+
+  .card {
+    width: 860px;
+    background: linear-gradient(160deg, #16161f 0%, #0e0e15 100%);
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.07);
+    overflow: hidden;
+    position: relative;
+  }
+  .shimmer { height: 3px; background: linear-gradient(90deg, transparent, #30d158, #ff453a, #30d158, transparent); }
+  .bg-glow {
+    position: absolute; top: -40px; left: 50%;
+    transform: translateX(-50%);
+    width: 500px; height: 300px;
+    background: radial-gradient(ellipse, rgba(255,255,255,0.03) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .inner {
+    padding: 28px 28px 24px;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative; z-index: 1;
+  }
+  .header { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; }
+  .status-pill {
+    font-size: 10px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;
+    color: #5ac8fa; background: rgba(10,132,255,0.12);
+    border: 1px solid rgba(10,132,255,0.3); border-radius: 30px; padding: 5px 18px;
+  }
+  .status-sub { font-size: 10px; color: rgba(255,255,255,0.25); letter-spacing: 1px; text-transform: uppercase; }
+
+  .cols {
+    width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+
+  .col-header {
+    font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 7px;
+  }
+  .col-header.hot  { color: #30d158; }
+  .col-header.cold { color: #ff453a; }
+  .col-header-icon { font-family: 'Noto Color Emoji', sans-serif; font-size: 15px; }
+
+  .row {
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    border: 1px solid; border-radius: 14px;
+    padding: 12px 14px; margin-bottom: 7px;
+  }
+  .row:last-child { margin-bottom: 0; }
+
+  .icon { font-size: 22px; font-family: 'Noto Color Emoji', sans-serif; flex-shrink: 0; width: 28px; text-align: center; }
+
+  .info { flex: 1; min-width: 0; }
+  .name { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 7px; }
+
+  .bars { display: flex; gap: 3px; align-items: flex-end; height: 12px; }
+  .bar  { width: 7px; height: 100%; border-radius: 2px; }
+
+  .streak-val { font-size: 20px; font-weight: 900; flex-shrink: 0; letter-spacing: -0.5px; }
+
+  .empty { font-size: 12px; color: rgba(255,255,255,0.2); padding: 12px 0; }
+
+  .footer { font-size: 10px; color: #252530; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="shimmer"></div>
+  <div class="bg-glow"></div>
+  <div class="inner">
+    <div class="header">
+      <div class="status-pill">CURRENT STREAKS</div>
+      <div class="status-sub">Season 2026 · Solo/Duo · Last 20 games</div>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="col-header hot"><span class="col-header-icon">🔥</span> On Fire</div>
+        ${hotRows}
+      </div>
+      <div>
+        <div class="col-header cold"><span class="col-header-icon">❄️</span> Ice Cold</div>
+        ${coldRows}
+      </div>
+    </div>
     <div class="footer">Squad Tracker</div>
   </div>
 </div>
@@ -255,7 +398,7 @@ export async function renderDuoCard(html) {
   });
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width: 460, height: 600, deviceScaleFactor: 2 });
+    await page.setViewport({ width: 1380, height: 1200, deviceScaleFactor: 2 });
     await page.setContent(html, { waitUntil: "networkidle0" });
     const card = await page.$(".card");
     return await card.screenshot({ type: "png" });
@@ -265,16 +408,20 @@ export async function renderDuoCard(html) {
 }
 
 // ── Follow-up response with image ─────────────────────────────────────────────
-async function sendDuoResponse(appId, token, buffer) {
+async function sendFollowUp(appId, token, buffer, filename = "card.png") {
   const form = new FormData();
-  form.append("files[0]", new Blob([buffer], { type: "image/png" }), "duo-stats.png");
+  form.append("files[0]", new Blob([buffer], { type: "image/png" }), filename);
   form.append("payload_json", JSON.stringify({ flags: 4096 }));
-
   const res = await fetch(
     `https://discord.com/api/v10/webhooks/${appId}/${token}`,
     { method: "POST", body: form }
   );
-  if (!res.ok) console.warn("Duo follow-up failed:", res.status, await res.text());
+  if (!res.ok) console.warn("Follow-up failed:", res.status, await res.text());
+}
+
+// Keep old name as alias
+async function sendDuoResponse(appId, token, buffer) {
+  return sendFollowUp(appId, token, buffer, "duo-stats.png");
 }
 
 // ── Express interaction handler ───────────────────────────────────────────────
@@ -295,32 +442,43 @@ export function handleDiscordInteraction(req, res) {
   // Discord PING
   if (body.type === 1) return res.json({ type: 1 });
 
-  // Slash command
-  if (body.type === 2 && body.data?.name === "duo") {
-    // Acknowledge immediately (deferred silent response)
-    res.json({ type: 5, data: { flags: 4096 } });
+  if (body.type !== 2) return;
 
-    // Generate and send image in background
-    const appId = process.env.DISCORD_APP_ID;
-    const interactionToken = body.token;
+  const appId = process.env.DISCORD_APP_ID;
+  const interactionToken = body.token;
+  const commandName = body.data?.name;
 
-    setImmediate(async () => {
-      try {
-        const duos = getDuoStats(CURRENT_SEASON, "solo", 2);
-        if (duos.length === 0) {
+  // Acknowledge immediately (deferred silent response)
+  res.json({ type: 5, data: { flags: 4096 } });
+
+  setImmediate(async () => {
+    try {
+      if (commandName === "duo") {
+        const duos = getDuoStats(CURRENT_SEASON, "solo", 5);
+        if (!duos.length) {
           await fetch(`https://discord.com/api/v10/webhooks/${appId}/${interactionToken}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content: "No duo data found yet — play some games together first!" }),
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: "No duo data yet — play some games together first!" }),
           });
           return;
         }
-        const html   = buildDuoHTML(duos);
-        const buffer = await renderDuoCard(html);
-        await sendDuoResponse(appId, interactionToken, buffer);
-      } catch (e) {
-        console.warn("Duo command error:", e.message);
+        const buffer = await renderDuoCard(buildDuoHTML(duos));
+        await sendFollowUp(appId, interactionToken, buffer, "duo-stats.png");
+
+      } else if (commandName === "streak") {
+        const streaks = getStreaks(CURRENT_SEASON, "solo");
+        if (!streaks.length) {
+          await fetch(`https://discord.com/api/v10/webhooks/${appId}/${interactionToken}`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: "No match data yet!" }),
+          });
+          return;
+        }
+        const buffer = await renderDuoCard(buildStreakHTML(streaks));
+        await sendFollowUp(appId, interactionToken, buffer, "streaks.png");
       }
-    });
-  }
+    } catch (e) {
+      console.warn(`${commandName} command error:`, e.message);
+    }
+  });
 }

@@ -22,11 +22,6 @@ function migrateIfNeeded(season, mode) {
     const legacy = path.join(__dirname, "..", "match-cache.json");
     if (fs.existsSync(legacy)) candidates.push({ path: legacy, season, mode });
   }
-  if (season === "2025" && mode === "clash") {
-    const legacy = path.join(__dirname, "..", "clash-cache.json");
-    if (fs.existsSync(legacy)) candidates.push({ path: legacy, season, mode });
-  }
-
   for (const { path: p } of candidates) {
     try {
       const raw = JSON.parse(fs.readFileSync(p, "utf8"));

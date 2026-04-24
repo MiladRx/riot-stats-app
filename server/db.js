@@ -172,7 +172,7 @@ export function getDuoStats(season, mode, minGames = 3) {
     GROUP BY a.player_key, b.player_key
     HAVING games >= ?
     ORDER BY games DESC
-    LIMIT 100
+    LIMIT 500
   `);
   stmt.bind([season, mode, season, mode, minGames]);
   const result = [];
@@ -181,6 +181,37 @@ export function getDuoStats(season, mode, minGames = 3) {
     result.push({ p1: r.p1, p2: r.p2, games: r.games, wins: r.wins });
   }
   stmt.free();
+  return result;
+}
+
+export function getStreaks(season, mode) {
+  if (!db) return [];
+  const players = db.exec(`SELECT DISTINCT player_key FROM matches WHERE season='${season}' AND mode='${mode}'`);
+  if (!players.length) return [];
+
+  const result = [];
+  for (const [playerKey] of players[0].values) {
+    const stmt = db.prepare(`
+      SELECT win FROM matches WHERE player_key=? AND season=? AND mode=? AND ts IS NOT NULL
+      ORDER BY ts DESC LIMIT 20
+    `);
+    stmt.bind([playerKey, season, mode]);
+    const games = [];
+    while (stmt.step()) games.push(stmt.getAsObject().win);
+    stmt.free();
+    if (!games.length) continue;
+
+    const first = games[0];
+    let streak = 0;
+    for (const w of games) {
+      if (w === first) streak++;
+      else break;
+    }
+    result.push({ playerKey, win: !!first, streak });
+  }
+
+  // Sort: longest streak first, wins before losses on ties
+  result.sort((a, b) => b.streak - a.streak || (b.win ? 1 : -1));
   return result;
 }
 
@@ -307,6 +338,48 @@ export function getMatchesSince(sinceTs, season = "2026", mode = "solo") {
   }
   return result;
 }
+
+// Sync all matches from match-cache.json into SQLite
+export function syncFromMatchCache(matchCache, season, mode) {
+  if (!db) return { inserted: 0 };
+
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO matches
+      (id,player_key,season,mode,ts,duration,win,champion,role,kills,deaths,assists,cs,vision,damage,gold,pentas)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `);
+
+  let inserted = 0;
+  for (const [playerKey, playerData] of Object.entries(matchCache)) {
+    const matches = playerData?.matches || {};
+    for (const [matchId, data] of Object.entries(matches)) {
+      stmt.bind([
+        matchId, playerKey, season, mode,
+        data.ts || null,
+        data.duration || null,
+        data.win ? 1 : 0,
+        data.champion || null,
+        data.role || null,
+        data.kills || 0,
+        data.deaths || 0,
+        data.assists || 0,
+        data.cs || 0,
+        data.vision || 0,
+        data.damage || 0,
+        data.gold || 0,
+        data.pentas || 0,
+      ]);
+      stmt.step();
+      stmt.reset();
+      inserted++;
+    }
+  }
+  stmt.free();
+  saveDb();
+  return { inserted };
+}
+
+export function getDb() { return db; }
 
 export async function ready() {
   return initDb();

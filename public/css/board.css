@@ -34,7 +34,6 @@
   color: var(--text) !important;
 }
 .bf-mode.active.solo  { background: rgba(10,132,255,0.15) !important; border-color: rgba(10,132,255,0.45) !important; color: #7eb8ff !important; }
-.bf-mode.active.clash { background: rgba(191,90,242,0.14) !important; border-color: rgba(191,90,242,0.45) !important; color: #d090f8 !important; }
 
 /* Mode tag inside card tier column (for cached seasons) */
 .bf-mode-tag {
@@ -42,7 +41,6 @@
   letter-spacing: 0.5px; padding: 2px 8px; border-radius: 6px; display: inline-block;
 }
 .bf-mode-tag.solo  { background: rgba(10,132,255,0.14); color: #7eb8ff; border: 1px solid rgba(10,132,255,0.3); }
-.bf-mode-tag.clash { background: rgba(191,90,242,0.14); color: #d090f8; border: 1px solid rgba(191,90,242,0.3); }
 
 /* ── Player card Base ── */
 .player-card {

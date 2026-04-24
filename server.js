@@ -34,17 +34,23 @@ import { FULL_SQUAD, CACHE_DURATION, AUTO_FETCH_INTERVAL, CURRENT_SEASON, SEASON
 import { loadSeasonCache, getSeasonCacheSummary } from "./server/season-cache.js";
 import { fetchJob, runFetch, setPentaKillHandler } from "./server/fetch-engine.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
-import { buildLineups } from "./server/clash.js";
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
 import { notifyRankChanges, notifyPentaKill } from "./server/discord.js";
-import { registerDuoCommand, handleDiscordInteraction, buildDuoHTML, renderDuoCard } from "./server/discord-bot.js";
+import { registerDuoCommand, handleDiscordInteraction, buildDuoHTML, buildStreakHTML, renderDuoCard } from "./server/discord-bot.js";
 import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
-import { ready as dbReady, getHeatmapData, getDuoStats, getMatches } from "./server/db.js";
+import { ready as dbReady, getHeatmapData, getDuoStats, getStreaks, getMatches, syncFromMatchCache, getDb } from "./server/db.js";
 
 loadDDragon();
 
 // Initialize database (must happen before any routes use it)
 await dbReady();
+
+// Sync match-cache.json → SQLite on boot so duo stats are always up to date
+{
+  const cache = loadMatchCache();
+  const { inserted } = syncFromMatchCache(cache, CURRENT_SEASON, "solo");
+  console.log(`🔄 Synced match-cache → SQLite (${inserted} records processed)`);
+}
 
 // Wire up penta kill Discord notifications
 setPentaKillHandler(data => notifyPentaKill({ ...data, ddragonVersion }));
@@ -219,7 +225,7 @@ app.post("/fetch", (req, res) => {
 
   const { season = CURRENT_SEASON, mode = "solo", players: playerNames } = req.body || {};
   if (!SEASONS[season])                          return res.status(400).json({ error: `Unknown season: ${season}` });
-  if (!["solo","clash"].includes(mode))           return res.status(400).json({ error: `Unknown mode: ${mode}` });
+  if (mode !== "solo")                             return res.status(400).json({ error: `Unknown mode: ${mode}` });
 
   const targets = playerNames?.length
     ? FULL_SQUAD.filter(p => playerNames.includes(p.gameName))
@@ -286,7 +292,11 @@ app.post("/fetch-history", (req, res) => {
   const seasonInfo = SEASONS[season];
   const startTime = seasonInfo?.start ?? 1767866400;
   const endTime   = seasonInfo?.end   ?? null;
-  runFetchJob(targets, null, startTime, endTime);
+  runFetchJob(targets, () => {
+    const cache = loadMatchCache();
+    const { inserted } = syncFromMatchCache(cache, season, "solo");
+    if (inserted > 0) console.log(`🔄 Post-fetch sync: ${inserted} new matches written to SQLite`);
+  }, startTime, endTime);
   res.json({ status: "started", players: targets.map(p => p.gameName) });
 });
 
@@ -421,15 +431,13 @@ app.get("/squad-stats", (req, res) => {
       avgDuration:Math.round(duration/n/60),totalTimeSecs:duration,
       totalKills:kills,totalDeaths:deaths,totalAssists:assists,totalCS:cs,totalDamage:damage,totalGold:gold,
       pentas,streak,bestStreak,bestLStreak,
-      sortScore: season!==CURRENT_SEASON&&mode!=="clash" ? n
-        : mode==="clash" ? winRate*1000+wins
-        : wins-losses,
+      sortScore: season!==CURRENT_SEASON ? n : wins-losses,
       topCachedChamp,
     }};
   });
 
   players.sort((a,b)=>(b.solo?.sortScore??-9999)-(a.solo?.sortScore??-9999));
-  res.json({ players, season, mode, hideRank: season!==CURRENT_SEASON&&mode!=="clash", ddragonVersion });
+  res.json({ players, season, mode, hideRank: season!==CURRENT_SEASON, ddragonVersion });
 });
 
 // ─────────────────────────────────────────────
@@ -487,17 +495,6 @@ app.post("/power-rankings/reset", (req, res) => {
   const weekKey  = getWeekKey();
   const snapshot = saveSnapshot(weekKey, cachedSquadData);
   res.json({ ok: true, weekKey, players: Object.keys(snapshot.players).length });
-});
-
-// ─────────────────────────────────────────────
-// Clash Lineup
-// ─────────────────────────────────────────────
-app.get("/clash-lineup", (req, res) => {
-  if (!cachedSquadData) return res.status(503).json({ error: "Squad data not loaded yet." });
-  const eligible = cachedSquadData.filter(p => !p.error && p.solo);
-  if (eligible.length < 5) return res.status(400).json({ error: "Need at least 5 ranked players." });
-  try { res.json({ lineups: buildLineups(eligible) }); }
-  catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ─────────────────────────────────────────────
@@ -656,6 +653,39 @@ app.post("/test-penta", async (req, res) => {
   }
 });
 
+// ── Debug: show what keys exist in match-cache vs SQLite
+app.get("/debug-cache-keys", (req, res) => {
+  const cache = loadMatchCache();
+  const cacheKeys = Object.entries(cache).map(([k, v]) => ({
+    key: k,
+    matchesInCache: Object.keys(v?.matches || {}).length,
+    fetchedIds: (v?.fetchedIds || []).length,
+    matchesInDb: getMatches(k, CURRENT_SEASON, "solo").length,
+  }));
+  res.json(cacheKeys);
+});
+
+// ── Debug: what seasons/modes are stored in SQLite per player
+app.get("/debug-db-seasons", (req, res) => {
+  const { player } = req.query;
+  const sql = player
+    ? `SELECT player_key, season, mode, COUNT(*) as cnt FROM matches WHERE player_key=? GROUP BY player_key, season, mode`
+    : `SELECT player_key, season, mode, COUNT(*) as cnt FROM matches GROUP BY player_key, season, mode ORDER BY player_key`;
+  const stmt = getDb().prepare(sql);
+  if (player) stmt.bind([player]);
+  const rows = [];
+  while (stmt.step()) rows.push(stmt.getAsObject());
+  stmt.free();
+  res.json(rows);
+});
+
+// ── Manual sync trigger
+app.post("/sync-db", (req, res) => {
+  const cache = loadMatchCache();
+  const { inserted } = syncFromMatchCache(cache, CURRENT_SEASON, "solo");
+  res.json({ ok: true, processed: inserted });
+});
+
 // ── Debug duo stats
 app.get("/debug-duo", (req, res) => {
   const duos = getDuoStats(CURRENT_SEASON, "solo", 1);
@@ -682,9 +712,23 @@ app.get("/debug-duo-overlap", (req, res) => {
 // ── Test endpoint — duo card preview
 app.get("/test-duo", async (req, res) => {
   try {
-    const duos = getDuoStats(CURRENT_SEASON, "solo", 2);
+    const duos = getDuoStats(CURRENT_SEASON, "solo", 5);
     if (duos.length === 0) return res.send("No duo data yet.");
     const html   = buildDuoHTML(duos);
+    const buffer = await renderDuoCard(html);
+    res.set("Content-Type", "image/png");
+    res.send(buffer);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Test endpoint — streak card preview
+app.get("/test-streak", async (req, res) => {
+  try {
+    const streaks = getStreaks(CURRENT_SEASON, "solo");
+    if (!streaks.length) return res.send("No streak data yet.");
+    const html   = buildStreakHTML(streaks);
     const buffer = await renderDuoCard(html);
     res.set("Content-Type", "image/png");
     res.send(buffer);

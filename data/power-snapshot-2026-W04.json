@@ -1,0 +1,97 @@
+{
+  "week": "2026-W04",
+  "createdAt": 1777055846149,
+  "players": {
+    "adam1276#eune": {
+      "tier": "DIAMOND",
+      "rank": "II",
+      "lp": 82,
+      "wins": 245,
+      "losses": 225
+    },
+    "la cabra#iii": {
+      "tier": "DIAMOND",
+      "rank": "IV",
+      "lp": 0,
+      "wins": 193,
+      "losses": 187
+    },
+    "littlestjeff1#goyem": {
+      "tier": "DIAMOND",
+      "rank": "IV",
+      "lp": 0,
+      "wins": 107,
+      "losses": 101
+    },
+    "fåce#tap": {
+      "tier": "EMERALD",
+      "rank": "II",
+      "lp": 12,
+      "wins": 247,
+      "losses": 232
+    },
+    "spirifan3#faker": {
+      "tier": "EMERALD",
+      "rank": "III",
+      "lp": 71,
+      "wins": 94,
+      "losses": 73
+    },
+    "darwizzy#høes": {
+      "tier": "EMERALD",
+      "rank": "III",
+      "lp": 28,
+      "wins": 66,
+      "losses": 59
+    },
+    "la cabra ii#qlawi": {
+      "tier": "EMERALD",
+      "rank": "IV",
+      "lp": 94,
+      "wins": 42,
+      "losses": 37
+    },
+    "moroccan dealer#pimp": {
+      "tier": "PLATINUM",
+      "rank": "II",
+      "lp": 87,
+      "wins": 83,
+      "losses": 83
+    },
+    "mohsh#eune": {
+      "tier": "PLATINUM",
+      "rank": "II",
+      "lp": 69,
+      "wins": 268,
+      "losses": 273
+    },
+    "pas på#00007": {
+      "tier": "PLATINUM",
+      "rank": "IV",
+      "lp": 58,
+      "wins": 74,
+      "losses": 72
+    },
+    "biigdaddy#eune": {
+      "tier": "PLATINUM",
+      "rank": "IV",
+      "lp": 55,
+      "wins": 41,
+      "losses": 41
+    },
+    "dårk#abo": {
+      "tier": "PLATINUM",
+      "rank": "IV",
+      "lp": 3,
+      "wins": 28,
+      "losses": 21
+    },
+    "milad#exe": {
+      "tier": "GOLD",
+      "rank": "III",
+      "lp": 21,
+      "wins": 33,
+      "losses": 21
+    }
+  }
+}

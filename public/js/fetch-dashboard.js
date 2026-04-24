@@ -11,7 +11,6 @@ var _fdSocket     = null;    // socket.io listener
 var FD_SEASONS = ["2026", "2025", "2024", "2023"];
 var FD_MODES   = [
   { id: "solo",  label: "Solo/Duo" },
-  { id: "clash", label: "Clash"    },
 ];
 
 // ── Socket.io wiring — deferred so schedule.js has a chance to create the socket ──
@@ -171,9 +170,8 @@ function _fdRenderPlayers() {
     var agoHtml = p.lastUpdated
       ? '<span class="fd-ago">· ' + _fdTimeAgo(p.lastUpdated) + '</span>'
       : '<span class="fd-never">· never fetched</span>';
-    var cbMode = _fdMode === "clash" ? " clash" : "";
     return '<div class="fd-player-row" data-name="' + p.gameName + '" onclick="_fdTogglePlayer(\'' + p.gameName + '\')">'
-      + '<span class="fd-cb' + (sel ? " checked" + cbMode : "") + '"></span>'
+      + '<span class="fd-cb' + (sel ? " checked" : "") + '"></span>'
       + '<span class="fd-pname">' + p.gameName + '</span>'
       + '<span class="fd-prog-icon" id="fdprog-' + _fdSafeId(p.gameName) + '"></span>'
       + countHtml + agoHtml
@@ -239,7 +237,6 @@ function _fdUpdateActions() {
   if (!startBtn) return;
   var count = _fdSummary.filter(function(p) { return _fdSel[p.gameName]; }).length;
   startBtn.disabled = count === 0;
-  var modeLabel = _fdMode === "clash" ? "Clash" : "Solo/Duo";
   startBtn.textContent = count > 0
     ? "▶ Fetch " + count + " Player" + (count !== 1 ? "s" : "") + " — " + _fdSeason + " All Games"
     : "▶ Select Players to Fetch";
