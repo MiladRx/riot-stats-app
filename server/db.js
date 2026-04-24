@@ -159,6 +159,31 @@ export function getMatchCount(playerKey, season, mode) {
   return row.cnt || 0;
 }
 
+export function getDuoStats(season, mode, minGames = 3) {
+  if (!db) return [];
+  const stmt = db.prepare(`
+    SELECT a.player_key AS p1, b.player_key AS p2,
+           COUNT(*)     AS games,
+           SUM(a.win)   AS wins
+    FROM matches a
+    JOIN matches b ON a.id = b.id AND a.player_key < b.player_key
+    WHERE a.season = ? AND a.mode = ?
+      AND b.season = ? AND b.mode = ?
+    GROUP BY a.player_key, b.player_key
+    HAVING games >= ?
+    ORDER BY games DESC
+    LIMIT 20
+  `);
+  stmt.bind([season, mode, season, mode, minGames]);
+  const result = [];
+  while (stmt.step()) {
+    const r = stmt.getAsObject();
+    result.push({ p1: r.p1, p2: r.p2, games: r.games, wins: r.wins });
+  }
+  stmt.free();
+  return result;
+}
+
 export function getHeatmapData(season, mode, playerKey = null) {
   if (!db) return [];
   const sql  = playerKey

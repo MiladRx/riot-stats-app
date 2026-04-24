@@ -30,6 +30,7 @@ import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-sta
 import { buildLineups } from "./server/clash.js";
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
 import { notifyRankChanges, notifyPentaKill } from "./server/discord.js";
+import { registerDuoCommand, handleDiscordInteraction } from "./server/discord-bot.js";
 import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
 import { ready as dbReady, getHeatmapData } from "./server/db.js";
 
@@ -40,6 +41,9 @@ await dbReady();
 
 // Wire up penta kill Discord notifications
 setPentaKillHandler(data => notifyPentaKill({ ...data, ddragonVersion }));
+
+// Register Discord /duo slash command
+registerDuoCommand();
 
 // ─────────────────────────────────────────────
 // Squad Cache
@@ -179,6 +183,7 @@ app.post("/force-refresh", async (req, res) => {
 });
 
 app.get("/health", (req, res) => res.json({ ok: true }));
+app.post("/discord/interactions", express.raw({ type: "application/json" }), handleDiscordInteraction);
 app.post("/test-recap", async (req, res) => {
   await postDailyRecap(cachedSquadData);
   res.json({ ok: true });

@@ -1,11 +1,9 @@
 // Discord webhook notifications — promo/demo image cards
 import puppeteer from "puppeteer";
-import GIFEncoder from "gif-encoder-2";
-import sharp from "sharp";
 
-function getWebhookUrl(forceLocal = false) {
-  if (!process.env.RAILWAY_ENVIRONMENT && !forceLocal) return null;
-  return process.env.DISCORD_WEBHOOK_URL;
+function canSend(forceLocal = false) {
+  if (!process.env.RAILWAY_ENVIRONMENT && !forceLocal) return false;
+  return !!(process.env.DISCORD_BOT_TOKEN && process.env.DISCORD_CHANNEL_ID);
 }
 
 const TIER_ORDER    = ["IRON","BRONZE","SILVER","GOLD","PLATINUM","EMERALD","DIAMOND","MASTER","GRANDMASTER","CHALLENGER"];
@@ -266,26 +264,31 @@ async function renderGif(html, { width = 460, height = 520, frames = 36, fps = 1
   }
 }
 
-// ── Post image to Discord ──────────────────────────────────────────────────────
+// ── Post image via bot ────────────────────────────────────────────────────────
 async function postImageToDiscord(imageBuffer, filename, forceLocal = false, silent = false) {
-  const WEBHOOK_URL = getWebhookUrl(forceLocal);
-  if (!WEBHOOK_URL) return;
+  const token     = process.env.DISCORD_BOT_TOKEN;
+  const channelId = process.env.DISCORD_CHANNEL_ID;
+  if (!token || !channelId) return;
 
   const form = new FormData();
   form.append("files[0]", new Blob([imageBuffer], { type: "image/png" }), filename);
   form.append("payload_json", JSON.stringify(silent ? { flags: 4096 } : { content: "<@&1495245177147621427>" }));
 
   try {
-    const res = await fetch(WEBHOOK_URL, { method: "POST", body: form });
-    if (!res.ok) console.warn("Discord webhook failed:", res.status, await res.text());
+    const res = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+      method:  "POST",
+      headers: { Authorization: `Bot ${token}` },
+      body:    form,
+    });
+    if (!res.ok) console.warn("Discord bot post failed:", res.status, await res.text());
   } catch (e) {
-    console.warn("Discord webhook error:", e.message);
+    console.warn("Discord bot post error:", e.message);
   }
 }
 
 // ── Main export ────────────────────────────────────────────────────────────────
 export async function notifyRankChanges(prevSquad, newSquad, ddragonVersion, forceLocal = false) {
-  if (!getWebhookUrl(forceLocal)) return;
+  if (!canSend(forceLocal)) return;
 
   const prevByKey = {};
   for (const p of prevSquad) {
@@ -481,17 +484,12 @@ function buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVer
 }
 
 export async function notifyPentaKill({ gameName, champion, kills, deaths, assists, ddragonVersion, forceLocal = false }) {
-  const WEBHOOK_URL = getWebhookUrl(forceLocal);
-  if (!WEBHOOK_URL) return;
+  if (!canSend(forceLocal)) return;
   console.log(`🎉 PENTA KILL — ${gameName} on ${champion}!`);
   try {
     const html   = buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVersion });
     const buffer = await renderCard(html);
-    const form   = new FormData();
-    form.append("files[0]", new Blob([buffer], { type: "image/png" }), `penta-${gameName}.png`);
-    form.append("payload_json", JSON.stringify(forceLocal ? { flags: 4096 } : { content: "<@&1495245177147621427>" }));
-    const res = await fetch(WEBHOOK_URL, { method: "POST", body: form });
-    if (!res.ok) console.warn("Penta webhook failed:", res.status, await res.text());
+    await postImageToDiscord(buffer, `penta-${gameName}.png`, forceLocal, forceLocal);
   } catch (e) {
     console.warn("Penta notification error:", e.message);
   }
