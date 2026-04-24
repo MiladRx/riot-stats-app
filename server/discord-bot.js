@@ -71,13 +71,14 @@ function buildDuoHTML(duos) {
     const wr      = d.games > 0 ? Math.round((d.wins / d.games) * 100) : 0;
     const name1   = displayName(d.p1);
     const name2   = displayName(d.p2);
-    const medals  = ["&#x1F947;", "&#x1F948;", "&#x1F949;"];
+    const medals  = ["1", "2", "3"];
+    const medalColors = ["#ffd60a", "#a8b2bd", "#cd7f32"];
     const wrColor = wr >= 55 ? "#30d158" : wr >= 50 ? "#ffd60a" : "#ff453a";
 
     return `
     <div class="duo-row">
       <div class="duo-top">
-        <div class="duo-medal">${medals[i]}</div>
+        <div class="duo-medal" style="color:${medalColors[i]};border-color:${medalColors[i]}40">${medals[i]}</div>
         <div class="duo-names">
           <span class="duo-n1">${name1}</span>
           <span class="duo-sep">+</span>
@@ -160,7 +161,12 @@ function buildDuoHTML(duos) {
     gap: 10px;
     margin-bottom: 10px;
   }
-  .duo-medal { font-size: 18px; flex-shrink: 0; font-family: 'Noto Color Emoji', sans-serif; }
+  .duo-medal {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800; flex-shrink: 0;
+  }
   .duo-names {
     display: flex; align-items: center; gap: 7px; flex: 1;
   }
