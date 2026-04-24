@@ -19,14 +19,14 @@ if (!process.env.RIOT_API_KEY) {
   process.exit(1);
 }
 
-// Capture raw body for /discord/interactions BEFORE express.json() consumes the stream
+// For /discord/interactions: capture raw body (needed for signature verification)
+// Skip express.json() on that route so it doesn't consume the stream first
 app.use((req, res, next) => {
-  if (req.path !== "/discord/interactions") return next();
+  if (req.path !== "/discord/interactions") return express.json()(req, res, next);
   const chunks = [];
   req.on("data", chunk => chunks.push(chunk));
   req.on("end", () => { req.rawBody = Buffer.concat(chunks).toString(); next(); });
 });
-app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // --- Imports ---
