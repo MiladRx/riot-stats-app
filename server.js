@@ -656,6 +656,16 @@ app.post("/test-penta", async (req, res) => {
   }
 });
 
+// ── Test endpoint — duo card
+app.post("/test-duo", async (req, res) => {
+  try {
+    const { buildDuoHTML, renderDuoCard, sendDuoResponse } = await import("./server/discord-bot.js");
+    res.json({ ok: true, message: "Use /duo in Discord to see the card" });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Test endpoint — fake a promo/demo card
 app.post("/test-rank-change", async (req, res) => {
   try {

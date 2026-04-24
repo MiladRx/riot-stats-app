@@ -64,28 +64,31 @@ export async function registerDuoCommand() {
 
 // ── Build duo card HTML ───────────────────────────────────────────────────────
 function buildDuoHTML(duos) {
-  const rows = duos.slice(0, 3).map((d, i) => {
+  // Sort by win rate descending
+  const sorted = duos.slice().sort((a, b) => (b.wins / b.games) - (a.wins / a.games));
+
+  const rows = sorted.slice(0, 3).map((d, i) => {
     const wr      = d.games > 0 ? Math.round((d.wins / d.games) * 100) : 0;
     const name1   = displayName(d.p1);
     const name2   = displayName(d.p2);
-    const medals  = ["🥇","🥈","🥉"];
+    const medals  = ["&#x1F947;", "&#x1F948;", "&#x1F949;"];
     const wrColor = wr >= 55 ? "#30d158" : wr >= 50 ? "#ffd60a" : "#ff453a";
 
     return `
     <div class="duo-row">
-      <div class="duo-rank">${medals[i]}</div>
-      <div class="duo-names">
-        <span class="duo-n1">${name1}</span>
-        <span class="duo-sep">+</span>
-        <span class="duo-n2">${name2}</span>
-      </div>
-      <div class="duo-stats">
+      <div class="duo-top">
+        <div class="duo-medal">${medals[i]}</div>
+        <div class="duo-names">
+          <span class="duo-n1">${name1}</span>
+          <span class="duo-sep">+</span>
+          <span class="duo-n2">${name2}</span>
+        </div>
         <div class="duo-wr" style="color:${wrColor}">${wr}%</div>
-        <div class="duo-games">${d.games} games</div>
       </div>
       <div class="duo-bar-wrap">
-        <div class="duo-bar" style="width:${wr}%;background:${wrColor}"></div>
+        <div class="duo-bar" style="width:${wr}%;background:${wrColor}40;box-shadow:0 0 8px ${wrColor}60"></div>
       </div>
+      <div class="duo-games">${d.games} games together</div>
     </div>`;
   }).join("");
 
@@ -93,16 +96,16 @@ function buildDuoHTML(duos) {
 <html>
 <head>
 <meta charset="UTF-8"/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans', sans-serif; background: transparent; width: 460px; }
+  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: transparent; width: 460px; }
 
   .card {
     width: 460px;
     background: linear-gradient(160deg, #16161f 0%, #0e0e15 100%);
-    border: 1px solid rgba(255,255,255,0.07);
     border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.07);
     overflow: hidden;
     position: relative;
   }
@@ -122,84 +125,67 @@ function buildDuoHTML(duos) {
   }
 
   .inner {
-    padding: 24px 28px 28px;
+    padding: 28px 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     position: relative;
     z-index: 1;
   }
 
-  .header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  .status-pill {
+    font-size: 10px; font-weight: 900; letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #5ac8fa;
+    background: rgba(10,132,255,0.12);
+    border: 1px solid rgba(10,132,255,0.35);
+    border-radius: 30px;
+    padding: 5px 18px;
     margin-bottom: 22px;
-  }
-  .header-icon { font-size: 22px; }
-  .header-title {
-    font-size: 18px; font-weight: 800; color: #fff;
-  }
-  .header-sub {
-    font-size: 11px; color: rgba(255,255,255,0.35);
-    text-transform: uppercase; letter-spacing: 1px;
-    margin-top: 1px;
   }
 
   .duo-row {
+    width: 100%;
     background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 14px;
-    padding: 14px 16px 10px;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 14px 18px 12px;
     margin-bottom: 10px;
   }
   .duo-row:last-child { margin-bottom: 0; }
 
-  .duo-rank {
-    font-size: 18px;
-    margin-bottom: 6px;
-  }
-
-  .duo-names {
+  .duo-top {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  .duo-n1, .duo-n2 {
-    font-size: 15px; font-weight: 700; color: #fff;
-  }
-  .duo-sep {
-    font-size: 13px; color: rgba(255,255,255,0.3); font-weight: 400;
-  }
-
-  .duo-stats {
-    display: flex;
-    align-items: baseline;
     gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
-  .duo-wr {
-    font-size: 20px; font-weight: 800;
+  .duo-medal { font-size: 18px; flex-shrink: 0; font-family: 'Noto Color Emoji', sans-serif; }
+  .duo-names {
+    display: flex; align-items: center; gap: 7px; flex: 1;
   }
-  .duo-games {
-    font-size: 11px; color: rgba(255,255,255,0.35);
-    text-transform: uppercase; letter-spacing: 0.8px;
-  }
+  .duo-n1, .duo-n2 { font-size: 15px; font-weight: 700; color: #fff; }
+  .duo-sep { font-size: 12px; color: rgba(255,255,255,0.25); }
+  .duo-wr { font-size: 20px; font-weight: 800; margin-left: auto; }
 
   .duo-bar-wrap {
     height: 3px;
-    background: rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.06);
     border-radius: 2px;
     overflow: hidden;
+    margin-bottom: 8px;
   }
-  .duo-bar {
-    height: 100%;
-    border-radius: 2px;
-    opacity: 0.85;
+  .duo-bar { height: 100%; border-radius: 2px; }
+
+  .duo-games {
+    font-size: 10px; color: rgba(255,255,255,0.25);
+    text-transform: uppercase; letter-spacing: 0.8px;
   }
 
   .footer {
-    font-size: 10px; color: rgba(255,255,255,0.15);
+    font-size: 10px; color: #2a2a35;
     text-transform: uppercase; letter-spacing: 1.5px;
-    margin-top: 18px; text-align: center;
+    margin-top: 20px;
   }
 </style>
 </head>
@@ -208,13 +194,7 @@ function buildDuoHTML(duos) {
   <div class="shimmer"></div>
   <div class="bg-glow"></div>
   <div class="inner">
-    <div class="header">
-      <div class="header-icon">🤝</div>
-      <div>
-        <div class="header-title">Top Duos</div>
-        <div class="header-sub">Season 2026 · Solo/Duo</div>
-      </div>
-    </div>
+    <div class="status-pill">TOP DUOS</div>
     ${rows}
     <div class="footer">Squad Tracker</div>
   </div>
@@ -244,7 +224,7 @@ async function renderDuoCard(html) {
 async function sendDuoResponse(appId, token, buffer) {
   const form = new FormData();
   form.append("files[0]", new Blob([buffer], { type: "image/png" }), "duo-stats.png");
-  form.append("payload_json", JSON.stringify({}));
+  form.append("payload_json", JSON.stringify({ flags: 4096 }));
 
   const res = await fetch(
     `https://discord.com/api/v10/webhooks/${appId}/${token}`,
