@@ -258,16 +258,15 @@ export function handleDiscordInteraction(req, res) {
   const publicKey = process.env.DISCORD_PUBLIC_KEY;
   const signature = req.headers["x-signature-ed25519"];
   const timestamp = req.headers["x-signature-timestamp"];
-  const rawBody   = req.body.toString(); // Buffer from express.raw()
+  const rawBody   = req.rawBody || "";
 
   // Verify signature
+  if (!rawBody) return res.status(400).send("Empty body");
   const valid = publicKey && verifyDiscordSignature(publicKey, signature, timestamp, rawBody);
-  console.log(`Discord interaction: type=${JSON.parse(rawBody).type} sig_valid=${valid} has_key=${!!publicKey}`);
-  if (!valid) {
-    return res.status(401).send("Invalid signature");
-  }
+  if (!valid) return res.status(401).send("Invalid signature");
 
   const body = JSON.parse(rawBody);
+  console.log(`Discord interaction: type=${body.type}`);
 
   // Discord PING
   if (body.type === 1) return res.json({ type: 1 });

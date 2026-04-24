@@ -19,6 +19,13 @@ if (!process.env.RIOT_API_KEY) {
   process.exit(1);
 }
 
+// Capture raw body for /discord/interactions BEFORE express.json() consumes the stream
+app.use((req, res, next) => {
+  if (req.path !== "/discord/interactions") return next();
+  const chunks = [];
+  req.on("data", chunk => chunks.push(chunk));
+  req.on("end", () => { req.rawBody = Buffer.concat(chunks).toString(); next(); });
+});
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -183,7 +190,7 @@ app.post("/force-refresh", async (req, res) => {
 });
 
 app.get("/health", (req, res) => res.json({ ok: true }));
-app.post("/discord/interactions", express.raw({ type: "application/json" }), handleDiscordInteraction);
+app.post("/discord/interactions", handleDiscordInteraction);
 app.post("/test-recap", async (req, res) => {
   await postDailyRecap(cachedSquadData);
   res.json({ ok: true });
