@@ -63,33 +63,43 @@ export async function registerDuoCommand() {
 }
 
 // ── Build duo card HTML ───────────────────────────────────────────────────────
-function buildDuoHTML(duos) {
+export function buildDuoHTML(duos) {
   // Sort by win rate descending
   const sorted = duos.slice().sort((a, b) => (b.wins / b.games) - (a.wins / a.games));
 
-  const rows = sorted.slice(0, 3).map((d, i) => {
+  const rows = sorted.slice(0, 10).map((d, i) => {
     const wr      = d.games > 0 ? Math.round((d.wins / d.games) * 100) : 0;
+    const losses  = d.games - d.wins;
     const name1   = displayName(d.p1);
     const name2   = displayName(d.p2);
-    const medals  = ["1", "2", "3"];
-    const medalColors = ["#ffd60a", "#a8b2bd", "#cd7f32"];
+    const medals  = ["&#x1F947;","&#x1F948;","&#x1F949;","4","5","6","7","8","9","10"];
     const wrColor = wr >= 55 ? "#30d158" : wr >= 50 ? "#ffd60a" : "#ff453a";
+    const rowBg   = wr >= 55 ? "rgba(48,209,88,0.04)" : wr >= 50 ? "rgba(255,214,10,0.04)" : "rgba(255,69,58,0.04)";
+    const rowBdr  = wr >= 55 ? "rgba(48,209,88,0.12)" : wr >= 50 ? "rgba(255,214,10,0.12)" : "rgba(255,69,58,0.12)";
 
     return `
-    <div class="duo-row">
+    <div class="duo-row" style="background:${rowBg};border-color:${rowBdr}">
       <div class="duo-top">
-        <div class="duo-medal" style="color:${medalColors[i]};border-color:${medalColors[i]}40">${medals[i]}</div>
-        <div class="duo-names">
-          <span class="duo-n1">${name1}</span>
-          <span class="duo-sep">+</span>
-          <span class="duo-n2">${name2}</span>
+        <div class="duo-medal${i >= 3 ? ' num' : ''}">${medals[i]}</div>
+        <div class="duo-info">
+          <div class="duo-names">
+            <span class="duo-n1">${name1}</span>
+            <span class="duo-sep">+</span>
+            <span class="duo-n2">${name2}</span>
+          </div>
+          <div class="duo-record">
+            <span class="duo-w">${d.wins}W</span>
+            <span class="duo-divider">·</span>
+            <span class="duo-l">${losses}L</span>
+            <span class="duo-divider">·</span>
+            <span class="duo-g">${d.games} games</span>
+          </div>
         </div>
-        <div class="duo-wr" style="color:${wrColor}">${wr}%</div>
+        <div class="duo-wr" style="color:${wrColor};text-shadow:0 0 18px ${wrColor}80">${wr}%</div>
       </div>
       <div class="duo-bar-wrap">
-        <div class="duo-bar" style="width:${wr}%;background:${wrColor}40;box-shadow:0 0 8px ${wrColor}60"></div>
+        <div class="duo-bar" style="width:${wr}%;background:${wrColor};box-shadow:0 0 10px ${wrColor}60;opacity:0.7"></div>
       </div>
-      <div class="duo-games">${d.games} games together</div>
     </div>`;
   }).join("");
 
@@ -97,10 +107,10 @@ function buildDuoHTML(duos) {
 <html>
 <head>
 <meta charset="UTF-8"/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: transparent; width: 460px; }
+  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: #0e0e15; width: 460px; }
 
   .card {
     width: 460px;
@@ -121,12 +131,12 @@ function buildDuoHTML(duos) {
     top: -40px; left: 50%;
     transform: translateX(-50%);
     width: 320px; height: 320px;
-    background: radial-gradient(circle, rgba(10,132,255,0.12) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(10,132,255,0.1) 0%, transparent 70%);
     pointer-events: none;
   }
 
   .inner {
-    padding: 28px 32px 24px;
+    padding: 28px 28px 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -139,59 +149,87 @@ function buildDuoHTML(duos) {
     text-transform: uppercase;
     color: #5ac8fa;
     background: rgba(10,132,255,0.12);
-    border: 1px solid rgba(10,132,255,0.35);
+    border: 1px solid rgba(10,132,255,0.3);
     border-radius: 30px;
     padding: 5px 18px;
-    margin-bottom: 22px;
+    margin-bottom: 20px;
   }
 
   .duo-row {
     width: 100%;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    border: 1px solid;
     border-radius: 16px;
-    padding: 14px 18px 12px;
-    margin-bottom: 10px;
+    padding: 14px 16px 11px;
+    margin-bottom: 8px;
   }
   .duo-row:last-child { margin-bottom: 0; }
 
   .duo-top {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 10px;
   }
+
   .duo-medal {
-    width: 26px; height: 26px; border-radius: 50%;
-    border: 1px solid;
+    font-size: 22px;
+    flex-shrink: 0;
+    font-family: 'Noto Color Emoji', sans-serif;
+    line-height: 1;
+    width: 28px;
+    text-align: center;
+  }
+  .duo-medal.num {
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.4);
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 800; flex-shrink: 0;
+    line-height: 1;
   }
+
+  .duo-info { flex: 1; min-width: 0; }
+
   .duo-names {
-    display: flex; align-items: center; gap: 7px; flex: 1;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 5px;
   }
-  .duo-n1, .duo-n2 { font-size: 15px; font-weight: 700; color: #fff; }
-  .duo-sep { font-size: 12px; color: rgba(255,255,255,0.25); }
-  .duo-wr { font-size: 20px; font-weight: 800; margin-left: auto; }
+  .duo-n1, .duo-n2 {
+    font-size: 15px; font-weight: 800; color: #fff;
+    white-space: nowrap;
+  }
+  .duo-sep { font-size: 13px; color: rgba(255,255,255,0.2); font-weight: 400; }
+
+  .duo-record {
+    display: flex; align-items: center; gap: 5px;
+  }
+  .duo-w  { font-size: 11px; font-weight: 700; color: #30d158; }
+  .duo-l  { font-size: 11px; font-weight: 700; color: #ff453a; }
+  .duo-g  { font-size: 11px; color: rgba(255,255,255,0.25); }
+  .duo-divider { font-size: 10px; color: rgba(255,255,255,0.15); }
+
+  .duo-wr {
+    font-size: 26px; font-weight: 900;
+    margin-left: auto; flex-shrink: 0;
+    letter-spacing: -0.5px;
+  }
 
   .duo-bar-wrap {
     height: 3px;
     background: rgba(255,255,255,0.06);
-    border-radius: 2px;
+    border-radius: 3px;
     overflow: hidden;
-    margin-bottom: 8px;
   }
-  .duo-bar { height: 100%; border-radius: 2px; }
-
-  .duo-games {
-    font-size: 10px; color: rgba(255,255,255,0.25);
-    text-transform: uppercase; letter-spacing: 0.8px;
-  }
+  .duo-bar { height: 100%; border-radius: 3px; }
 
   .footer {
-    font-size: 10px; color: #2a2a35;
+    font-size: 10px; color: #252530;
     text-transform: uppercase; letter-spacing: 1.5px;
-    margin-top: 20px;
+    margin-top: 18px;
   }
 </style>
 </head>
@@ -210,7 +248,7 @@ function buildDuoHTML(duos) {
 }
 
 // ── Render card image ─────────────────────────────────────────────────────────
-async function renderDuoCard(html) {
+export async function renderDuoCard(html) {
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
@@ -259,8 +297,8 @@ export function handleDiscordInteraction(req, res) {
 
   // Slash command
   if (body.type === 2 && body.data?.name === "duo") {
-    // Acknowledge immediately (deferred response)
-    res.json({ type: 5 });
+    // Acknowledge immediately (deferred silent response)
+    res.json({ type: 5, data: { flags: 4096 } });
 
     // Generate and send image in background
     const appId = process.env.DISCORD_APP_ID;
@@ -268,7 +306,7 @@ export function handleDiscordInteraction(req, res) {
 
     setImmediate(async () => {
       try {
-        const duos = getDuoStats(CURRENT_SEASON, "solo", 3);
+        const duos = getDuoStats(CURRENT_SEASON, "solo", 2);
         if (duos.length === 0) {
           await fetch(`https://discord.com/api/v10/webhooks/${appId}/${interactionToken}`, {
             method: "POST",

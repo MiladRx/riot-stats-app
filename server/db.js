@@ -172,7 +172,7 @@ export function getDuoStats(season, mode, minGames = 3) {
     GROUP BY a.player_key, b.player_key
     HAVING games >= ?
     ORDER BY games DESC
-    LIMIT 20
+    LIMIT 100
   `);
   stmt.bind([season, mode, season, mode, minGames]);
   const result = [];

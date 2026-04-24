@@ -37,9 +37,9 @@ import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-sta
 import { buildLineups } from "./server/clash.js";
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
 import { notifyRankChanges, notifyPentaKill } from "./server/discord.js";
-import { registerDuoCommand, handleDiscordInteraction } from "./server/discord-bot.js";
+import { registerDuoCommand, handleDiscordInteraction, buildDuoHTML, renderDuoCard } from "./server/discord-bot.js";
 import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
-import { ready as dbReady, getHeatmapData } from "./server/db.js";
+import { ready as dbReady, getHeatmapData, getDuoStats, getMatches } from "./server/db.js";
 
 loadDDragon();
 
@@ -656,11 +656,38 @@ app.post("/test-penta", async (req, res) => {
   }
 });
 
-// ── Test endpoint — duo card
-app.post("/test-duo", async (req, res) => {
+// ── Debug duo stats
+app.get("/debug-duo", (req, res) => {
+  const duos = getDuoStats(CURRENT_SEASON, "solo", 1);
+  res.json(duos);
+});
+
+app.get("/debug-player-ids", (req, res) => {
+  const { player } = req.query;
+  if (!player) return res.json({ error: "pass ?player=milad%23exe" });
+  const matches = getMatches(player, CURRENT_SEASON, "solo");
+  const ids = matches.map(m => m._id);
+  res.json({ player, total: matches.length, ids });
+});
+
+app.get("/debug-duo-overlap", (req, res) => {
+  const { p1, p2 } = req.query;
+  if (!p1 || !p2) return res.json({ error: "pass ?p1=milad%23exe&p2=biigdaddy%23eune" });
+  const m1 = new Set(getMatches(p1, CURRENT_SEASON, "solo").map(m => m._id));
+  const m2 = new Set(getMatches(p2, CURRENT_SEASON, "solo").map(m => m._id));
+  const shared = [...m1].filter(id => m2.has(id));
+  res.json({ p1, p2, p1Total: m1.size, p2Total: m2.size, sharedGames: shared.length, sharedIds: shared });
+});
+
+// ── Test endpoint — duo card preview
+app.get("/test-duo", async (req, res) => {
   try {
-    const { buildDuoHTML, renderDuoCard, sendDuoResponse } = await import("./server/discord-bot.js");
-    res.json({ ok: true, message: "Use /duo in Discord to see the card" });
+    const duos = getDuoStats(CURRENT_SEASON, "solo", 2);
+    if (duos.length === 0) return res.send("No duo data yet.");
+    const html   = buildDuoHTML(duos);
+    const buffer = await renderDuoCard(html);
+    res.set("Content-Type", "image/png");
+    res.send(buffer);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
