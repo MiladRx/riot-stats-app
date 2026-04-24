@@ -261,7 +261,9 @@ export function handleDiscordInteraction(req, res) {
   const rawBody   = req.body.toString(); // Buffer from express.raw()
 
   // Verify signature
-  if (!publicKey || !verifyDiscordSignature(publicKey, signature, timestamp, rawBody)) {
+  const valid = publicKey && verifyDiscordSignature(publicKey, signature, timestamp, rawBody);
+  console.log(`Discord interaction: type=${JSON.parse(rawBody).type} sig_valid=${valid} has_key=${!!publicKey}`);
+  if (!valid) {
     return res.status(401).send("Invalid signature");
   }
 
