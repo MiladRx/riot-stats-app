@@ -67,11 +67,7 @@ function _loadForFilter() {
 function _renderFilterBar() {
   var seasonEl = document.getElementById("board-seasons");
   var modeEl   = document.getElementById("board-modes");
-  if (seasonEl) {
-    seasonEl.innerHTML = '<div class="join">' + _boardAvailableSeasons.map(function(s) {
-      return '<button class="join-item btn btn-ghost btn-xs bf-season' + (s === _boardSeason ? " active" : "") + '" onclick="setBoardSeason(\'' + s + '\')">' + s + '</button>';
-    }).join('') + '</div>';
-  }
+  // Season buttons removed — always showing 2026
   if (modeEl) modeEl.innerHTML = '';
 }
 

@@ -37,7 +37,7 @@ import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-sta
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
 import { notifyRankChanges, notifyPentaKill } from "./server/discord.js";
 import { registerDuoCommand, handleDiscordInteraction, buildDuoHTML, buildStreakHTML, renderDuoCard } from "./server/discord-bot.js";
-import { loadMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
+import { loadMatchCache, saveMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
 import { ready as dbReady, getHeatmapData, getDuoStats, getStreaks, getMatches, syncFromMatchCache, getDb } from "./server/db.js";
 
 loadDDragon();
@@ -698,6 +698,23 @@ app.get("/debug-player-ids", (req, res) => {
   const matches = getMatches(player, CURRENT_SEASON, "solo");
   const ids = matches.map(m => m._id);
   res.json({ player, total: matches.length, ids });
+});
+
+// ── One-time player rename migration
+app.post("/admin/rename-player", (req, res) => {
+  const { oldKey, newKey } = req.body;
+  if (!oldKey || !newKey) return res.status(400).json({ error: "pass oldKey and newKey" });
+  const db = getDb();
+  db.run(`UPDATE matches      SET player_key=? WHERE player_key=?`, [newKey, oldKey]);
+  db.run(`UPDATE player_state SET player_key=? WHERE player_key=?`, [newKey, oldKey]);
+  db.run(`UPDATE fetched_ids  SET player_key=? WHERE player_key=?`, [newKey, oldKey]);
+  const check = db.exec(`SELECT COUNT(*) FROM matches WHERE player_key='${newKey}'`);
+  const count = check[0]?.values[0][0] ?? 0;
+  // Rename in match-cache.json
+  const cache = loadMatchCache();
+  if (cache[oldKey]) { cache[newKey] = cache[oldKey]; delete cache[oldKey]; }
+  saveMatchCache(cache);
+  res.json({ ok: true, matchesRenamed: count });
 });
 
 app.get("/debug-duo-overlap", (req, res) => {

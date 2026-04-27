@@ -19,7 +19,7 @@ export const FULL_SQUAD = [
   { gameName: "Fåce", tagLine: "TAP" },
   { gameName: "Milad", tagLine: "EXE" },
   { gameName: "LittlestJeff1", tagLine: "goyem" },
-  { gameName: "DÅRK", tagLine: "ABO" },
+  { gameName: "Tissemand", tagLine: "Luder" },
   { gameName: "DARWIZZY", tagLine: "HØES" },
   { gameName: "La Cabra II", tagLine: "Qlawi" },
   { gameName: "biigdaddy", tagLine: "EUNE" },
@@ -29,7 +29,7 @@ export const FULL_SQUAD = [
 export const ALT_ACCOUNTS = {
   "la cabra#iii":       "la cabra ii#qlawi",
   "littlestjeff1#goyem": "darwizzy#høes",
-  "fåce#tap":           "dårk#abo",
+  "fåce#tap":           "tissemand#luder",
   "mohsh#eune":         "biigdaddy#eune",
 };
 // Set of alt keys (for quick lookup)

@@ -17,7 +17,7 @@ const PLAYERS = [
   { gameName: "Fåce",            tagLine: "TAP"   },
   { gameName: "Milad",           tagLine: "EXE"   },
   { gameName: "LittlestJeff1",   tagLine: "goyem" },
-  { gameName: "DÅRK",            tagLine: "ABO"   },
+  { gameName: "Tissemand",            tagLine: "ABO"   },
   { gameName: "DARWIZZY",        tagLine: "HØES"  },
   { gameName: "La Cabra II",     tagLine: "Qlawi" },
 ];
