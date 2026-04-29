@@ -765,6 +765,17 @@ app.get("/test-penta", async (req, res) => {
   }
 });
 
+// ── Test endpoint — fire penta kill notification to Discord
+app.post("/test-penta-notify", async (req, res) => {
+  try {
+    const { gameName = "Tissemand", champion = "Vayne", kills = 21, deaths = 4, assists = 3 } = req.body || {};
+    await notifyPentaKill({ gameName, champion, kills, deaths, assists, ddragonVersion, forceLocal: true });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Test endpoint — streak card preview
 app.get("/test-streak", async (req, res) => {
   try {
