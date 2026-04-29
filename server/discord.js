@@ -34,7 +34,7 @@ function rankLabel(tier, rank) {
 }
 
 // ── Build HTML card ────────────────────────────────────────────────────────────
-function buildPromoHTML({ gameName, profileIconId, ddragonVersion, prevTier, prevRank, newTier, newRank, lp, promoted }) {
+export function buildPromoHTML({ gameName, profileIconId, ddragonVersion, prevTier, prevRank, newTier, newRank, lp, promoted }) {
   const prevLabel   = rankLabel(prevTier, prevRank);
   const newLabel    = rankLabel(newTier, newRank);
   const accent      = TIER_COLOR[newTier]  || "#fff";
@@ -213,7 +213,7 @@ function buildPromoHTML({ gameName, profileIconId, ddragonVersion, prevTier, pre
 }
 
 // ── Render HTML → PNG ──────────────────────────────────────────────────────────
-async function renderCard(html) {
+export async function renderCard(html) {
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
@@ -330,11 +330,12 @@ export async function notifyRankChanges(prevSquad, newSquad, ddragonVersion, for
 }
 
 // ── Penta Kill card ───────────────────────────────────────────────────────────
-function buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVersion }) {
-  const ddVer     = ddragonVersion || "16.8.1";
-  const champKey  = champion.replace(/\s/g, "").replace(/'/g, "");
-  const champUrl  = `https://ddragon.leagueoflegends.com/cdn/${ddVer}/img/champion/${champKey}.png`;
-  const kda       = deaths === 0 ? "Perfect" : ((kills + assists) / deaths).toFixed(2);
+export function buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVersion }) {
+  const ddVer    = ddragonVersion || "16.8.1";
+  const champKey = champion.replace(/\s/g, "").replace(/'/g, "");
+  const champUrl = `https://ddragon.leagueoflegends.com/cdn/${ddVer}/img/champion/${champKey}.png`;
+  const kda      = deaths === 0 ? "Perfect" : ((kills + assists) / deaths).toFixed(2);
+  const accent   = "#c89b3c";
 
   return `<!DOCTYPE html>
 <html>
@@ -343,20 +344,20 @@ function buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVer
 <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans', sans-serif; background: transparent; width: 460px; }
+  body { font-family: 'Noto Sans', 'Segoe UI', sans-serif; background: transparent; width: 460px; }
 
   .card {
     width: 460px;
-    background: linear-gradient(160deg, #1a1208 0%, #0e0e15 60%);
-    border: 1px solid rgba(255,214,10,0.15);
+    background: linear-gradient(160deg, #16161f 0%, #0e0e15 100%);
     border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.07);
     overflow: hidden;
     position: relative;
   }
 
   .shimmer {
     height: 3px;
-    background: linear-gradient(90deg, transparent, #ffd60a, #ff9f0a, #ffd60a, transparent);
+    background: linear-gradient(90deg, transparent, ${accent}, transparent);
   }
 
   .bg-glow {
@@ -364,7 +365,7 @@ function buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVer
     top: -40px; left: 50%;
     transform: translateX(-50%);
     width: 320px; height: 320px;
-    background: radial-gradient(circle, rgba(255,214,10,0.19) 0%, transparent 70%);
+    background: radial-gradient(circle, ${accent}30 0%, transparent 70%);
     pointer-events: none;
   }
 
@@ -377,62 +378,57 @@ function buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVer
     z-index: 1;
   }
 
-  .penta-badge {
-    font-size: 11px; font-weight: 900; letter-spacing: 3px;
+  .status-pill {
+    font-size: 10px; font-weight: 900; letter-spacing: 3px;
     text-transform: uppercase;
-    color: #ffd60a;
-    background: rgba(255,214,10,0.12);
-    border: 1px solid rgba(255,214,10,0.4);
+    color: ${accent};
+    background: ${accent}18;
+    border: 1px solid ${accent}50;
     border-radius: 30px;
-    padding: 5px 20px;
+    padding: 5px 18px;
     margin-bottom: 20px;
   }
 
-  .champ-wrap {
-    position: relative;
-    margin-bottom: 16px;
-  }
-  .champ-ring {
+  .avatar-ring {
     width: 90px; height: 90px;
     border-radius: 50%;
-    border: 3px solid #ffd60a;
-    box-shadow: 0 0 30px rgba(255,214,10,0.5), 0 0 60px rgba(255,214,10,0.2);
+    border: 3px solid ${accent};
+    box-shadow: 0 0 18px ${accent}55;
     overflow: hidden;
-    flex-shrink: 0;
+    margin-bottom: 16px;
   }
-  .champ-img {
+  .avatar-ring img {
     width: 115%; height: 115%;
     margin: -7.5%;
     object-fit: cover;
     display: block;
   }
 
-  .player-name {
+  .name {
     font-size: 22px; font-weight: 800; color: #fff;
+    letter-spacing: 0.2px;
     margin-bottom: 4px;
   }
-  .champ-name {
-    font-size: 14px; color: #ffd60a; font-weight: 600;
-    margin-bottom: 22px;
+  .sub {
+    font-size: 13px; color: ${accent}; font-weight: 600;
+    margin-bottom: 24px;
   }
 
   .stats-row {
-    display: flex; gap: 12px; margin-bottom: 6px;
+    display: flex; gap: 10px; margin-bottom: 4px;
   }
   .stat-box {
     display: flex; flex-direction: column; align-items: center;
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: 14px;
-    padding: 10px 20px;
-    min-width: 80px;
+    padding: 10px 18px;
+    min-width: 78px;
   }
-  .stat-val {
-    font-size: 20px; font-weight: 800;
-  }
-  .stat-val.k { color: #30d158; }
-  .stat-val.d { color: #ff453a; }
-  .stat-val.a { color: #ffd60a; }
+  .stat-val { font-size: 20px; font-weight: 800; }
+  .stat-val.k   { color: #30d158; }
+  .stat-val.d   { color: #ff453a; }
+  .stat-val.a   { color: ${accent}; }
   .stat-val.kda { color: #9cb4e8; }
   .stat-label {
     font-size: 10px; color: #444; text-transform: uppercase;
@@ -440,8 +436,9 @@ function buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVer
   }
 
   .footer {
-    font-size: 10px; color: #252530;
-    text-transform: uppercase; letter-spacing: 1.5px; margin-top: 18px;
+    font-size: 10px; color: #2a2a35;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-top: 18px;
   }
 </style>
 </head>
@@ -450,14 +447,12 @@ function buildPentaHTML({ gameName, champion, kills, deaths, assists, ddragonVer
   <div class="shimmer"></div>
   <div class="bg-glow"></div>
   <div class="inner">
-    <div class="penta-badge">&#x1F525; PENTA KILL &#x1F525;</div>
-    <div class="champ-wrap">
-      <div class="champ-ring">
-        <img class="champ-img" src="${champUrl}" onerror="this.style.background='#2a2a1a'"/>
-      </div>
+    <div class="status-pill">&#x1F525; PENTA KILL &#x1F525;</div>
+    <div class="avatar-ring">
+      <img src="${champUrl}" onerror="this.style.background='#1a1a25'"/>
     </div>
-    <div class="player-name">${gameName}</div>
-    <div class="champ-name">${champion}</div>
+    <div class="name">${gameName}</div>
+    <div class="sub">${champion}</div>
     <div class="stats-row">
       <div class="stat-box">
         <div class="stat-val k">${kills}</div>

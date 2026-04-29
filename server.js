@@ -35,7 +35,7 @@ import { loadSeasonCache, getSeasonCacheSummary } from "./server/season-cache.js
 import { fetchJob, runFetch, setPentaKillHandler } from "./server/fetch-engine.js";
 import { loadDDragon, ddragonVersion, getPlayerStats } from "./server/player-stats.js";
 import { getWeekKey, nextWeekKey, getNextResetMs, loadSnapshot, saveSnapshot, saveFinalResults, computeRankings } from "./server/power-rankings.js";
-import { notifyRankChanges, notifyPentaKill } from "./server/discord.js";
+import { notifyRankChanges, notifyPentaKill, buildPentaHTML, buildPromoHTML, renderCard } from "./server/discord.js";
 import { registerDuoCommand, handleDiscordInteraction, buildDuoHTML, buildStreakHTML, renderDuoCard } from "./server/discord-bot.js";
 import { loadMatchCache, saveMatchCache, runFetchJob, fetchJob as matchFetchJob } from "./server/match-cache.js";
 import { ready as dbReady, getHeatmapData, getDuoStats, getStreaks, getMatches, syncFromMatchCache, getDb } from "./server/db.js";
@@ -733,6 +733,31 @@ app.get("/test-duo", async (req, res) => {
     if (duos.length === 0) return res.send("No duo data yet.");
     const html   = buildDuoHTML(duos);
     const buffer = await renderDuoCard(html);
+    res.set("Content-Type", "image/png");
+    res.send(buffer);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Test endpoint — promo/demo card preview
+app.get("/test-promo", async (req, res) => {
+  try {
+    const promoted = req.query.type !== "demo";
+    const html   = buildPromoHTML({ gameName: "Milad", profileIconId: 1, ddragonVersion, prevTier: "GOLD", prevRank: "III", newTier: "GOLD", newRank: "II", lp: 21, promoted });
+    const buffer = await renderCard(html);
+    res.set("Content-Type", "image/png");
+    res.send(buffer);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Test endpoint — penta kill card preview
+app.get("/test-penta", async (req, res) => {
+  try {
+    const html   = buildPentaHTML({ gameName: "Tissemand", champion: "Vayne", kills: 21, deaths: 4, assists: 3, ddragonVersion });
+    const buffer = await renderCard(html);
     res.set("Content-Type", "image/png");
     res.send(buffer);
   } catch (e) {
