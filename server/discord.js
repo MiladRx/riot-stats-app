@@ -447,7 +447,7 @@ export function buildPentaHTML({ gameName, champion, kills, deaths, assists, ddr
   <div class="shimmer"></div>
   <div class="bg-glow"></div>
   <div class="inner">
-    <div class="status-pill">&#x1F525; PENTA KILL &#x1F525;</div>
+    <div class="status-pill">PENTA KILL</div>
     <div class="avatar-ring">
       <img src="${champUrl}" onerror="this.style.background='#1a1a25'"/>
     </div>
